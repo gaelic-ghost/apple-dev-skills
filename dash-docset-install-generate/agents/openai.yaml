@@ -1,0 +1,4 @@
+interface:
+  display_name: "Dash Install and Generate"
+  short_description: "Install or generate Dash docsets and cheatsheets"
+  default_prompt: "Use $dash-docset-install-generate to install requested Dash docsets and run or guide docset generation workflows."
