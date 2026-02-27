@@ -2,6 +2,32 @@
 
 Codex skills for Apple development workflows focused on Swift, Xcode, and Apple tooling.
 
+## Quick Add (Skills CLI)
+
+```bash
+npx skills add gaelic-ghost/apple-dev-skills
+```
+
+The CLI will prompt you to choose which skill(s) to install from this repo.
+
+Additional examples:
+
+```bash
+# Target Codex explicitly
+npx skills add gaelic-ghost/apple-dev-skills -a codex
+
+# Install to global profile
+npx skills add gaelic-ghost/apple-dev-skills -g
+
+# Combine both
+npx skills add gaelic-ghost/apple-dev-skills -a codex -g
+```
+
+Flag notes (see https://www.npmjs.com/package/skills):
+
+- `-a` targets a specific agent (for example `codex`).
+- `-g` installs to the global profile.
+
 ## Purpose
 
 This repository packages a curated set of Apple-development Codex skills in a flat layout so they are easy to discover and install.
