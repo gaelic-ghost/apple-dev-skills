@@ -116,4 +116,4 @@ When no API path is usable, provide direct commands:
 
 ## Optional Visual Troubleshooting
 
-If Dash UI behavior needs visual confirmation, use [$screenshot](/Users/galew/.codex/skills/screenshot/SKILL.md).
+If Dash UI behavior needs visual confirmation, use the `$screenshot` skill if it is available in the user's environment.

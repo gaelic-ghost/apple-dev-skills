@@ -11,7 +11,7 @@ Use this skill in two patterns.
   - Exit `0` when all repos already match canonical `AGENTS.md`.
   - Exit `1` when one or more repos drift from canonical.
 - Default discovery root is `~/Workspace`.
-- Discovery explicitly excludes `~/Workspace/services`.
+- Use `--root` to target a different repository root when needed.
 - Discovery excludes hidden directories (`.*`) and common Xcode directories (`*.xcworkspace`, `*.xcodeproj`, `DerivedData`).
 
 ## Apply/update schedule
@@ -23,7 +23,7 @@ Use this skill in two patterns.
   - Creates missing `AGENTS.md` files.
   - Replaces drifted `AGENTS.md` files with canonical content.
 - Default discovery root is `~/Workspace`.
-- Discovery explicitly excludes `~/Workspace/services`.
+- Use `--root` to target a different repository root when needed.
 - Discovery excludes hidden directories (`.*`) and common Xcode directories (`*.xcworkspace`, `*.xcodeproj`, `DerivedData`).
 
 ## Single repository runs

@@ -117,4 +117,4 @@ If MCP is unavailable:
 
 ## Optional Visual Troubleshooting
 
-If Dash interface behavior needs verification, use [$screenshot](/Users/galew/.codex/skills/screenshot/SKILL.md).
+If Dash interface behavior needs verification, use the `$screenshot` skill if it is available in the user's environment.

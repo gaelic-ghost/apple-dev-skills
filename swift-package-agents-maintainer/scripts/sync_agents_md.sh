@@ -10,7 +10,7 @@ Options:
   --canonical <path>  Canonical AGENTS.md source file. Defaults to ../assets/AGENTS.md.
   --repo <path>       Single repository path containing Package.swift.
   --root <path>       Root path to scan recursively for Swift package repositories.
-                     Defaults to ~/Workspace when omitted with --repo.
+                     Defaults to ~/Workspace when neither --repo nor --root is provided.
   --check             Read-only drift detection mode; exit 1 when drift exists.
   --verbose           Print per-repo action details.
   -h, --help          Show this help.
@@ -92,7 +92,6 @@ else
     REPOS+=("$repo_dir")
   done < <(
     find "$ROOT_PATH" \
-      \( -path "$HOME/Workspace/services" -o -path "$HOME/Workspace/services/*" \) -prune -o \
       \( -type d \( -name ".*" -o -name ".build" -o -name ".swiftpm" -o -name "node_modules" -o -name "*.xcworkspace" -o -name "*.xcodeproj" -o -name "DerivedData" \) -prune \) -o \
       \( -type f -name "Package.swift" -print \) \
       | sort -u

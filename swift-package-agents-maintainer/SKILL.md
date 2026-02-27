@@ -37,7 +37,7 @@ Prefer the bundled script for deterministic automation runs.
 - Prefer apply mode for user-invoked maintenance runs.
 - Treat a directory as a Swift package repo only when `Package.swift` is present.
 - Use `~/Workspace` as the default discovery root on machines where Swift packages are stored there.
-- Exclude `~/Workspace/services` from discovery scans.
+- Use `--root` when your repositories live outside `~/Workspace`.
 - Skip hidden/build dependency directories during scans (for example `.git`, any `.*` directory, `.build`, `.swiftpm`, `node_modules`).
 - Skip Xcode-protected/generated directories during scans (for example `*.xcworkspace`, `*.xcodeproj`, `DerivedData`).
 

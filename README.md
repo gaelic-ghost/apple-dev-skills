@@ -21,6 +21,18 @@ Example skill directories in this repo:
 
 Version `v1.0.0` includes the four skills above as the initial Apple-development bundle.
 
+## v1.1.0 Highlights
+
+Version `v1.1.0` focuses on public portability and customization:
+
+- sanitizes user-specific path assumptions in skill content
+- removes tracked Python cache artifacts
+- adds per-skill customization guides:
+  - `bootstrap-swift-package/README.md`
+  - `swift-package-agents-maintainer/README.md`
+  - `dash-docset-search/README.md`
+  - `dash-docset-install-generate/README.md`
+
 ## Repository Layout
 
 ```text
