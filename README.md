@@ -70,24 +70,17 @@ The CLI will prompt you to choose which skill(s) to install from this repo.
 Additional examples:
 
 ```bash
-# Install to global profile
-# The CLI will prompt you to target your choice of agent(s)
-# Uses `npx` to fetch the `skills` CLI without installing it on your machine
+# Install to you global Agent profile(s)
 npx skills add gaelic-ghost/apple-dev-skills -g
 ```
 
 ```bash
-# Target Codex explicitly
-# The CLI will prompt you interactively for further options
-# Uses `npx` to fetch the `skills` CLI without installing it on your machine
+# Target Codex, or any other Agent, explicitly
 npx skills add gaelic-ghost/apple-dev-skills -a codex
 ```
 
 ```bash
-# Combines both of the above
-# For installing your choice of skill(s) globally,
-# while also targeting Codex explicitly
-# Uses `npx` to fetch the `skills` CLI without installing it on your machine
+# Combine both of the above for global install to a target Agent
 npx skills add gaelic-ghost/apple-dev-skills -a codex -g
 ```
 
@@ -101,28 +94,23 @@ Notes on `skills` CLI flags (see https://www.npmjs.com/package/skills):
 ```bash
 npx skills add gaelic-ghost/apple-dev-skills@apple-xcode-hybrid-orchestrator -a codex
 ```
-
 ```bash
 npx skills add gaelic-ghost/apple-dev-skills@xcode-mcp-first-executor -a codex
 ```
-
 ```bash
 npx skills add gaelic-ghost/apple-dev-skills@apple-swift-cli-fallback -a codex
 ```
-
 ```bash
 npx skills add gaelic-ghost/apple-dev-skills@apple-dev-safety-and-docs -a codex
 ```
-
 ```bash
 npx skills add gaelic-ghost/apple-dev-skills@bootstrap-swift-package -a codex
 ```
-
 ```bash
 npx skills add gaelic-ghost/apple-dev-skills@swift-package-agents-maintainer -a codex
 ```
 
-## Find Skills like these with the `skills` CLI by Vercel (vercel-labs/)
+## Find Skills like these with the `skills` CLI by Vercel — [vercel-labs/skills](https://github.com/vercel-labs/skills)
 
 ```bash
 npx skills find "xcode mcp"
@@ -130,12 +118,12 @@ npx skills find "xcodebuild test swiftpm"
 npx skills find "dash docset apple docs"
 ```
 
-## Find Skills like these with `Find Skills` by Vercel (vercel-labs/agent-skills) 
+## Find Skills like these with `Find Skills` by Vercel — [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills)
 
 Install Vercel's skill bundle (which includes `find-skills`), then query the ecosystem:
 
 ```bash
-# Install vercel-labs skills bundle for Codex
+# Install vercel-labs agent-skills bundle for Codex
 npx skills add vercel-labs/agent-skills -a codex
 ```
 
@@ -147,8 +135,8 @@ npx skills find "swift package workflow"
 ```
 
 Learn more:
-- `find-skills`: https://skills.sh/vercel-labs/skills/find-skills
 - Skills catalog: https://skills.sh/
+- `find-skills`: https://skills.sh/vercel-labs/skills/find-skills
 
 ## v1.0.0 Contents
 
