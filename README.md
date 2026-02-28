@@ -28,6 +28,23 @@ Flag notes (see https://www.npmjs.com/package/skills):
 - `-a` targets a specific agent (for example `codex`).
 - `-g` installs to the global profile.
 
+## Install by Skill
+
+```bash
+npx skills add gaelic-ghost/apple-dev-skills@apple-xcode-hybrid-orchestrator -a codex
+npx skills add gaelic-ghost/apple-dev-skills@xcode-mcp-first-executor -a codex
+npx skills add gaelic-ghost/apple-dev-skills@apple-swift-cli-fallback -a codex
+npx skills add gaelic-ghost/apple-dev-skills@apple-dev-safety-and-docs -a codex
+```
+
+## Find via Skills CLI
+
+```bash
+npx skills find "xcode mcp"
+npx skills find "xcodebuild test swiftpm"
+npx skills find "dash docset apple docs"
+```
+
 ## Purpose
 
 This repository packages a curated set of Apple-development Codex skills in a flat layout so they are easy to discover and install.
@@ -107,3 +124,7 @@ Version `v1.3.0` adds a portable Apple/Swift/Xcode hybrid workflow suite:
 
 - This repository intentionally includes only selected git-tracked skills from `~/.codex/skills`.
 - The structure is intentionally flat at the repository root for now.
+
+## Search Keywords
+
+Xcode MCP, xcodebuild, xcodebuild test, xcrun, SwiftPM, swift build, swift test, swift run, swift package, swiftly, Swift toolchain, Dash docsets, Apple developer docs, Codex skills.
