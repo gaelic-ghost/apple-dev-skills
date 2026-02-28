@@ -15,6 +15,13 @@ Use this skill to search Dash content with a strict fallback order:
 
 Use `references/dash_mcp_tools.md`, `references/dash_http_api.md`, and `references/dash_url_and_service.md` for exact details.
 
+## Automation Prompting
+
+- Codex App automation fit: Strong. Suitable for recurring search and reporting workflows.
+- Codex CLI automation fit: Strong. Suitable for non-interactive probe/search tasks with fallback handling.
+- Use `references/automation-prompts.md` for Codex App and Codex CLI templates, placeholders, and output shapes.
+- Keep install and generation actions out of this skill's automation prompts; hand off to `$dash-docset-install-generate` when needed.
+
 ## Workflow
 
 ### 1) Establish access path
@@ -110,6 +117,7 @@ When no API path is usable, provide direct commands:
 - `references/dash_mcp_tools.md`
 - `references/dash_http_api.md`
 - `references/dash_url_and_service.md`
+- `references/automation-prompts.md`
 - `references/catalog_built_in_docsets.json`
 - `references/catalog_user_contrib_docsets.json`
 - `references/catalog_cheatsheets.json`

@@ -39,6 +39,13 @@ Prefer the bundled script for deterministic setup.
 - Always initialize git.
 - Always include `AGENTS.md` with repository expectations for working with Swift Package Manager and Swift packages.
 
+## Automation Prompting
+
+- Codex App automation fit: Guarded. Prefer event-driven or explicit scaffold requests over frequent recurring schedules.
+- Codex CLI automation fit: Strong. Use deterministic `codex exec` prompts with explicit placeholders and strict scope.
+- Use `references/automation-prompts.md` for ready-to-use Codex App and Codex CLI templates.
+- Keep schedule and workspace configuration outside the prompt body for App automations.
+
 ## Troubleshooting
 
 - If `swift` is missing, stop and ask the user to install Xcode command line tools or Swift toolchain.
@@ -56,6 +63,7 @@ Prefer the bundled script for deterministic setup.
 ### references/
 
 - `references/package-types.md`: Quick selection guide for package types, platform presets, and version profiles.
+- `references/automation-prompts.md`: Codex App and Codex CLI automation prompt templates with placeholders and guardrails.
 
 ### assets/
 

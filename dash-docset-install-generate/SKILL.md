@@ -17,6 +17,13 @@ Defaults:
 
 Use `references/dash_url_and_service.md`, `references/dash_http_api.md`, and `references/dash_mcp_tools.md` during execution.
 
+## Automation Prompting
+
+- Codex App automation fit: Guarded. Install and generation flows can require user approval or UI-level interaction.
+- Codex CLI automation fit: Guarded. Prefer dry-run or planning mode unless explicit install approval is provided.
+- Use `references/automation-prompts.md` for Codex App and Codex CLI templates with placeholders and stop conditions.
+- Default automation behavior should be non-destructive unless install mode is explicitly approved.
+
 ## Install Workflow
 
 ### 1) Resolve candidate
@@ -111,6 +118,7 @@ If MCP is unavailable:
 - `references/dash_mcp_tools.md`
 - `references/dash_http_api.md`
 - `references/dash_url_and_service.md`
+- `references/automation-prompts.md`
 - `references/catalog_built_in_docsets.json`
 - `references/catalog_user_contrib_docsets.json`
 - `references/catalog_cheatsheets.json`

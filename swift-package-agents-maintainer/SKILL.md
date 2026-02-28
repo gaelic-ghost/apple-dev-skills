@@ -41,6 +41,13 @@ Prefer the bundled script for deterministic automation runs.
 - Skip hidden/build dependency directories during scans (for example `.git`, any `.*` directory, `.build`, `.swiftpm`, `node_modules`).
 - Skip Xcode-protected/generated directories during scans (for example `*.xcworkspace`, `*.xcodeproj`, `DerivedData`).
 
+## Automation Prompting
+
+- Codex App automation fit: Strong. Use for recurring drift detection or scheduled apply runs.
+- Codex CLI automation fit: Strong. Use deterministic prompts that map directly to `--check` or apply mode.
+- Use `references/automation-prompts.md` for Codex App and Codex CLI templates with placeholders.
+- Keep mode, schedule, and workspace routing explicit to avoid accidental apply runs.
+
 ## Troubleshooting
 
 - If the canonical file path is missing, stop and request or restore a valid canonical `AGENTS.md`.
@@ -60,3 +67,4 @@ Prefer the bundled script for deterministic automation runs.
 ### references/
 
 - `references/automation-usage.md`: Suggested recurring automation modes and output expectations.
+- `references/automation-prompts.md`: Codex App and Codex CLI automation templates with placeholders and guardrails.

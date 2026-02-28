@@ -1,4 +1,4 @@
 interface:
   display_name: "Dash Docset Search"
   short_description: "Search and reason about Dash docsets safely"
-  default_prompt: "Use $dash-docset-search to list installed Dash docsets, search by topic, and suggest missing docset install paths."
+  default_prompt: "Use $dash-docset-search and references/automation-prompts.md to run or adapt Codex App and codex exec automation prompts for Dash search and reporting workflows."
