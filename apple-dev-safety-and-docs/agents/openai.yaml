@@ -1,0 +1,4 @@
+interface:
+  display_name: "Apple Dev Safety and Docs"
+  short_description: "Guard risky edits and enforce Dash-first doc workflow"
+  default_prompt: "Use $apple-dev-safety-and-docs to apply mutation safety gates in Xcode-managed projects and route documentation lookup through Dash local-first policy."

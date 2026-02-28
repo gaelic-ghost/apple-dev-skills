@@ -1,0 +1,4 @@
+interface:
+  display_name: "Xcode MCP First Executor"
+  short_description: "Prefer Xcode MCP tools before any CLI fallback"
+  default_prompt: "Use $xcode-mcp-first-executor to map this task to Xcode MCP tools first, then produce a structured fallback handoff only if MCP is unavailable."

@@ -42,6 +42,10 @@ Example skill directories in this repo:
 - `swift-package-agents-maintainer`
 - `dash-docset-search`
 - `dash-docset-install-generate`
+- `apple-xcode-hybrid-orchestrator`
+- `xcode-mcp-first-executor`
+- `apple-swift-cli-fallback`
+- `apple-dev-safety-and-docs`
 
 ## v1.0.0 Contents
 
@@ -70,6 +74,19 @@ Version `v1.2.0` adds automation prompt support across all bundled skills:
 - adds `Automation Prompting` sections to each `SKILL.md` with App/CLI fit guidance (`Strong` or `Guarded`)
 - updates each `agents/openai.yaml` `default_prompt` to explicitly route users to automation template usage
 
+## v1.3.0 Highlights
+
+Version `v1.3.0` adds a portable Apple/Swift/Xcode hybrid workflow suite:
+
+- `apple-xcode-hybrid-orchestrator`
+  - entrypoint routing for MCP-first execution, official CLI fallback, and safety/docs handoff
+- `xcode-mcp-first-executor`
+  - strict Xcode MCP tool routing with workspacePath-first tab resolution and fallback handoff policy
+- `apple-swift-cli-fallback`
+  - automatic official-tooling fallback for `xcodebuild`, `xcrun`, SwiftPM, and toolchain checks
+- `apple-dev-safety-and-docs`
+  - hard mutation safety gate for Xcode-managed scope and Dash local-first docs guidance with advisory cooldown policy
+
 ## Repository Layout
 
 ```text
@@ -79,7 +96,11 @@ Version `v1.2.0` adds automation prompt support across all bundled skills:
 ├── bootstrap-swift-package/
 ├── swift-package-agents-maintainer/
 ├── dash-docset-search/
-└── dash-docset-install-generate/
+├── dash-docset-install-generate/
+├── apple-xcode-hybrid-orchestrator/
+├── xcode-mcp-first-executor/
+├── apple-swift-cli-fallback/
+└── apple-dev-safety-and-docs/
 ```
 
 ## Notes
