@@ -59,6 +59,17 @@ Version `v1.1.0` focuses on public portability and customization:
   - `dash-docset-search/README.md`
   - `dash-docset-install-generate/README.md`
 
+## v1.2.0 Highlights
+
+Version `v1.2.0` adds automation prompt support across all bundled skills:
+
+- adds `references/automation-prompts.md` to each skill with:
+  - Codex App automation prompt templates
+  - Codex CLI (`codex exec`) automation prompt templates
+  - placeholder-driven customization knobs and guardrails
+- adds `Automation Prompting` sections to each `SKILL.md` with App/CLI fit guidance (`Strong` or `Guarded`)
+- updates each `agents/openai.yaml` `default_prompt` to explicitly route users to automation template usage
+
 ## Repository Layout
 
 ```text
