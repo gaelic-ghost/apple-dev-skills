@@ -2,7 +2,7 @@
 
 Codex skills for Apple development workflows focused on Swift, Xcode, and Apple tooling.
 
-## What This Repo Helps With
+## What These Agent Skills Help With
 
 This repository is a practical skill bundle for Apple-platform development work in Codex and similar agents.
 It is designed for:
