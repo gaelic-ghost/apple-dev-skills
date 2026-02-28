@@ -201,3 +201,7 @@ Version `v1.3.0` adds a portable Apple/Swift/Xcode hybrid workflow suite:
 ## Search Keywords
 
 Xcode MCP, xcodebuild, xcodebuild test, xcrun, SwiftPM, swift build, swift test, swift run, swift package, swiftly, Swift toolchain, Dash docsets, Apple developer docs, Codex skills.
+
+## License
+
+See [LICENSE](./LICENSE).
