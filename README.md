@@ -54,9 +54,14 @@ In short: if you or your users are building, testing, packaging, documenting, or
   - Use when creating or syncing canonical `AGENTS.md` policy files across Swift package repos.
   - Helps by keeping agent behavior consistent across repositories.
 
-## Quick Add (Skills CLI)
+## Quick Start (Vercel Skills CLI)
+
+Use the Vercel `skills` CLI against this repository to install any skill directory you want to use. Or install them all conveniently with one command.
 
 ```bash
+# Install your choice of skill(s) via the Vercel `skills` cli
+# The `skills` CLI will prompt you interactively for further options
+# Uses `npx` to fetch the `skills` CLI without installing it on your machine
 npx skills add gaelic-ghost/apple-dev-skills
 ```
 
@@ -65,31 +70,59 @@ The CLI will prompt you to choose which skill(s) to install from this repo.
 Additional examples:
 
 ```bash
-# Target Codex explicitly
-npx skills add gaelic-ghost/apple-dev-skills -a codex
-
 # Install to global profile
+# The CLI will prompt you to target your choice of agent(s)
+# Uses `npx` to fetch the `skills` CLI without installing it on your machine
 npx skills add gaelic-ghost/apple-dev-skills -g
+```
 
-# Combine both
+```bash
+# Target Codex explicitly
+# The CLI will prompt you interactively for further options
+# Uses `npx` to fetch the `skills` CLI without installing it on your machine
+npx skills add gaelic-ghost/apple-dev-skills -a codex
+```
+
+```bash
+# Combines both of the above
+# For installing your choice of skill(s) globally,
+# while also targeting Codex explicitly
+# Uses `npx` to fetch the `skills` CLI without installing it on your machine
 npx skills add gaelic-ghost/apple-dev-skills -a codex -g
 ```
 
-Flag notes (see https://www.npmjs.com/package/skills):
+Notes on `skills` CLI flags (see https://www.npmjs.com/package/skills):
 
 - `-a` targets a specific agent (for example `codex`).
 - `-g` installs to the global profile.
 
-## Install by Skill
+## Install individually by Skill
 
 ```bash
 npx skills add gaelic-ghost/apple-dev-skills@apple-xcode-hybrid-orchestrator -a codex
+```
+
+```bash
 npx skills add gaelic-ghost/apple-dev-skills@xcode-mcp-first-executor -a codex
+```
+
+```bash
 npx skills add gaelic-ghost/apple-dev-skills@apple-swift-cli-fallback -a codex
+```
+
+```bash
 npx skills add gaelic-ghost/apple-dev-skills@apple-dev-safety-and-docs -a codex
 ```
 
-## Find via Skills CLI
+```bash
+npx skills add gaelic-ghost/apple-dev-skills@bootstrap-swift-package -a codex
+```
+
+```bash
+npx skills add gaelic-ghost/apple-dev-skills@swift-package-agents-maintainer -a codex
+```
+
+## Find Skills like these with the `skills` CLI by Vercel (vercel-labs/)
 
 ```bash
 npx skills find "xcode mcp"
@@ -97,24 +130,25 @@ npx skills find "xcodebuild test swiftpm"
 npx skills find "dash docset apple docs"
 ```
 
-## Purpose
+## Find Skills like these with `Find Skills` by Vercel (vercel-labs/agent-skills) 
 
-This repository packages a curated set of Apple-development Codex skills in a flat layout so they are easy to discover and install.
+Install Vercel's skill bundle (which includes `find-skills`), then query the ecosystem:
 
-## Installing Skills (Vercel Skills CLI)
+```bash
+# Install vercel-labs skills bundle for Codex
+npx skills add vercel-labs/agent-skills -a codex
+```
 
-Use the Vercel Skills CLI against this repository to install any skill directory you want to use.
+```bash
+# Search for relevant skills
+npx skills find "xcode mcp swift"
+npx skills find "apple docs dash docsets"
+npx skills find "swift package workflow"
+```
 
-Example skill directories in this repo:
-
-- `bootstrap-swift-package`
-- `swift-package-agents-maintainer`
-- `dash-docset-search`
-- `dash-docset-install-generate`
-- `apple-xcode-hybrid-orchestrator`
-- `xcode-mcp-first-executor`
-- `apple-swift-cli-fallback`
-- `apple-dev-safety-and-docs`
+Learn more:
+- `find-skills`: https://skills.sh/vercel-labs/skills/find-skills
+- Skills catalog: https://skills.sh/
 
 ## v1.0.0 Contents
 
@@ -174,8 +208,7 @@ Version `v1.3.0` adds a portable Apple/Swift/Xcode hybrid workflow suite:
 
 ## Notes
 
-- This repository intentionally includes only selected git-tracked skills from `~/.codex/skills`.
-- The structure is intentionally flat at the repository root for now.
+- The structure is intentionally flat at the repository root for ease of navigation and discoverability.
 
 ## Search Keywords
 
