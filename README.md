@@ -178,6 +178,28 @@ Version `v1.3.0` adds a portable Apple/Swift/Xcode hybrid workflow suite:
 - `apple-dev-safety-and-docs`
   - hard mutation safety gate for Xcode-managed scope and Dash local-first docs guidance with advisory cooldown policy
 
+## v1.4.0 Highlights
+
+Version `v1.4.0` improves root-level discoverability and navigation:
+
+- adds top-level workflow and skill guide sections for faster skill selection
+- renames and clarifies the top summary heading for first-time readers
+- improves keyword and discovery coverage in root docs
+
+## v1.4.1 Highlights
+
+Version `v1.4.1` improves documentation portability:
+
+- converts Vercel repo references to inline GitHub links where appropriate
+- completes `find-skills` guidance in root README usage examples
+
+## v1.4.2 Highlights
+
+Version `v1.4.2` applies final README cleanup before roadmap-based planning:
+
+- cleans up README footer content and license section wording
+- keeps root documentation structure consistent with latest tag metadata
+
 ## Repository Layout
 
 ```text
