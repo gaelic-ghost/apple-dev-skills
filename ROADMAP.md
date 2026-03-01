@@ -3,10 +3,10 @@
 ## Current Milestone
 - ID: M6
 - Name: v1.5.0 Readiness and Documentation Parity
-- Status: In Progress
+- Status: Completed
 - Target Version: v1.5.0
-- Last Updated: 2026-02-28
-- Summary: Canonical roadmap is established and documentation parity is closed; next step is adding CI guardrails to prevent roadmap/docs drift before the next feature release.
+- Last Updated: 2026-03-01
+- Summary: Canonical roadmap, documentation parity, and CI guardrails are all in place, completing the readiness track before new feature work.
 
 ## Milestones
 | ID | Name | Target Version | Status | Target Date | Notes |
@@ -16,7 +16,7 @@
 | M3 | Automation Prompt Support | v1.2.0 | Completed | 2026-02-27 | Automation prompt templates added to the original four skills. |
 | M4 | Hybrid Apple/Xcode Workflow Suite | v1.3.0 | Completed | 2026-02-28 | Added orchestrator, MCP-first executor, CLI fallback, and safety/docs skills. |
 | M5 | Discovery and README Polish | v1.4.x | Completed | 2026-02-28 | README discoverability and link/wording cleanup through `v1.4.2`. |
-| M6 | Readiness and Documentation Parity | v1.5.0 | In Progress | 2026-03-15 | Roadmap + P1 docs parity complete; P2 CI validation guardrail in progress. |
+| M6 | Readiness and Documentation Parity | v1.5.0 | Completed | 2026-03-01 | Roadmap established, P1 docs parity merged, and P2 CI validation guardrail merged. |
 
 ## Plan History
 ### 2026-02-28 - Accepted Plan (v1.5.0 / M6)
@@ -43,3 +43,4 @@
 - 2026-02-28: Initialized roadmap for repository status and next-priority planning.
 - 2026-02-28: Closed P1 documentation parity (missing per-skill READMEs + root README v1.4.x highlights).
 - 2026-02-28: Started P2 by adding CI guardrail workflow for roadmap/docs/skill-structure drift checks.
+- 2026-03-01: Completed M6 after merging P2 CI guardrails and synchronizing roadmap status.
