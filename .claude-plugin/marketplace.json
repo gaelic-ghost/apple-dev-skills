@@ -1,0 +1,39 @@
+{
+  "metadata": {
+    "pluginRoot": "./"
+  },
+  "plugins": [
+    {
+      "name": "swift-xcode-tools",
+      "source": "./swift-xcode-tools",
+      "skills": [
+        "./apple-xcode-hybrid-orchestrator",
+        "./xcode-mcp-first-executor",
+        "./apple-swift-cli-fallback",
+        "./apple-dev-safety-and-docs"
+      ]
+    },
+    {
+      "name": "dash-apple-swift-documentation",
+      "source": "./dash-apple-swift-documentation",
+      "skills": [
+        "./dash-docset-search",
+        "./dash-docset-install-generate"
+      ]
+    },
+    {
+      "name": "apple-swift-repo-tools",
+      "source": "./apple-swift-repo-tools",
+      "skills": [
+        "./swift-package-agents-maintainer"
+      ]
+    },
+    {
+      "name": "apple-swift-bootstraps",
+      "source": "./apple-swift-bootstraps",
+      "skills": [
+        "./bootstrap-swift-package"
+      ]
+    }
+  ]
+}
