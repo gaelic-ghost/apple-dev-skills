@@ -7,7 +7,7 @@ description: Bootstrap new Swift Package Manager projects with consistent defaul
 
 ## Purpose
 
-Create a new Swift package repository with one top-level entry point, one deterministic scaffold path, explicit defaults, and verification grounded in the bundled bootstrap script.
+Create a new Swift package repository with one top-level entry point. `scripts/run_workflow.py` is the runtime wrapper, and `scripts/bootstrap_swift_package.sh` remains the implementation core for scaffold creation and validation.
 
 ## When To Use
 
@@ -34,17 +34,18 @@ Create a new Swift package repository with one top-level entry point, one determ
    - `latest -> latest-major`
    - `minus-one -> current-minus-one`
    - `minus-two -> current-minus-two`
-3. Run the bundled script:
+3. Run `python3 scripts/run_workflow.py` so documented defaults are loaded from customization state and normalized into one JSON contract.
+4. Let the wrapper invoke the bundled script:
    ```bash
    scripts/bootstrap_swift_package.sh --name <Name> --type <library|executable|tool> --destination <dir> --platform <mac|macos|mobile|ios|multiplatform|both> --version-profile <latest-major|current-minus-one|current-minus-two|latest|minus-one|minus-two>
    ```
-4. Verify the generated repository:
+5. Verify the generated repository:
    - `Package.swift`
    - `.git`
    - `AGENTS.md`
    - `Tests/`
    - `swift build` and `swift test` unless `--skip-validation` was requested
-5. Return one execution summary with the created path, normalized options, and validation result.
+6. Return one JSON execution summary with the created path, normalized options, and validation result.
 
 ## Inputs
 
@@ -54,7 +55,9 @@ Create a new Swift package repository with one top-level entry point, one determ
 - `platform`: `mac`, `mobile`, or `multiplatform`, with aliases normalized by the script.
 - `version_profile`: `latest-major`, `current-minus-one`, or `current-minus-two`, with aliases normalized by the script.
 - `skip_validation`: optional flag to skip `swift build` and `swift test`.
+- `dry_run`: optional flag to resolve defaults and emit the normalized command contract without creating files.
 - Defaults:
+  - runtime entrypoint: `python3 scripts/run_workflow.py`
   - `type` defaults to `library`
   - `destination` defaults to `.`
   - `platform` defaults to `multiplatform`
@@ -72,7 +75,7 @@ Create a new Swift package repository with one top-level entry point, one determ
   - `fallback`: manual scaffold guidance is being used instead of the bundled script
 - `output`
   - resolved package path
-  - normalized `type`, `platform`, and `version_profile`
+  - normalized inputs
   - validation result
   - one concise next step
 
@@ -82,7 +85,7 @@ Create a new Swift package repository with one top-level entry point, one determ
 - Stop with `blocked` if `git` is missing.
 - Stop with `blocked` if `assets/AGENTS.md` is missing.
 - Stop with `blocked` if the target exists and contains non-ignorable files.
-- Do not claim that customization metadata changes the bootstrap script at runtime; it does not today.
+- Stop with `blocked` if `name` is missing.
 
 ## Fallbacks and Handoffs
 
@@ -91,12 +94,14 @@ Create a new Swift package repository with one top-level entry point, one determ
 - `tool` is an advanced explicit passthrough, not a default branch of the workflow.
 - After a successful scaffold, hand off build, test, or Apple-platform execution tasks to `apple-xcode-workflow`.
 - Recommend `apple-dash-docsets` directly when the user’s next step is Dash docset or cheatsheet management.
+- `scripts/run_workflow.py` is the top-level runtime entrypoint and converts the shell script result into the documented JSON contract.
 
 ## Customization
 
 - Use `references/customization-flow.md`.
-- All documented customization knobs for this skill are `policy-only`.
-- `scripts/customization_config.py` stores and reports customization state, but `scripts/bootstrap_swift_package.sh` does not auto-load those settings today.
+- `scripts/customization_config.py` stores and reports customization state.
+- `scripts/run_workflow.py` loads runtime-safe defaults from customization state before invoking the shell script.
+- `scripts/bootstrap_swift_package.sh` now honors the wrapper's git and `AGENTS.md` copy flags.
 
 ## References
 
@@ -117,5 +122,6 @@ Create a new Swift package repository with one top-level entry point, one determ
 
 ### Script Inventory
 
+- `scripts/run_workflow.py`
 - `scripts/bootstrap_swift_package.sh`
 - `scripts/customization_config.py`

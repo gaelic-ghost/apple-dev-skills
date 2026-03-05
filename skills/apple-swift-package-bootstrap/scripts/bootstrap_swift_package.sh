@@ -4,7 +4,7 @@ set -euo pipefail
 usage() {
   cat <<'USAGE'
 Usage:
-  bootstrap_swift_package.sh --name <PackageName> [--type library|executable|tool] [--destination <dir>] [--platform mac|macos|mobile|ios|multiplatform|both] [--version-profile latest-major|current-minus-one|current-minus-two|latest|minus-one|minus-two] [--skip-validation]
+  bootstrap_swift_package.sh --name <PackageName> [--type library|executable|tool] [--destination <dir>] [--platform mac|macos|mobile|ios|multiplatform|both] [--version-profile latest-major|current-minus-one|current-minus-two|latest|minus-one|minus-two] [--skip-validation] [--skip-git-init] [--skip-copy-agents]
 
 Examples:
   bootstrap_swift_package.sh --name MyLibrary
@@ -22,6 +22,8 @@ destination="."
 platform_mode="multiplatform"
 version_profile="current-minus-one"
 run_validation="true"
+initialize_git="true"
+copy_agents="true"
 
 ios_version=""
 macos_version=""
@@ -133,6 +135,14 @@ while [[ $# -gt 0 ]]; do
       run_validation="false"
       shift
       ;;
+    --skip-git-init)
+      initialize_git="false"
+      shift
+      ;;
+    --skip-copy-agents)
+      copy_agents="false"
+      shift
+      ;;
     -h|--help)
       usage
       exit 0
@@ -200,12 +210,12 @@ if ! command -v swift >/dev/null 2>&1; then
   exit 1
 fi
 
-if ! command -v git >/dev/null 2>&1; then
+if [[ "$initialize_git" == "true" ]] && ! command -v git >/dev/null 2>&1; then
   echo "git is not installed or not on PATH." >&2
   exit 1
 fi
 
-if [[ ! -f "$agents_template" ]]; then
+if [[ "$copy_agents" == "true" ]] && [[ ! -f "$agents_template" ]]; then
   echo "Template missing: $agents_template" >&2
   exit 1
 fi
@@ -246,9 +256,13 @@ mkdir -p "$target_dir"
     mv Package.swift.tmp Package.swift
   fi
 
-  git init >/dev/null 2>&1
+  if [[ "$initialize_git" == "true" ]]; then
+    git init >/dev/null 2>&1
+  fi
 
-  cp "$agents_template" AGENTS.md
+  if [[ "$copy_agents" == "true" ]]; then
+    cp "$agents_template" AGENTS.md
+  fi
 
   if [[ ! -d Tests ]]; then
     swift package add-target "${name}Tests" --type test --dependencies "$name" >/dev/null
@@ -259,12 +273,12 @@ mkdir -p "$target_dir"
     exit 1
   fi
 
-  if [[ ! -d .git ]]; then
+  if [[ "$initialize_git" == "true" ]] && [[ ! -d .git ]]; then
     echo "Validation failed: git repository was not initialized." >&2
     exit 1
   fi
 
-  if [[ ! -f AGENTS.md ]]; then
+  if [[ "$copy_agents" == "true" ]] && [[ ! -f AGENTS.md ]]; then
     echo "Validation failed: AGENTS.md missing." >&2
     exit 1
   fi
@@ -289,7 +303,16 @@ echo "Created Swift package: $target_dir"
 echo "Type: $pkg_type"
 echo "Platform: $platform_mode"
 echo "Version profile: $version_profile (iOS $ios_version, macOS $macos_version)"
-echo "Git: initialized"
+if [[ "$initialize_git" == "true" ]]; then
+  echo "Git: initialized"
+else
+  echo "Git: skipped"
+fi
+if [[ "$copy_agents" == "true" ]]; then
+  echo "AGENTS: copied"
+else
+  echo "AGENTS: skipped"
+fi
 if [[ "$run_validation" == "true" ]]; then
   echo "Validation: swift build + swift test passed"
 else

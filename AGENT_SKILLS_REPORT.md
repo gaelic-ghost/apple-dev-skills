@@ -55,15 +55,15 @@ Canonical status policy:
 
 Purpose:
 
-- Provide the canonical Apple and Swift execution workflow with one MCP-first execution engine.
+- Provide the canonical Apple and Swift execution workflow with one MCP-first execution engine and one local runtime-policy entrypoint.
 
 Primary workflow:
 
 1. Classify the operation.
-2. Resolve workspace context.
+2. Use `scripts/run_workflow.py` to apply local policy and fallback planning.
 3. Attempt the MCP path.
 4. Retry once for transient failures.
-5. Use official CLI fallback when MCP cannot complete.
+5. Use the planned official CLI fallback when MCP cannot complete.
 6. Report the completed path.
 
 Straightened behavior:
@@ -82,13 +82,13 @@ Contract notes:
 
 Purpose:
 
-- Manage Dash docsets through a straight stage flow.
+- Manage Dash docsets through one runtime entrypoint and a straight internal stage flow.
 
 Primary workflow:
 
 1. Classify the request into a stage.
 2. Start at `search` unless another stage is explicit.
-3. Run the selected stage.
+3. Run `scripts/run_workflow.py` for the selected stage.
 4. Hand off forward when needed.
 5. Return one status and one path type.
 
@@ -108,15 +108,15 @@ Contract notes:
 
 Purpose:
 
-- Create one deterministic Swift package scaffold path grounded in the bundled bootstrap script.
+- Create one deterministic Swift package scaffold path through a runtime wrapper grounded in the bundled bootstrap script.
 
 Primary workflow:
 
 1. Collect inputs.
-2. Normalize aliases.
+2. Let `scripts/run_workflow.py` resolve defaults and normalize inputs.
 3. Run the bundled script.
 4. Verify the generated repository.
-5. Report the result.
+5. Report the result as structured JSON.
 
 Straightened behavior:
 

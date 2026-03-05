@@ -7,7 +7,7 @@ description: Manage Dash docsets and cheatsheets on macOS through a straight sta
 
 ## Purpose
 
-Manage Dash docsets and cheatsheets on macOS with one top-level entry point, a straight internal stage flow, explicit approval gates, and deterministic fallback order.
+Manage Dash docsets and cheatsheets on macOS with one top-level entry point. `scripts/run_workflow.py` is the authoritative runtime path for stage selection, fallback order, source priority, approval gating, and structured generation guidance.
 
 ## When To Use
 
@@ -25,10 +25,10 @@ Manage Dash docsets and cheatsheets on macOS with one top-level entry point, a s
    - `install`
    - `generate`
 2. If no stage is explicit, start at `search`.
-3. Run the selected stage:
-   - `search`: `mcp -> http -> url-service`
-   - `install`: `built-in -> user-contributed -> cheatsheet`
-   - `generate`: stable automation first, manual guidance only when automation is unavailable
+3. Run `scripts/run_workflow.py` with the selected stage:
+   - `search`: applies configured fallback order and returns a structured access-path decision
+   - `install`: applies configured source priority and approval gating
+   - `generate`: returns structured automation-first guidance
 4. If the selected stage cannot complete, hand off forward through `references/stage-handoff-contract.md`:
    - `search -> install`
    - `install -> generate`
@@ -42,6 +42,7 @@ Manage Dash docsets and cheatsheets on macOS with one top-level entry point, a s
 - `docset_request`: required for `install` and `generate`
 - `approval`: required before side-effectful install actions
 - Defaults:
+  - runtime entrypoint: `python3 scripts/run_workflow.py`
   - `search` access order is `mcp -> http -> url-service`
   - install source priority is `built-in,user-contributed,cheatsheet`
   - default search result limit is `20`
@@ -59,7 +60,8 @@ Manage Dash docsets and cheatsheets on macOS with one top-level entry point, a s
 - `output`
   - `stage`
   - `access_path` or `source_path`
-  - concise result or action summary
+  - `matches`
+  - install result or generation guidance when applicable
   - one next step when follow-up is required
 
 ## Guards and Stop Conditions
@@ -78,12 +80,13 @@ Manage Dash docsets and cheatsheets on macOS with one top-level entry point, a s
 - Use `references/stage-handoff-contract.md` when `search` transitions to `install` or `install` transitions to `generate`.
 - Recommend `apple-xcode-workflow` directly when the user’s task shifts from docs management to Apple or Swift execution work.
 - Recommend `apple-swift-package-bootstrap` directly when the user needs new Swift package scaffolding.
+- `scripts/run_workflow.py` is the only local runtime entrypoint for stage behavior; helper scripts remain implementation details behind it.
 
 ## Customization
 
 - Use `references/customization-flow.md`.
-- All documented customization knobs for this skill are `policy-only`.
-- `scripts/customization_config.py` stores and reports customization state, but the search and install scripts do not auto-load those settings at runtime unless future code wires them in explicitly.
+- `scripts/customization_config.py` stores and reports customization state.
+- `scripts/run_workflow.py` loads and enforces the runtime-safe knobs documented in `references/customization-flow.md`.
 
 ## References
 
@@ -109,6 +112,7 @@ Manage Dash docsets and cheatsheets on macOS with one top-level entry point, a s
 
 ### Script Inventory
 
+- `scripts/run_workflow.py`
 - `scripts/dash_api_probe.py`
 - `scripts/dash_catalog_match.py`
 - `scripts/dash_catalog_refresh.py`

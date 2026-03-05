@@ -52,15 +52,16 @@ flowchart TD
 
 ### Purpose
 
-Provide the canonical Apple and Swift execution workflow with one MCP-first engine.
+Provide the canonical Apple and Swift execution workflow with one MCP-first engine and one local runtime-policy entrypoint.
 
 ### Workflow Diagram
 
 ```mermaid
 flowchart TD
     I["Operation input"] --> C["Classify operation type"]
-    C --> RC["Resolve workspace context"]
-    RC --> MCP["Run MCP path"]
+    C --> RW["run_workflow.py"]
+    RW --> RC["Resolve workspace context and local policy"]
+    RC --> MCP["Agent runs MCP path"]
     MCP --> OK{"MCP success?"}
     OK -->|Yes| OUT1["Success / primary"]
     OK -->|No| RT{"Transient failure?"}
@@ -94,10 +95,10 @@ flowchart LR
 
 ### Branch and Path Notes
 
+- `run_workflow.py` is the local runtime entrypoint.
 - Mutation is a guard, not a second top-level workflow.
 - Docs lookup is an operation profile under the same execution engine.
-- Official CLI execution is the only fallback path for the primary workflow.
-- Allowlist guidance is a blocked-path remedy, not a second execution workflow.
+- Official CLI execution remains the only documented fallback plan for the primary workflow.
 
 ### Inputs
 
@@ -107,7 +108,9 @@ flowchart LR
   - `workspace_path`
   - `tab_identifier`
   - `mcp_failure_reason`
+  - `docs_query`
 - Defaults:
+  - runtime entrypoint `python3 scripts/run_workflow.py`
   - one retry for transient MCP failure
   - advisory cooldown `21` days
   - docs source order `dash-mcp,dash-local,official-web`
@@ -124,8 +127,9 @@ flowchart LR
   - `fallback`
 - Primary output fields:
   - operation type
-  - MCP tool or CLI command used
-  - concise fallback or handoff reason
+  - `guard_result`
+  - `docs_route`
+  - `fallback_commands`
   - next step or handoff payload
 
 ### Agent ↔ User UX
@@ -133,7 +137,7 @@ flowchart LR
 - Entry:
   - The user asks for Apple or Swift execution, diagnostics, docs, toolchain, or mutation work.
 - Agent behavior:
-  - The agent classifies the operation, resolves context, tries MCP first, retries if appropriate, and uses CLI fallback only when needed.
+  - The agent classifies the operation, runs `run_workflow.py` for local policy and fallback planning, then executes MCP or the planned fallback path.
 - User-visible response:
   - On success: the user sees the completed path and what ran.
   - On fallback: the user sees that CLI was used and why.
@@ -153,7 +157,7 @@ flowchart LR
 
 ### Purpose
 
-Manage Dash docsets through a straight stage flow.
+Manage Dash docsets through one runtime entrypoint and a straight internal stage flow.
 
 ### Workflow Diagram
 
@@ -165,7 +169,8 @@ flowchart TD
     S -->|install| INSTALL
     S -->|generate| GENERATE
 
-    SEARCH --> SEARCHOK{"Search stage completes?"}
+    SEARCH --> RT["run_workflow.py"]
+    RT --> SEARCHOK{"Search stage completes?"}
     SEARCHOK -->|Yes| OUT1["Success / primary or fallback"]
     SEARCHOK -->|No| HI["Handoff to install"]
 
@@ -205,6 +210,7 @@ flowchart LR
 
 ### Branch and Path Notes
 
+- `run_workflow.py` is the local runtime entrypoint for all stages.
 - Default progression is `search -> install -> generate`.
 - Direct entry to `install` or `generate` remains supported.
 - `search` has a fallback ladder.
@@ -221,6 +227,7 @@ flowchart LR
   - `docset_identifiers`
   - `approval`
 - Defaults:
+  - runtime entrypoint `python3 scripts/run_workflow.py`
   - start at `search` when no stage is explicit
   - search order `mcp -> http -> url-service`
   - install source priority `built-in,user-contributed,cheatsheet`
@@ -239,7 +246,8 @@ flowchart LR
 - Primary output fields:
   - `stage`
   - `access_path` or `source_path`
-  - concise result summary
+  - `matches`
+  - install result or generation guidance
   - next step
 
 ### Agent ↔ User UX
@@ -247,7 +255,7 @@ flowchart LR
 - Entry:
   - The user asks to search Dash, install a missing docset, or get generation guidance.
 - Agent behavior:
-  - The agent selects a stage, defaults to `search` when needed, and moves forward by handoff rather than mixing stages.
+  - The agent selects a stage, calls `run_workflow.py`, and uses the structured stage result instead of stitching helper scripts together manually.
 - User-visible response:
   - On success: the user sees what stage ran and what path completed it.
   - On fallback: the user sees which secondary path completed the stage.
@@ -267,13 +275,14 @@ flowchart LR
 
 ### Purpose
 
-Create one deterministic Swift package scaffold path grounded in the bundled bootstrap script.
+Create one deterministic Swift package scaffold path through a runtime wrapper grounded in the bundled bootstrap script.
 
 ### Workflow Diagram
 
 ```mermaid
 flowchart TD
-    I["Scaffold inputs"] --> N["Normalize aliases"]
+    I["Scaffold inputs"] --> RW["run_workflow.py"]
+    RW --> N["Normalize aliases and defaults"]
     N --> RUN["Run bootstrap script"]
     RUN --> OK{"Script success?"}
     OK -->|Yes| V["Verify generated repo"]
@@ -301,6 +310,7 @@ flowchart LR
 
 ### Branch and Path Notes
 
+- `run_workflow.py` is the runtime entrypoint and `bootstrap_swift_package.sh` is the implementation core.
 - The primary workflow is always the bundled script.
 - Manual scaffold guidance is fallback-only.
 - `tool` stays supported, but only as an advanced explicit passthrough.
@@ -316,7 +326,9 @@ flowchart LR
   - `platform`
   - `version_profile`
   - `skip_validation`
+  - `dry_run`
 - Defaults:
+  - runtime entrypoint `python3 scripts/run_workflow.py`
   - `type=library`
   - `destination=.`
   - `platform=multiplatform`
@@ -334,7 +346,7 @@ flowchart LR
   - `fallback`
 - Primary output fields:
   - resolved package path
-  - normalized type, platform, and version profile
+  - normalized inputs
   - validation result
   - next step
 
@@ -343,7 +355,7 @@ flowchart LR
 - Entry:
   - The user asks for a new Swift package scaffold or wants scaffold defaults explained.
 - Agent behavior:
-  - The agent gathers inputs, normalizes aliases, runs the script, verifies the repo, and only falls back to manual guidance when the primary path is unavailable.
+  - The agent gathers inputs, calls `run_workflow.py`, and uses the wrapper output instead of parsing shell behavior ad hoc.
 - User-visible response:
   - On success: the user sees the created path, normalized options, and validation result.
   - On fallback: the user sees manual scaffold guidance instead of the script path.

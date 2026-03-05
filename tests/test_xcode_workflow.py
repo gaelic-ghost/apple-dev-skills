@@ -1,0 +1,114 @@
+from __future__ import annotations
+
+import json
+import os
+import subprocess
+import tempfile
+import unittest
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+SCRIPT = ROOT / "skills/apple-xcode-workflow/scripts/run_workflow.py"
+
+
+def write_config(tmpdir: str, skill: str, settings: dict) -> None:
+    target = Path(tmpdir) / skill / "customization.yaml"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    lines = ["schemaVersion: 1", "isCustomized: true", "settings:"]
+    for key, value in settings.items():
+        if isinstance(value, bool):
+            raw = "true" if value else "false"
+        elif isinstance(value, int):
+            raw = str(value)
+        else:
+            raw = f'"{value}"'
+        lines.append(f"  {key}: {raw}")
+    target.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+class XcodeWorkflowTests(unittest.TestCase):
+    def run_script(self, *args: str, env: dict | None = None) -> tuple[int, dict]:
+        proc = subprocess.run(
+            ["python3", str(SCRIPT), *args],
+            cwd=ROOT,
+            env=env,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        return proc.returncode, json.loads(proc.stdout)
+
+    def test_mutation_guard_blocks_managed_scope_without_opt_in(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            Path(tmpdir, "Demo.xcodeproj").mkdir()
+            env = dict(os.environ)
+            code, payload = self.run_script(
+                "--operation-type",
+                "mutation",
+                "--workspace-path",
+                tmpdir,
+                env=env,
+            )
+            self.assertEqual(code, 1)
+            self.assertEqual(payload["status"], "blocked")
+            self.assertTrue(payload["guard_result"]["managed_scope"])
+
+    def test_mutation_guard_allows_non_managed_scope(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            code, payload = self.run_script(
+                "--operation-type",
+                "mutation",
+                "--workspace-path",
+                tmpdir,
+            )
+            self.assertEqual(code, 0)
+            self.assertEqual(payload["status"], "success")
+            self.assertFalse(payload["guard_result"]["managed_scope"])
+
+    def test_advisory_cooldown_and_retry_count_follow_config(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            write_config(
+                tmpdir,
+                "apple-xcode-workflow",
+                {
+                    "advisoryCooldownDays": 30,
+                    "mcpRetryCount": 2,
+                },
+            )
+            state_file = Path(tmpdir) / "cooldown.json"
+            state_file.write_text('{"mcp-fallback-advisory":"2999-01-01T00:00:00Z"}\n', encoding="utf-8")
+            env = dict(os.environ)
+            env["APPLE_DEV_SKILLS_CONFIG_HOME"] = tmpdir
+            code, payload = self.run_script(
+                "--operation-type",
+                "docs",
+                "--docs-query",
+                "Swift",
+                "--advisory-state-file",
+                str(state_file),
+                env=env,
+            )
+            self.assertEqual(code, 0)
+            self.assertEqual(payload["retry_count"], 2)
+            self.assertEqual(payload["advisory"]["cooldown_days"], 30)
+            self.assertFalse(payload["advisory"]["should_emit"])
+
+    def test_fallback_commands_follow_mapping_profile(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            Path(tmpdir, "Package.swift").write_text("// test\n", encoding="utf-8")
+            code, payload = self.run_script(
+                "--operation-type",
+                "build",
+                "--workspace-path",
+                tmpdir,
+                "--mcp-failure-reason",
+                "timeout",
+            )
+            self.assertEqual(code, 0)
+            self.assertEqual(payload["path_type"], "fallback")
+            self.assertIn("swift build", payload["fallback_commands"])
+
+
+if __name__ == "__main__":
+    unittest.main()

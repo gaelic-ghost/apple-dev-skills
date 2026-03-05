@@ -7,7 +7,7 @@ description: Execute Apple and Swift development workflows with one MCP-first en
 
 ## Purpose
 
-Use this skill as the top-level entry point for Apple and Swift work in or around Xcode, with one MCP-first engine, official CLI fallback, explicit mutation guards, and local-first docs guidance.
+Use this skill as the top-level entry point for Apple and Swift work in or around Xcode. Agent-side MCP tools remain the primary execution layer, while `scripts/run_workflow.py` enforces local policy, mutation guards, cooldown behavior, docs routing, and structured fallback planning.
 
 ## When To Use
 
@@ -27,11 +27,10 @@ Use this skill as the top-level entry point for Apple and Swift work in or aroun
    - package or toolchain management
    - docs lookup
    - mutation
-2. Resolve workspace context through Xcode MCP metadata when available.
-3. Run the supported MCP path first by using `references/mcp-tool-matrix.md`.
-4. Retry once when the failure is transient (`timeout` or `transport`).
-5. If MCP is unsupported or the retry also fails, run the official CLI fallback from `references/cli-fallback-matrix.md`.
-6. Report the completed path and any required next step.
+2. Run `scripts/run_workflow.py` to apply runtime configuration, mutation-guard checks, docs-routing order, advisory cooldown, and CLI fallback planning.
+3. Use MCP tools from `references/mcp-tool-matrix.md` for agent-executed operations.
+4. If MCP fails, use the structured fallback output from `scripts/run_workflow.py` together with `references/cli-fallback-matrix.md`.
+5. Report which parts were agent-executed, which parts were locally enforced by script, and any required next step.
 
 ## Inputs
 
@@ -39,7 +38,10 @@ Use this skill as the top-level entry point for Apple and Swift work in or aroun
 - `workspace_path`: optional absolute path for the target Xcode or Swift workspace.
 - `tab_identifier`: optional MCP tab identifier when already known.
 - `mcp_failure_reason`: optional input when continuing from an earlier MCP failure.
+- `docs_query`: required when `operation_type` is `docs`.
+- `filesystem_fallback_opt_in`: optional explicit opt-in when planning direct filesystem fallback in Xcode-managed scope.
 - Defaults:
+  - runtime entrypoint: `python3 scripts/run_workflow.py`
   - MCP retries once for transient failures
   - advisory cooldown is `21` days
   - docs source order is `dash-mcp,dash-local,official-web`
@@ -56,8 +58,10 @@ Use this skill as the top-level entry point for Apple and Swift work in or aroun
   - `fallback`: the official CLI fallback path completed successfully
 - `output`
   - operation type
-  - MCP tool or CLI command used
-  - concise reason when a fallback or handoff happened
+  - `guard_result`
+  - `docs_route`
+  - `fallback_commands`
+  - advisory status
   - one next step or handoff payload when needed
 
 ## Guards and Stop Conditions
@@ -66,7 +70,7 @@ Use this skill as the top-level entry point for Apple and Swift work in or aroun
 - Do not skip the mutation guard for direct filesystem edits inside Xcode-managed scope.
 - Stop with `blocked` when the required workspace context cannot be resolved and the operation cannot safely continue.
 - Stop with `blocked` when allowlist or sandbox rules prevent the official CLI fallback and no safe alternative exists.
-- Do not claim that customization metadata changes runtime behavior automatically; it does not today.
+- Stop with `blocked` when `operation_type=docs` and `docs_query` is missing.
 
 ## Fallbacks and Handoffs
 
@@ -76,12 +80,14 @@ Use this skill as the top-level entry point for Apple and Swift work in or aroun
 - Use `references/dash-docs-flow.md` to describe docs lookup as an operation profile under this same execution engine.
 - Recommend `apple-dash-docsets` directly when the task becomes Dash management work.
 - Recommend `apple-swift-package-bootstrap` directly when the task becomes new-package scaffolding.
+- `scripts/run_workflow.py` plans fallback commands and docs-route changes; MCP execution itself remains agent-side.
 
 ## Customization
 
 - Use `references/customization-flow.md`.
-- All documented customization knobs for this skill are `policy-only`.
-- `scripts/customization_config.py` stores and reports customization state, but no knob in that file is auto-loaded by the execution scripts today.
+- `scripts/customization_config.py` stores and reports customization state.
+- `scripts/run_workflow.py` loads and enforces the runtime-safe knobs documented in `references/customization-flow.md`.
+- MCP tool execution itself remains agent-side and is not performed by the local runtime entrypoint.
 
 ## References
 
@@ -111,6 +117,7 @@ Use this skill as the top-level entry point for Apple and Swift work in or aroun
 
 ### Script Inventory
 
+- `scripts/run_workflow.py`
 - `scripts/advisory_cooldown.py`
 - `scripts/detect_xcode_managed_scope.sh`
 - `scripts/customization_config.py`

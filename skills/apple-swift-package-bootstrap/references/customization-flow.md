@@ -8,30 +8,32 @@ Adjust the documented bootstrap defaults while keeping runtime behavior grounded
 
 | Knob | Default | Status | Effect |
 | --- | --- | --- | --- |
-| `defaultPackageType` | `library` | `policy-only` | Sets the documented default scaffold type. |
-| `defaultPlatformPreset` | `multiplatform` | `policy-only` | Sets the documented default platform preset. |
-| `defaultVersionProfile` | `current-minus-one` | `policy-only` | Sets the documented default version profile. |
-| `initializeGit` | `true` | `policy-only` | Describes whether docs present git initialization as default behavior. |
-| `copyAgentsMd` | `true` | `policy-only` | Describes whether docs present `AGENTS.md` copy-in as default behavior. |
+| `defaultPackageType` | `library` | `runtime-enforced` | Sets the runtime default scaffold type used by `scripts/run_workflow.py`. |
+| `defaultPlatformPreset` | `multiplatform` | `runtime-enforced` | Sets the runtime default platform preset used by `scripts/run_workflow.py`. |
+| `defaultVersionProfile` | `current-minus-one` | `runtime-enforced` | Sets the runtime default version profile used by `scripts/run_workflow.py`. |
+| `initializeGit` | `true` | `runtime-enforced` | Controls whether the wrapper asks the shell script to initialize git. |
+| `copyAgentsMd` | `true` | `runtime-enforced` | Controls whether the wrapper asks the shell script to copy `AGENTS.md`. |
 | `namingPattern` | `pascal-case` | `policy-only` | Describes the preferred package naming convention in docs and examples. |
 
 ## Runtime Behavior
 
 - `scripts/customization_config.py` reads, writes, resets, and reports customization state.
-- `scripts/bootstrap_swift_package.sh` does not auto-load any knob in this file today.
-- If a future change must enforce a knob automatically, update both the script and this document.
+- `scripts/run_workflow.py` loads the effective merged customization state at runtime.
+- `scripts/bootstrap_swift_package.sh` remains the implementation core and now honors the wrapper's git and `AGENTS.md` copy flags.
+- `namingPattern` remains guidance-only.
 
 ## Update Flow
 
-1. Inspect current settings with `uv run python scripts/customization_config.py effective`.
+1. Inspect current settings with `python3 scripts/customization_config.py effective`.
 2. Update `SKILL.md`, `references/package-types.md`, and `references/automation-prompts.md` to reflect the approved policy change.
-3. Persist the metadata change with `uv run python scripts/customization_config.py apply --input <yaml-file>`.
-4. Re-run `uv run python scripts/customization_config.py effective` and confirm the stored values match the docs.
-5. Use `uv run python scripts/customization_config.py reset` only when the user explicitly wants to clear customization state.
+3. Persist the metadata change with `python3 scripts/customization_config.py apply --input <yaml-file>`.
+4. Re-run `python3 scripts/customization_config.py effective` and confirm the stored values match the docs.
+5. Use `python3 scripts/customization_config.py reset` only when the user explicitly wants to clear customization state.
+6. Verify runtime defaults with `python3 scripts/run_workflow.py --name DemoPkg --dry-run`.
 
 ## Validation
 
 1. Run the bootstrap workflow once with defaults.
 2. Run the bootstrap workflow once with explicit overrides.
 3. Verify `Package.swift`, `.git`, `AGENTS.md`, and `Tests/` exist.
-4. Verify the docs do not claim that customization state changes runtime behavior automatically.
+4. Verify `scripts/run_workflow.py` reflects the runtime-enforced knobs above.
