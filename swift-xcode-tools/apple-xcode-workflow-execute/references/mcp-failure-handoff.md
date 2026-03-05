@@ -1,6 +1,6 @@
 # MCP Failure Handoff
 
-Use this payload shape when handing off to `$apple-swift-cli-fallback`.
+Use this payload shape when handing off to `$apple-xcode-workflow-execute`.
 
 ```text
 intent: <build|test|run|package|toolchain|docs|mutation|read-search>

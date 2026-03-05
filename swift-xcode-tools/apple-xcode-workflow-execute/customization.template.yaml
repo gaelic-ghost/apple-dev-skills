@@ -4,5 +4,6 @@ settings:
   intentBucketsProfile: "default"
   mcpRetryCount: 1
   requireExplicitMutationOptInForFilesystemFallback: true
-  docsPolicySkill: "apple-dev-safety-and-docs"
+  docsRoutingOrder: "dash-mcp,dash-local,official-web"
   advisoryCooldownDays: 21
+  fallbackCommandMappingProfile: "official-default"

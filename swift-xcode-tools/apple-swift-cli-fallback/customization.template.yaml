@@ -1,8 +1,0 @@
-schemaVersion: 1
-isCustomized: false
-settings:
-  fallbackCommandMappingProfile: "official-default"
-  requireReproducibleCommandBlocks: true
-  allowlistGuidanceMode: "minimal"
-  toolchainPreference: "swiftly-then-xcode"
-  advisoryCooldownDays: 21

@@ -14,5 +14,5 @@
 
 ## Existing skill handoff
 
-- Search and reasoning: `$dash-docset-search`
-- Install/generate docsets: `$dash-docset-install-generate`
+- Search and reasoning: `$apple-dash-docset-manage`
+- Install/generate docsets: `$apple-dash-docset-manage`
