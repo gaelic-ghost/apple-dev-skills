@@ -1,12 +1,12 @@
 # Project Roadmap
 
 ## Current Milestone
-- ID: M7
-- Name: Claude Code Compatibility Completion
-- Status: Planned
-- Target Version: v1.7.0
-- Last Updated: 2026-03-01
-- Summary: Complete end-to-end Claude Code compatibility for grouped/nested skill packaging and compatibility signaling across repository metadata and release docs.
+- ID: M8
+- Name: Canonical Skill v2.0.0 Consolidation
+- Status: In Progress
+- Target Version: v2.0.0
+- Last Updated: 2026-03-05
+- Summary: Consolidate and rename the Apple skills bundle into five canonical skills, add install-advisor routing, and extract shared AGENTS baseline snippets.
 
 ## Milestones
 | ID | Name | Target Version | Status | Target Date | Notes |
@@ -16,33 +16,26 @@
 | M3 | Automation Prompt Support | v1.2.0 | Completed | 2026-02-27 | Automation prompt templates added to the original four skills. |
 | M4 | Hybrid Apple/Xcode Workflow Suite | v1.3.0 | Completed | 2026-02-28 | Added orchestrator, MCP-first executor, CLI fallback, and safety/docs skills. |
 | M5 | Discovery and README Polish | v1.4.x | Completed | 2026-02-28 | README discoverability and link/wording cleanup through `v1.4.2`. |
-| M6 | Readiness and Documentation Parity | v1.5.0 | Completed | 2026-03-01 | Roadmap established, P1 docs parity merged, and P2 CI validation guardrail merged. |
-| M7 | Claude Code Compatibility Completion | v1.7.0 | Planned | 2026-03-15 | Ensure full Claude Code/plugin-manifest compatibility for nested skill packs and keep release/docs compatibility signaling synchronized. |
+| M6 | Readiness and Documentation Parity | v1.5.0 | Completed | 2026-03-01 | Roadmap established, docs parity merged, and CI validation guardrails merged. |
+| M7 | Claude Code Compatibility Completion | v1.7.0 | Completed | 2026-03-01 | Added grouped nested plugin manifest support. |
+| M8 | Canonical Skill v2.0.0 Consolidation | v2.0.0 | In Progress | 2026-03-05 | Reduce to five canonical skills with merge + rename migration and routing installer guidance. |
 
 ## Plan History
-### 2026-02-28 - Accepted Plan (v1.5.0 / M6)
+### 2026-03-05 - Accepted Plan (v2.0.0 / M8)
 - Scope:
-  - Create root `ROADMAP.md` as the canonical milestone tracker.
-  - Confirm post-`v1.3.0` documentation coverage and release-note continuity.
-  - Prioritize next tasks before starting new feature work.
+  - Consolidate 8 skills into 5 canonical skills.
+  - Introduce install-advisor routing skill.
+  - Extract shared AGENTS core snippet for reusable standards.
 - Acceptance Criteria:
-  - `ROADMAP.md` exists in the repo root and has synchronized `Current Milestone` and `Milestones`.
-  - Top-priority follow-up work is ranked with rationale.
+  - Exactly five `SKILL.md` skill directories remain active.
+  - Root docs and plugin manifest match new names and paths.
+  - Validation script passes with no stale old-skill references in active skill metadata.
 - Risks/Dependencies:
-  - Documentation drift risk if new skills ship without matching README/customization guidance.
-  - Release traceability risk if README highlights lag behind tags/releases.
-
-### 2026-02-28 - Accepted Plan Update (v1.5.0 / M6)
-- Scope:
-  - Add lightweight GitHub Actions validation for roadmap presence, skill layout requirements, and README/latest-tag continuity.
-- Acceptance Criteria:
-  - A CI workflow runs on push/PR and fails when required docs or skill files are missing.
-- Risks/Dependencies:
-  - Checks may need refinement if repository structure changes.
+  - Breaking rename requires migration guidance for existing users.
+  - Merge quality depends on preserving prior safety/fallback behavior.
 
 ## Change Log
 - 2026-02-28: Initialized roadmap for repository status and next-priority planning.
-- 2026-02-28: Closed P1 documentation parity (missing per-skill READMEs + root README v1.4.x highlights).
-- 2026-02-28: Started P2 by adding CI guardrail workflow for roadmap/docs/skill-structure drift checks.
-- 2026-03-01: Completed M6 after merging P2 CI guardrails and synchronizing roadmap status.
-- 2026-03-01: Added M7 to track full Claude Code compatibility for nested skill-pack/plugin-manifest workflows.
+- 2026-02-28: Closed documentation parity follow-ups and added CI guardrail workflow.
+- 2026-03-01: Completed M6 and added M7 for plugin compatibility work.
+- 2026-03-05: Started M8 to deliver canonical v2.0.0 naming and consolidation.

@@ -7,32 +7,35 @@
       "name": "swift-xcode-tools",
       "source": "./swift-xcode-tools",
       "skills": [
-        "./apple-xcode-hybrid-orchestrator",
-        "./xcode-mcp-first-executor",
-        "./apple-swift-cli-fallback",
-        "./apple-dev-safety-and-docs"
+        "./apple-xcode-workflow-execute"
       ]
     },
     {
       "name": "dash-apple-swift-documentation",
       "source": "./dash-apple-swift-documentation",
       "skills": [
-        "./dash-docset-search",
-        "./dash-docset-install-generate"
+        "./apple-dash-docset-manage"
       ]
     },
     {
       "name": "apple-swift-repo-tools",
       "source": "./apple-swift-repo-tools",
       "skills": [
-        "./swift-package-agents-maintainer"
+        "./apple-swift-package-agents-sync"
       ]
     },
     {
       "name": "apple-swift-bootstraps",
       "source": "./apple-swift-bootstraps",
       "skills": [
-        "./bootstrap-swift-package"
+        "./apple-swift-package-bootstrap"
+      ]
+    },
+    {
+      "name": "apple-skills-routing",
+      "source": "./apple-skills-routing",
+      "skills": [
+        "./apple-skills-router-advise-install"
       ]
     }
   ]
