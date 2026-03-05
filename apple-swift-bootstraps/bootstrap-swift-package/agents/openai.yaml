@@ -1,4 +1,0 @@
-interface:
-  display_name: "Bootstrap Swift Package"
-  short_description: "Bootstrap Swift package projects with consistent setup"
-  default_prompt: "Use -swift-package for Swift package bootstrap tasks, and when customization is requested follow SKILL.md Interactive Customization Flow with scripts/customization_config.py and references/customization-flow.md."

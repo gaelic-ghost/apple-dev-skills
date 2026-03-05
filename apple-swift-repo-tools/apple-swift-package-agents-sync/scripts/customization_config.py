@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 
 SCHEMA_VERSION = 1
-SKILL_NAME = "bootstrap-swift-package"
+SKILL_NAME = "apple-swift-package-agents-sync"
 CONFIG_HOME_ENV = "APPLE_DEV_SKILLS_CONFIG_HOME"
 DEFAULT_CONFIG_ROOT = "~/.config/gaelic-ghost/apple-dev-skills"
 ALLOWED_TOP_LEVEL = {"schemaVersion", "isCustomized", "settings"}

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Apple Swift Package Bootstrap"
+  short_description: "Bootstrap Swift package repos with consistent defaults"
+  default_prompt: "Use apple-swift-package-bootstrap for deterministic Swift Package bootstrap workflows and customization-driven setup defaults."

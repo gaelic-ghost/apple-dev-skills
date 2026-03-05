@@ -1,9 +1,9 @@
 ---
-name: swift-package-agents-maintainer
+name: apple-swift-package-agents-sync
 description: Create, update, and maintain a canonical AGENTS.md (agents file) across Swift Package repositories. Use when Codex needs to update AGENTS.md for Swift packages, sync agents files across repos, enforce shared policy baselines, detect drift in automation, apply canonical templates, or customize this skills sync policy.
 ---
 
-# Swift Package AGENTS Maintainer
+# Apple Swift Package AGENTS Sync
 
 Maintain one canonical `AGENTS.md` across Swift Package repositories.
 Prefer the bundled script for deterministic automation runs.

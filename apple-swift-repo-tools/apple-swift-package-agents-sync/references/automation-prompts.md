@@ -14,7 +14,7 @@
 ## Codex App Automation Prompt Template
 
 ```text
-Use $swift-package-agents-maintainer.
+Use $apple-swift-package-agents-sync.
 
 Run a recurring AGENTS.md maintenance workflow with:
 - Target root: <TARGET_ROOT>
@@ -41,7 +41,7 @@ Output requirements:
 ## Codex CLI Automation Prompt Template
 
 ```text
-Use $swift-package-agents-maintainer for a deterministic non-interactive run.
+Use $apple-swift-package-agents-sync for a deterministic non-interactive run.
 
 Task:
 Execute `scripts/sync_agents_md.sh` with:

@@ -15,7 +15,7 @@
 ## Codex App Automation Prompt Template
 
 ```text
-Use $bootstrap-swift-package.
+Use $apple-swift-package-bootstrap.
 
 This automation is guarded for app scheduling. Run only when a package scaffold is explicitly requested.
 
@@ -43,7 +43,7 @@ Output requirements:
 ## Codex CLI Automation Prompt Template
 
 ```text
-Use $bootstrap-swift-package for a deterministic CLI automation run.
+Use $apple-swift-package-bootstrap for a deterministic CLI automation run.
 
 Task:
 Bootstrap one Swift package using `scripts/bootstrap_swift_package.sh` with:
