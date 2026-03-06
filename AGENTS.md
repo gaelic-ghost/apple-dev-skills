@@ -83,6 +83,12 @@ The Markdown body has no required format, but if you want reliability, use a pre
 - `references/`: For longer documentation, checklists, templates, etc.
 - `assets/`: For static templates, output templates, sample configs, diagrams, etc.
 
+### Constraints on Skills (Config/Customization/Automation)
+
+Skills are installed by an end user for their Agent to make use of. Skill installation is typically handled by the Vercel `skills` CLI, and located in a managed directory that neither Skill, nor Agent, will have write access to. Keep this in mind when considering customizations and configuration.
+
+Some alternatives for user customization/config include using their Agent's memory or personalization features, an end user's global or project-level `AGENTS.md` file, or automation workflows such as Codex App Automations or Codex CLI exec workflows.
+
 ## Repo-local Passive Standards
 
 - Prefer `uv run` for Python command execution in examples and scripts.
