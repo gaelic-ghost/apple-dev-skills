@@ -82,6 +82,11 @@ The Markdown body has no required format, but if you want reliability, use a pre
 - `scripts/`: For executable helpers. Useful in supporting deterministic, repeatable, automatable steps in workflows.
 - `references/`: For longer documentation, checklists, internal templates, etc.
 - `assets/`: For static/output templates, diagrams, etc.
+### Python-backed Skills
+
+- A skill may include Python helpers under `scripts/` and Python tests under a skill-local `tests/` directory when deterministic validation or local tooling is useful.
+- In `*-skills` repositories that contain Python-backed skills, `pytest` and `PyYAML` should be readily available as the default maintainer/dev baseline.
+- Treat this as repository-maintainer tooling only, not as an installed-skill runtime requirement for end users.
 
 ### Constraints on Skills (Config/Customization/Automation)
 

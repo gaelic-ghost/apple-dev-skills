@@ -1,4 +1,4 @@
 interface:
   display_name: "Apple Swift Package Bootstrap"
-  short_description: "Create Swift package repos with deterministic defaults"
-  default_prompt: "Use apple-swift-package-bootstrap for deterministic Swift package scaffolding with explicit inputs, script-grounded defaults, and clear validation output."
+  short_description: "Bootstrap Swift packages with consistent defaults"
+  default_prompt: "Use apple-swift-package-bootstrap for creating a new Swift package, scaffolding its initial structure, applying standard platform and version defaults, or customizing this skill's bootstrap defaults."

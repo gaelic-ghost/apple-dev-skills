@@ -1,6 +1,6 @@
 ---
 name: apple-xcode-workflow
-description: Guide Apple and Swift development workflows with agent-side MCP usage, official CLI fallback, mutation guards, and local-first docs guidance. Use when tasks involve Xcode MCP operations, build/test/run, toolchain checks, or Apple/Swift docs routing.
+description: Guide Apple and Swift development work in or around Xcode. Use when tasks involve Xcode workspace inspection, diagnostics, builds, tests, runs, toolchain checks, or Apple and Swift documentation lookup.
 ---
 
 # Apple Xcode Workflow

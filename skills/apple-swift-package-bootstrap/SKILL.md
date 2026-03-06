@@ -1,6 +1,6 @@
 ---
 name: apple-swift-package-bootstrap
-description: Bootstrap new Swift Package Manager projects with consistent defaults and fast setup. Use when creating a new Swift package (library, executable, or tool), scaffolding package structure, applying standard platform/version defaults, initializing git, running first-step validation, or when the user asks to customize bootstrap defaults in this skill.
+description: Bootstrap new Swift Package Manager projects with consistent defaults. Use when creating a new Swift package, scaffolding its initial structure, applying standard platform and version defaults, or customizing this skill's bootstrap defaults.
 ---
 
 # Apple Swift Package Bootstrap
