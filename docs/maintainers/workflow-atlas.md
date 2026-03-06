@@ -110,7 +110,7 @@ flowchart LR
   - `mcp_failure_reason`
   - `docs_query`
 - Defaults:
-  - runtime entrypoint `python3 scripts/run_workflow.py`
+  - repo-maintainer runtime entrypoint `uv run python scripts/run_workflow.py`
   - one retry for transient MCP failure
   - advisory cooldown `21` days
   - docs source order `dash-mcp,dash-local,official-web`
@@ -227,7 +227,7 @@ flowchart LR
   - `docset_identifiers`
   - `approval`
 - Defaults:
-  - runtime entrypoint `python3 scripts/run_workflow.py`
+  - repo-maintainer runtime entrypoint `uv run python scripts/run_workflow.py`
   - start at `search` when no stage is explicit
   - search order `mcp -> http -> url-service`
   - install source priority `built-in,user-contributed,cheatsheet`
@@ -316,7 +316,7 @@ flowchart LR
   - `skip_validation`
   - `dry_run`
 - Defaults:
-  - runtime entrypoint `python3 scripts/run_workflow.py`
+  - repo-maintainer runtime entrypoint `uv run python scripts/run_workflow.py`
   - `type=library`
   - `destination=.`
   - `platform=multiplatform`

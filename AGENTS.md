@@ -86,6 +86,7 @@ The Markdown body has no required format, but if you want reliability, use a pre
 
 - A skill may include Python helpers under `scripts/` and Python tests under a skill-local `tests/` directory when deterministic validation or local tooling is useful.
 - In `*-skills` repositories that contain Python-backed skills, `pytest` and `PyYAML` should be readily available as the default maintainer/dev baseline.
+- In this repository, maintain that baseline through repo-root `pyproject.toml` and `uv.lock`, and run checks with `uv run ...`.
 - Treat this as repository-maintainer tooling only, not as an installed-skill runtime requirement for end users.
 
 ### Constraints on Skills (Config/Customization/Automation)

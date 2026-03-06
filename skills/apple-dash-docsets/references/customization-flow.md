@@ -24,15 +24,15 @@ Tune the runtime-supported defaults for the unified Dash stage entrypoint.
 
 ## Update Flow
 
-1. Inspect current settings with `python3 scripts/customization_config.py effective`.
+1. Inspect current settings with `uv run python scripts/customization_config.py effective`.
 2. Update `SKILL.md`, `references/automation-prompts.md`, and the affected workflow references.
-3. Persist the metadata change with `python3 scripts/customization_config.py apply --input <yaml-file>`.
-4. Re-run `python3 scripts/customization_config.py effective` and confirm the stored values match the docs.
-5. Verify the runtime output with `python3 scripts/run_workflow.py --stage search --query Swift --dry-run`.
+3. Persist the metadata change with `uv run python scripts/customization_config.py apply --input <yaml-file>`.
+4. Re-run `uv run python scripts/customization_config.py effective` and confirm the stored values match the docs.
+5. Verify the runtime output with `uv run python scripts/run_workflow.py --stage search --query Swift --dry-run`.
 
 ## Validation
 
-1. Run `python3 scripts/dash_api_probe.py`.
-2. Run `python3 scripts/dash_catalog_match.py --query "swift"`.
+1. Run `uv run python scripts/dash_api_probe.py`.
+2. Run `uv run python scripts/dash_catalog_match.py --query "swift"`.
 3. Verify the docs still present `search`, `install`, and `generate` as separate stages in forward order.
 4. Verify `scripts/run_workflow.py` reflects the runtime-enforced knobs above.

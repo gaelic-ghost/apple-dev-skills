@@ -22,12 +22,12 @@ Adjust the documented bootstrap defaults while keeping runtime behavior grounded
 
 ## Update Flow
 
-1. Inspect current settings with `python3 scripts/customization_config.py effective`.
+1. Inspect current settings with `uv run python scripts/customization_config.py effective`.
 2. Update `SKILL.md`, `references/package-types.md`, and `references/automation-prompts.md` to reflect the approved policy change.
-3. Persist the metadata change with `python3 scripts/customization_config.py apply --input <yaml-file>`.
-4. Re-run `python3 scripts/customization_config.py effective` and confirm the stored values match the docs.
-5. Use `python3 scripts/customization_config.py reset` only when the user explicitly wants to clear customization state.
-6. Verify runtime defaults with `python3 scripts/run_workflow.py --name DemoPkg --dry-run`.
+3. Persist the metadata change with `uv run python scripts/customization_config.py apply --input <yaml-file>`.
+4. Re-run `uv run python scripts/customization_config.py effective` and confirm the stored values match the docs.
+5. Use `uv run python scripts/customization_config.py reset` only when the user explicitly wants to clear customization state.
+6. Verify runtime defaults with `uv run python scripts/run_workflow.py --name DemoPkg --dry-run`.
 
 ## Validation
 

@@ -10,6 +10,8 @@ import re
 import sys
 from pathlib import Path
 
+import yaml
+
 SCHEMA_VERSION = 1
 SKILL_NAME = "apple-swift-package-bootstrap"
 CONFIG_HOME_ENV = "APPLE_DEV_SKILLS_CONFIG_HOME"
@@ -20,23 +22,6 @@ ALLOWED_TOP_LEVEL = {"schemaVersion", "isCustomized", "settings"}
 def fail(message: str) -> None:
     print(f"ERROR: {message}", file=sys.stderr)
     raise SystemExit(1)
-
-
-def parse_scalar(raw: str):
-    value = raw.strip()
-    if value == "":
-        return ""
-    if value.lower() == "true":
-        return True
-    if value.lower() == "false":
-        return False
-    if re.fullmatch(r"-?\d+", value):
-        return int(value)
-    if (value.startswith('"') and value.endswith('"')) or (
-        value.startswith("'") and value.endswith("'")
-    ):
-        return value[1:-1]
-    return value
 
 
 def quote_string(value: str) -> str:
@@ -58,44 +43,22 @@ def parse_yaml(path: Path) -> dict:
     if not path.exists():
         fail(f"Missing YAML file: {path}")
 
-    data: dict = {}
-    current_key: str | None = None
-    settings: dict = {}
+    try:
+        loaded = yaml.safe_load(path.read_text(encoding="utf-8"))
+    except yaml.YAMLError as exc:
+        fail(f"Invalid YAML in {path}: {exc}")
 
-    for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
-        stripped = line.strip()
-        if not stripped or stripped.startswith("#"):
-            continue
+    if loaded is None:
+        return {}
+    if not isinstance(loaded, dict):
+        fail(f"Top-level YAML document must be a mapping in {path}")
 
-        if line.startswith("  "):
-            if current_key != "settings":
-                fail(f"Invalid indentation in {path}:{lineno}")
-            if ":" not in stripped:
-                fail(f"Expected key:value in {path}:{lineno}")
-            key, raw_value = stripped.split(":", 1)
-            key = key.strip()
-            if not key:
-                fail(f"Missing key in {path}:{lineno}")
-            settings[key] = parse_scalar(raw_value)
-            continue
+    if isinstance(loaded.get("settings"), dict):
+        loaded["settings"] = {
+            key: ("" if value is None else value) for key, value in loaded["settings"].items()
+        }
 
-        if ":" not in stripped:
-            fail(f"Expected top-level key:value in {path}:{lineno}")
-
-        key, raw_value = stripped.split(":", 1)
-        key = key.strip()
-        raw_value = raw_value.strip()
-        current_key = key
-
-        if key == "settings":
-            if raw_value not in ("", "{}"):
-                fail(f"settings must be a mapping in {path}:{lineno}")
-            continue
-
-        data[key] = parse_scalar(raw_value)
-
-    data["settings"] = settings
-    return data
+    return loaded
 
 
 def validate_config(config: dict, *, allow_partial: bool) -> None:
@@ -117,9 +80,11 @@ def validate_config(config: dict, *, allow_partial: bool) -> None:
     if "settings" in config:
         if not isinstance(config["settings"], dict):
             fail("settings must be a mapping")
-        for key in config["settings"]:
+        for key, value in config["settings"].items():
             if not re.fullmatch(r"[A-Za-z0-9_]+", key):
                 fail(f"Invalid settings key: {key}")
+            if isinstance(value, (dict, list)):
+                fail(f"settings values must be scalar: {key}")
 
 
 def merge_configs(base: dict, overlay: dict) -> dict:

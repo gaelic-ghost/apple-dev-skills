@@ -20,6 +20,18 @@ Every active skill now follows the same documentation contract:
 
 Maintainer-facing workflow diagrams, input/output contracts, and Agent ↔ User UX maps live in [docs/maintainers/workflow-atlas.md](./docs/maintainers/workflow-atlas.md). Audit procedure and source-of-truth guidance live in [docs/maintainers/reality-audit.md](./docs/maintainers/reality-audit.md).
 
+## Maintainer Python Tooling
+
+This repository standardizes maintainer-side Python tooling around `uv`.
+
+```bash
+uv sync --dev
+bash .github/scripts/validate_repo_docs.sh
+uv run pytest
+```
+
+Use `uv run python ...` for repo-local Python helper execution and validation.
+
 ## Install
 
 Install one skill:

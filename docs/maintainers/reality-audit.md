@@ -28,8 +28,8 @@ Use the highest-confidence artifact first and only fall back when the higher lay
    - `references/customization.template.yaml`
    - `references/`
    - local snippet copy under `references/snippets/`
-3. Run the repo docs validator and treat failures as documentation-contract drift unless code assets prove otherwise.
-4. Run the Python test suite and treat failures as runtime drift.
+3. Run `bash .github/scripts/validate_repo_docs.sh` and treat failures as documentation-contract drift unless code assets prove otherwise.
+4. Run `uv run pytest` and treat failures as runtime drift.
 5. Reconcile root docs to the tested, shipped state instead of preserving stale historical wording.
 6. Update `ROADMAP.md` in the same change when milestone or status text is no longer truthful.
 

@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import io
 import importlib.util
+import tempfile
 import unittest
+from contextlib import redirect_stderr
 from pathlib import Path
 
 
@@ -34,6 +37,71 @@ class CustomizationTemplatePathTests(unittest.TestCase):
                 loaded = module.load_template()
                 self.assertEqual(loaded["schemaVersion"], 1)
                 self.assertIn("settings", loaded)
+
+    def test_partial_override_yaml_loads_and_merges(self) -> None:
+        override_text = 'isCustomized: true\nsettings:\n  fallbackOrder: "url-service,http,mcp"\n'
+        for skill_name, module_path in SKILL_MODULES.items():
+            with self.subTest(skill=skill_name):
+                module = load_module(module_path)
+                with tempfile.TemporaryDirectory() as tmpdir:
+                    override_path = Path(tmpdir) / "override.yaml"
+                    override_path.write_text(override_text, encoding="utf-8")
+                    loaded = module.parse_yaml(override_path)
+                    module.validate_config(loaded, allow_partial=True)
+                    merged = module.merge_configs(module.load_template(), loaded)
+                    self.assertEqual(merged["isCustomized"], True)
+                    self.assertIn("settings", merged)
+
+    def test_invalid_yaml_is_rejected(self) -> None:
+        invalid_text = "schemaVersion: [1\n"
+        for skill_name, module_path in SKILL_MODULES.items():
+            with self.subTest(skill=skill_name):
+                module = load_module(module_path)
+                with tempfile.TemporaryDirectory() as tmpdir:
+                    invalid_path = Path(tmpdir) / "invalid.yaml"
+                    invalid_path.write_text(invalid_text, encoding="utf-8")
+                    stderr = io.StringIO()
+                    with self.assertRaises(SystemExit):
+                        with redirect_stderr(stderr):
+                            module.parse_yaml(invalid_path)
+                    self.assertIn("Invalid YAML", stderr.getvalue())
+
+    def test_unknown_top_level_key_is_rejected(self) -> None:
+        for skill_name, module_path in SKILL_MODULES.items():
+            with self.subTest(skill=skill_name):
+                module = load_module(module_path)
+                config = {
+                    "schemaVersion": 1,
+                    "isCustomized": True,
+                    "settings": {},
+                    "unexpected": "value",
+                }
+                with self.assertRaises(SystemExit):
+                    module.validate_config(config, allow_partial=False)
+
+    def test_settings_must_be_a_mapping(self) -> None:
+        invalid_text = "schemaVersion: 1\nisCustomized: true\nsettings:\n  - bad\n"
+        for skill_name, module_path in SKILL_MODULES.items():
+            with self.subTest(skill=skill_name):
+                module = load_module(module_path)
+                with tempfile.TemporaryDirectory() as tmpdir:
+                    invalid_path = Path(tmpdir) / "invalid.yaml"
+                    invalid_path.write_text(invalid_text, encoding="utf-8")
+                    loaded = module.parse_yaml(invalid_path)
+                    with self.assertRaises(SystemExit):
+                        module.validate_config(loaded, allow_partial=False)
+
+    def test_nested_settings_values_are_rejected(self) -> None:
+        invalid_text = "schemaVersion: 1\nisCustomized: true\nsettings:\n  nested:\n    child: true\n"
+        for skill_name, module_path in SKILL_MODULES.items():
+            with self.subTest(skill=skill_name):
+                module = load_module(module_path)
+                with tempfile.TemporaryDirectory() as tmpdir:
+                    invalid_path = Path(tmpdir) / "invalid.yaml"
+                    invalid_path.write_text(invalid_text, encoding="utf-8")
+                    loaded = module.parse_yaml(invalid_path)
+                    with self.assertRaises(SystemExit):
+                        module.validate_config(loaded, allow_partial=False)
 
 
 if __name__ == "__main__":

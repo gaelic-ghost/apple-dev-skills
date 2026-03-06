@@ -203,6 +203,8 @@ Tickets:
 - [ ] Defer recurring maintainer audit/report cadence refinement until it has a clearer operational need.
 - [ ] Park follow-up roadmap/reporting cleanup that is not required for the current shipped surface.
 - [ ] Hold a placeholder for future non-xcode swift skill design direction.
+- [ ] Add Dash end-to-end coverage for real install and fallback flows beyond dry-run and blocked-path assertions.
+- [ ] Add Xcode end-to-end coverage for real MCP or CLI fallback execution beyond policy-shaping tests.
 
 Exit criteria:
 
@@ -214,3 +216,4 @@ Exit criteria:
 - [x] 2026-03-01: M6 and M7 completed, closing readiness/parity follow-ups and plugin compatibility work.
 - [x] 2026-03-05: M8 through M10 reshaped the repository around canonical naming, router removal, and the three-skill top-level surface.
 - [x] 2026-03-06: M11 completed by aligning maintainer docs, repo validation, and shipped customization-template layout with current repo standards.
+- [x] 2026-03-06: Added a repo-level `uv` Python maintainer baseline and standardized tests and YAML validation around `pytest` and `PyYAML`.
