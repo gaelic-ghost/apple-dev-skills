@@ -1,7 +1,6 @@
 schemaVersion: 1
 isCustomized: false
 settings:
-  intentBucketsProfile: "default"
   mcpRetryCount: 1
   requireExplicitMutationOptInForFilesystemFallback: true
   docsRoutingOrder: "dash-mcp,dash-local,official-web"

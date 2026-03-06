@@ -13,14 +13,12 @@ Adjust the documented bootstrap defaults while keeping runtime behavior grounded
 | `defaultVersionProfile` | `current-minus-one` | `runtime-enforced` | Sets the runtime default version profile used by `scripts/run_workflow.py`. |
 | `initializeGit` | `true` | `runtime-enforced` | Controls whether the wrapper asks the shell script to initialize git. |
 | `copyAgentsMd` | `true` | `runtime-enforced` | Controls whether the wrapper asks the shell script to copy `AGENTS.md`. |
-| `namingPattern` | `pascal-case` | `policy-only` | Describes the preferred package naming convention in docs and examples. |
 
 ## Runtime Behavior
 
 - `scripts/customization_config.py` reads, writes, resets, and reports customization state.
 - `scripts/run_workflow.py` loads the effective merged customization state at runtime.
 - `scripts/bootstrap_swift_package.sh` remains the implementation core and now honors the wrapper's git and `AGENTS.md` copy flags.
-- `namingPattern` remains guidance-only.
 
 ## Update Flow
 

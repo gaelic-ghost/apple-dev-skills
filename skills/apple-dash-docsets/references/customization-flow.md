@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Tune the runtime-supported defaults for the unified Dash stage entrypoint without overstating what still remains guidance-only.
+Tune the runtime-supported defaults for the unified Dash stage entrypoint.
 
 ## Knobs
 
@@ -10,18 +10,17 @@ Tune the runtime-supported defaults for the unified Dash stage entrypoint withou
 | --- | --- | --- | --- |
 | `fallbackOrder` | `mcp,http,url-service` | `runtime-enforced` | Controls the search-stage access-path order used by `scripts/run_workflow.py`. |
 | `defaultMaxResults` | `20` | `runtime-enforced` | Controls the default catalog-match limit used by `scripts/run_workflow.py`. |
-| `defaultSearchSnippets` | `true` | `policy-only` | Still documents preferred snippet behavior; the runtime entrypoint does not yet shape snippet content. |
+| `defaultSearchSnippets` | `true` | `runtime-enforced` | Controls whether search results keep richer match metadata such as `hint` and `score` by default. |
 | `installSourcePriority` | `built-in,user-contributed,cheatsheet` | `runtime-enforced` | Controls source selection order for install-stage catalog matches. |
 | `requireExplicitApprovalForYes` | `true` | `runtime-enforced` | Controls whether `scripts/run_workflow.py` blocks install side effects without explicit approval. |
 | `generationPolicy` | `automate-stable` | `runtime-enforced` | Controls the structured guidance mode returned by the generate stage. |
-| `troubleshootingPreference` | `api-first` | `policy-only` | Sets the documented troubleshooting emphasis when Dash access fails. |
+| `troubleshootingPreference` | `api-first` | `runtime-enforced` | Controls whether blocked search guidance emphasizes Dash API recovery first or URL or Service recovery first. |
 
 ## Runtime Behavior
 
 - `scripts/customization_config.py` reads, writes, resets, and reports customization state.
 - `scripts/run_workflow.py` loads the effective merged customization state at runtime.
 - Helper scripts remain implementation details behind `scripts/run_workflow.py`.
-- `defaultSearchSnippets` and `troubleshootingPreference` still remain guidance-only.
 
 ## Update Flow
 

@@ -6,4 +6,3 @@ settings:
   defaultVersionProfile: "current-minus-one"
   initializeGit: true
   copyAgentsMd: true
-  namingPattern: "pascal-case"

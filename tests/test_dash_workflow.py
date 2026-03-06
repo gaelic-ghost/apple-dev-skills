@@ -48,6 +48,16 @@ class DashWorkflowTests(unittest.TestCase):
             self.assertEqual(code, 0)
             self.assertEqual(payload["access_path"], "url-service")
 
+    def test_search_snippets_can_be_disabled(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            write_config(tmpdir, "apple-dash-docsets", {"defaultSearchSnippets": False})
+            env = dict(os.environ)
+            env["APPLE_DEV_SKILLS_CONFIG_HOME"] = tmpdir
+            code, payload = self.run_script("--stage", "search", "--query", "Swift", "--dry-run", env=env)
+            self.assertEqual(code, 0)
+            self.assertFalse(payload["search_snippets_enabled"])
+            self.assertEqual(sorted(payload["matches"][0].keys()), ["name", "slug", "source"])
+
     def test_search_falls_back_when_http_probe_fails(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             write_config(tmpdir, "apple-dash-docsets", {"fallbackOrder": "http,url-service"})
@@ -66,6 +76,33 @@ class DashWorkflowTests(unittest.TestCase):
             self.assertEqual(code, 0)
             self.assertEqual(payload["access_path"], "url-service")
             self.assertEqual(payload["path_type"], "fallback")
+
+    def test_troubleshooting_preference_changes_blocked_guidance(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            write_config(
+                tmpdir,
+                "apple-dash-docsets",
+                {
+                    "fallbackOrder": "http",
+                    "troubleshootingPreference": "url-service-first",
+                },
+            )
+            env = dict(os.environ)
+            env["APPLE_DEV_SKILLS_CONFIG_HOME"] = tmpdir
+            code, payload = self.run_script(
+                "--stage",
+                "search",
+                "--query",
+                "Swift",
+                "--dry-run",
+                "--status-file",
+                str(Path(tmpdir) / "missing-status.json"),
+                env=env,
+            )
+            self.assertEqual(code, 1)
+            self.assertEqual(payload["status"], "blocked")
+            self.assertEqual(payload["troubleshooting_preference"], "url-service-first")
+            self.assertIn("URL or Service integration first", payload["next_step"])
 
     def test_install_obeys_source_priority(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:

@@ -38,8 +38,7 @@ This document records the current claim-vs-code status for the three active skil
 
 ### Docs-Only And Reduced
 
-- `defaultSearchSnippets` remains guidance-only.
-- `troubleshootingPreference` remains guidance-only.
+- none
 
 ## `apple-swift-package-bootstrap`
 
@@ -57,13 +56,13 @@ This document records the current claim-vs-code status for the three active skil
 
 ### Docs-Only And Reduced
 
-- `namingPattern` remains guidance-only.
+- none
 - Manual fallback guidance remains documentation-level behavior unless the shell script is unavailable.
 
 ## Summary
 
 - `apple-xcode-workflow`: pass, with MCP execution clearly separated as agent-side.
-- `apple-dash-docsets`: pass, with one real runtime entrypoint and two remaining guidance-only knobs.
-- `apple-swift-package-bootstrap`: pass, with one real runtime entrypoint and one remaining guidance-only knob.
+- `apple-dash-docsets`: pass, with one real runtime entrypoint and runtime-enforced search, install, and generation customization.
+- `apple-swift-package-bootstrap`: pass, with one real runtime entrypoint and no remaining inert customization knobs.
 
 No active skill should now present inert stored customization state as runtime-enforced behavior.

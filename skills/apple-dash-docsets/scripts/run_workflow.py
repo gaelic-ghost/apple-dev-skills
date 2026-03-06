@@ -71,6 +71,21 @@ def load_matches(query: str, limit: int) -> list[dict]:
     return payload.get("matches", []) if isinstance(payload.get("matches"), list) else []
 
 
+def shape_matches(matches: list[dict], include_snippets: bool) -> list[dict]:
+    if include_snippets:
+        return matches
+    trimmed: list[dict] = []
+    for match in matches:
+        trimmed.append(
+            {
+                "name": match.get("name"),
+                "slug": match.get("slug"),
+                "source": match.get("source"),
+            }
+        )
+    return trimmed
+
+
 def choose_match(matches: list[dict], source_priority: list[str]) -> dict | None:
     for source in source_priority:
         for match in matches:
@@ -93,8 +108,15 @@ def search_stage(args: argparse.Namespace, settings: dict) -> tuple[int, dict]:
 
     order = split_csv(str(settings.get("fallbackOrder", "mcp,http,url-service")))
     access_path, applied_order, probe = select_search_access_path(order, args.status_file)
-    matches = load_matches(args.query, int(settings.get("defaultMaxResults", 20)))
+    include_snippets = bool(settings.get("defaultSearchSnippets", True))
+    raw_matches = load_matches(args.query, int(settings.get("defaultMaxResults", 20)))
+    matches = shape_matches(raw_matches, include_snippets)
     if not access_path:
+        troubleshooting_preference = str(settings.get("troubleshootingPreference", "api-first"))
+        if troubleshooting_preference == "url-service-first":
+            next_step = "No usable Dash search path is available. Check URL or Service integration first, then verify the local Dash API."
+        else:
+            next_step = "No usable Dash search path is available. Check the local Dash API first, then verify URL or Service integration."
         return 1, {
             "status": "blocked",
             "path_type": "fallback",
@@ -103,7 +125,9 @@ def search_stage(args: argparse.Namespace, settings: dict) -> tuple[int, dict]:
             "source_path": None,
             "matches": matches,
             "probe": probe,
-            "next_step": "No usable Dash search path is available. Check Dash MCP, local API, or URL integration.",
+            "next_step": next_step,
+            "search_snippets_enabled": include_snippets,
+            "troubleshooting_preference": troubleshooting_preference,
         }
 
     return 0, {
@@ -114,6 +138,7 @@ def search_stage(args: argparse.Namespace, settings: dict) -> tuple[int, dict]:
         "source_path": None,
         "matches": matches,
         "probe": probe,
+        "search_snippets_enabled": include_snippets,
         "next_step": (
             "If the docset is missing, rerun with --stage install."
             if matches

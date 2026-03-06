@@ -8,7 +8,6 @@ Tune the documented policy defaults for MCP-first execution, fallback behavior, 
 
 | Knob | Default | Status | Effect |
 | --- | --- | --- | --- |
-| `intentBucketsProfile` | `default` | `policy-only` | Describes the documented operation taxonomy. |
 | `mcpRetryCount` | `1` | `runtime-enforced` | Controls the retry count emitted by `scripts/run_workflow.py` for transient MCP failures. |
 | `requireExplicitMutationOptInForFilesystemFallback` | `true` | `runtime-enforced` | Controls whether `scripts/run_workflow.py` blocks direct filesystem fallback planning in Xcode-managed scope without explicit opt-in. |
 | `docsRoutingOrder` | `dash-mcp,dash-local,official-web` | `runtime-enforced` | Controls the docs-route order emitted by `scripts/run_workflow.py`. |
