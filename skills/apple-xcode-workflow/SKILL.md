@@ -27,10 +27,17 @@ Use this skill as the top-level entry point for Apple and Swift work in or aroun
    - package or toolchain management
    - docs lookup
    - mutation
-2. Run `scripts/run_workflow.py` to apply runtime configuration, mutation-guard checks, docs-routing order, advisory cooldown, and CLI fallback planning.
-3. Use the guidance in `references/mcp-tool-matrix.md` for agent-executed MCP operations.
-4. If MCP fails, use the structured fallback output from `scripts/run_workflow.py` together with `references/cli-fallback-matrix.md`.
-5. Report which parts were agent-executed, which parts were locally enforced by script, and any required next step.
+2. Apply the Apple docs gate before any Apple design, architecture, implementation, or refactor guidance:
+   - read the relevant Apple documentation first
+   - use Dash or Xcode-local documentation first, then official Apple documentation if needed
+   - state the documented API behavior, lifecycle rule, or workflow requirement being relied on before proposing changes
+   - do not rely on memory as the primary source when Apple docs exist
+   - if the docs and the current code conflict, stop and report that conflict
+   - if no relevant Apple docs can be found, say that explicitly before proceeding
+3. Run `scripts/run_workflow.py` to apply runtime configuration, mutation-guard checks, docs-routing order, advisory cooldown, and CLI fallback planning.
+4. Use the guidance in `references/mcp-tool-matrix.md` for agent-executed MCP operations.
+5. If MCP fails, use the structured fallback output from `scripts/run_workflow.py` together with `references/cli-fallback-matrix.md`.
+6. Report which parts were agent-executed, which parts were locally enforced by script, the Apple docs relied on, and any required next step.
 
 ## Inputs
 

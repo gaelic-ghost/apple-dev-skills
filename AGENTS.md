@@ -8,6 +8,11 @@
 
 ## Standards and Guidance
 
+- For any skill that governs Swift, Apple framework, Apple platform, SwiftUI, SwiftData, Observation, AppKit, UIKit, Foundation-on-Apple, or Xcode-related work, require reading the relevant Apple documentation first before proposing or permitting implementation guidance.
+- Such skills must require the agent to state the documented behavior being relied on before design or code changes are proposed.
+- Apple docs outrank memory, habit, and analogy. If docs and current code conflict, the skill must instruct the agent to stop and report that conflict.
+- If no relevant Apple documentation can be found, the skill must instruct the agent to say that explicitly before proceeding.
+
 Consult these resources when creating, updating, reviewing, or sharing skills:
 
 - Agent Skills Standard: [agentskills.io/home](https://agentskills.io/home)
