@@ -48,7 +48,7 @@ Use this skill as the top-level entry point for Apple and Swift work in or aroun
 - `docs_query`: required when `operation_type` is `docs`.
 - `filesystem_fallback_opt_in`: optional explicit opt-in when planning direct filesystem fallback in Xcode-managed scope.
 - Defaults:
-  - runtime entrypoint: `python3 scripts/run_workflow.py`
+  - runtime entrypoint: executable `scripts/run_workflow.py`
   - agent-side MCP retries once for transient failures
   - advisory cooldown is `21` days
   - docs source order is `dash-mcp,dash-local,official-web`

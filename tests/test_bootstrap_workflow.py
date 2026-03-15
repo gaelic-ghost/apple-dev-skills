@@ -30,10 +30,12 @@ def write_config(tmpdir: str, skill: str, settings: dict) -> None:
 
 class BootstrapWorkflowTests(unittest.TestCase):
     def run_script(self, *args: str, env: dict | None = None) -> tuple[int, dict]:
+        command_env = dict(env or os.environ)
+        command_env.setdefault("UV_CACHE_DIR", str(Path(tempfile.gettempdir()) / "apple-dev-skills-uv-cache"))
         proc = subprocess.run(
-            ["python3", str(SCRIPT), *args],
-            cwd=ROOT,
-            env=env,
+            [str(SCRIPT), *args],
+            cwd="/tmp",
+            env=command_env,
             capture_output=True,
             text=True,
             check=False,

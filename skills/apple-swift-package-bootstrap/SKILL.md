@@ -34,7 +34,7 @@ Create a new Swift package repository with one top-level entry point. `scripts/r
    - `latest -> latest-major`
    - `minus-one -> current-minus-one`
    - `minus-two -> current-minus-two`
-3. Run `python3 scripts/run_workflow.py` so documented defaults are loaded from customization state and normalized into one JSON contract.
+3. Run `scripts/run_workflow.py` so documented defaults are loaded from customization state and normalized into one JSON contract.
 4. Let the wrapper invoke the bundled script:
    ```bash
    scripts/bootstrap_swift_package.sh --name <Name> --type <library|executable|tool> --destination <dir> --platform <mac|macos|mobile|ios|multiplatform|both> --version-profile <latest-major|current-minus-one|current-minus-two|latest|minus-one|minus-two>
@@ -57,7 +57,7 @@ Create a new Swift package repository with one top-level entry point. `scripts/r
 - `skip_validation`: optional flag to skip `swift build` and `swift test`.
 - `dry_run`: optional flag to resolve defaults and emit the normalized command contract without creating files.
 - Defaults:
-  - runtime entrypoint: `python3 scripts/run_workflow.py`
+  - runtime entrypoint: executable `scripts/run_workflow.py`
   - `type` defaults to `library`
   - `destination` defaults to `.`
   - `platform` defaults to `multiplatform`

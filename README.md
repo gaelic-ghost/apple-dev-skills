@@ -31,7 +31,8 @@ bash .github/scripts/validate_repo_docs.sh
 uv run pytest
 ```
 
-Use `uv run python ...` for repo-local Python helper execution and validation.
+Use the executable skill entrypoints directly, for example `skills/apple-xcode-workflow/scripts/run_workflow.py`.
+Use `uv run pytest` for the repo's test suite and other repo-root validation commands.
 Run the snippet sync script before validation whenever `shared/agents-snippets/apple-swift-core.md` changes.
 
 ## Install

@@ -1,4 +1,10 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "PyYAML>=6.0.2,<7",
+# ]
+# ///
 """Runtime workflow policy engine for apple-xcode-workflow."""
 
 from __future__ import annotations

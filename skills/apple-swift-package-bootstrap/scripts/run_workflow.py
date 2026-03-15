@@ -1,4 +1,10 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "PyYAML>=6.0.2,<7",
+# ]
+# ///
 """Unified runtime entrypoint for apple-swift-package-bootstrap."""
 
 from __future__ import annotations

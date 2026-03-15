@@ -42,7 +42,7 @@ Manage Dash docsets and cheatsheets on macOS with one top-level entry point. `sc
 - `docset_request`: required for `install` and `generate`
 - `approval`: required before side-effectful install actions
 - Defaults:
-  - runtime entrypoint: `python3 scripts/run_workflow.py`
+  - runtime entrypoint: executable `scripts/run_workflow.py`
   - `search` access order is `mcp -> http -> url-service`
   - install source priority is `built-in,user-contributed,cheatsheet`
   - default search result limit is `20`

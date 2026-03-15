@@ -17,10 +17,12 @@ SKILL_SCRIPTS = {
 
 class CustomizationCliTests(unittest.TestCase):
     def run_cli(self, script: Path, *args: str, env: dict | None = None) -> subprocess.CompletedProcess[str]:
+        command_env = dict(env or os.environ)
+        command_env.setdefault("UV_CACHE_DIR", str(Path(tempfile.gettempdir()) / "apple-dev-skills-uv-cache"))
         return subprocess.run(
-            ["uv", "run", "python", str(script), *args],
-            cwd=ROOT,
-            env=env,
+            [str(script), *args],
+            cwd="/tmp",
+            env=command_env,
             capture_output=True,
             text=True,
             check=False,

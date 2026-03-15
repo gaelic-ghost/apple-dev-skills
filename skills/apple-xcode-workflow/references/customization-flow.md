@@ -23,11 +23,11 @@ Tune the documented policy defaults for MCP-first execution, fallback behavior, 
 
 ## Update Flow
 
-1. Inspect current settings with `uv run python scripts/customization_config.py effective`.
+1. Inspect current settings with `scripts/customization_config.py effective`.
 2. Update `SKILL.md` and the affected workflow references to reflect the approved policy change.
-3. Persist the metadata change with `uv run python scripts/customization_config.py apply --input <yaml-file>`.
-4. Re-run `uv run python scripts/customization_config.py effective` and confirm the stored values match the docs.
-5. Verify the new values appear in `uv run python scripts/run_workflow.py --operation-type docs --docs-query Swift --dry-run`.
+3. Persist the metadata change with `scripts/customization_config.py apply --input <yaml-file>`.
+4. Re-run `scripts/customization_config.py effective` and confirm the stored values match the docs.
+5. Verify the new values appear in `scripts/run_workflow.py --operation-type docs --docs-query Swift --dry-run`.
 
 ## Validation
 
