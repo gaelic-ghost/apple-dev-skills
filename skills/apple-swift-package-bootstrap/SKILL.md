@@ -1,6 +1,6 @@
 ---
 name: apple-swift-package-bootstrap
-description: Bootstrap new Swift Package Manager projects with consistent defaults. Use when creating a new Swift package, scaffolding its initial structure, applying standard platform and version defaults, or customizing this skill's bootstrap defaults.
+description: Bootstrap new Swift Package Manager repositories with consistent defaults, generated AGENTS guidance, validation, and customizable bootstrap settings. Use when creating a new Swift package, choosing platform or version presets, scaffolding its initial structure, or maintaining this skill's bootstrap defaults.
 ---
 
 # Apple Swift Package Bootstrap
@@ -46,12 +46,9 @@ Create a new Swift package repository with one top-level entry point and a simpl
    - `Tests/`
    - `swift build` and `swift test` unless `--skip-validation` was requested
 6. Ensure the generated guidance encodes the shared Swift policy:
-   - prefer the simplest correct Swift that is easiest to read and reason about
-   - strongly prefer synthesized, implicit, and framework-provided behavior over custom boilerplate
-   - do not add `CodingKeys`, manual `Codable`, custom initializers, wrappers, protocols, or extra layers unless they are required or clearly simpler
-   - preserve stable source-of-truth names across layers when the data and meaning have not changed
-   - do not use `.convertFromSnakeCase`, `.convertToSnakeCase`, or similar naming conversions unless the project explicitly wants them and they clearly improve readability
-   - allow first-party and top-tier Swift ecosystem packages such as `swift-configuration` and `swift-async-algorithms` when they simplify the code
+   - apply the detailed local policy in `references/snippets/apple-swift-core.md`
+   - keep the generated repo aligned with the simplicity-first, shape-preserving, and anti-ceremony Swift guidance in that snippet
+   - preserve the project-appropriate logging, telemetry, and SwiftUI architecture guidance from that snippet
 7. Return one JSON execution summary with the created path, normalized options, and validation result.
 
 ## Inputs

@@ -1,6 +1,6 @@
 ---
 name: apple-xcode-workflow
-description: Guide Apple and Swift development work in or around Xcode. Use when tasks involve Xcode workspace inspection, diagnostics, builds, tests, runs, toolchain checks, or Apple and Swift documentation lookup.
+description: Guide Apple and Swift development work in or around Xcode, including workspace inspection, diagnostics, builds, tests, runs, toolchain checks, Apple and Swift documentation lookup, mutation guard decisions, and official CLI fallback planning. Use for existing Apple or Swift projects when Xcode-aware execution or Apple docs reasoning is needed.
 ---
 
 # Apple Xcode Workflow
@@ -35,13 +35,9 @@ Use this skill as the top-level entry point for Apple and Swift work in or aroun
    - if the docs and the current code conflict, stop and report that conflict
    - if no relevant Apple docs can be found, say that explicitly before proceeding
 3. Apply the shared Swift policy before giving implementation guidance:
-   - prefer the simplest correct Swift that is easiest to read and reason about
-   - treat idiomatic Swift, Cocoa conventions, and modern features as tools in service of readability
-   - strongly prefer synthesized, implicit, and framework-provided behavior over custom boilerplate
-   - do not add `CodingKeys`, manual `Codable`, custom initializers, protocols, wrappers, or extra layers unless they are required or clearly simpler
-   - preserve stable source-of-truth names across layers when the data and meaning have not changed
-   - do not use `.convertFromSnakeCase`, `.convertToSnakeCase`, or similar naming conversions unless the project explicitly wants them and they clearly improve readability
-   - allow first-party and top-tier Swift ecosystem packages such as `swift-configuration` and `swift-async-algorithms` when they simplify the code
+   - apply the detailed local policy in `references/snippets/apple-swift-core.md`
+   - preserve its simplicity-first, shape-preserving, and anti-ceremony Swift guidance
+   - preserve its project-appropriate logging, telemetry, and SwiftUI architecture guidance
 4. Run `scripts/run_workflow.py` to apply runtime configuration, mutation-guard checks, docs-routing order, advisory cooldown, and CLI fallback planning.
 5. Use the guidance in `references/mcp-tool-matrix.md` for agent-executed MCP operations.
 6. If MCP fails, use the structured fallback output from `scripts/run_workflow.py` together with `references/cli-fallback-matrix.md`.

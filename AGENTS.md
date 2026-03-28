@@ -18,6 +18,13 @@
 - Such skills must instruct the agent not to add `CodingKeys`, manual `Codable`, custom initializers, helper abstractions, wrappers, protocols, coordinators, or extra layers unless they are required by a concrete constraint or make the final code clearly easier to understand.
 - Such skills must treat naming consistency as a reliability feature and prefer stable source-of-truth names across layers when the data and meaning have not changed.
 - Such skills must instruct the agent not to rename fields merely to match local style conventions and not to use automatic case-conversion strategies such as `.convertFromSnakeCase` or `.convertToSnakeCase` unless the project explicitly wants that behavior and it clearly improves readability.
+- Such skills must prefer applicable existing framework or platform error types before inventing custom error wrappers or error hierarchies.
+- Such skills must strongly discourage redundant DTO, domain, and view-model transformation layers when wire or persistence shapes and meanings have not changed.
+- Such skills should explicitly encode an advanced-Swift bias toward dense but readable modern Swift rather than beginner-oriented explicitness.
+- Such skills should prefer compact functional and stream-style constructs, ternary expressions, and top-down chopped formatting when they improve readability.
+- Such skills should prefer Swift Logging, Swift OpenTelemetry, and Apple-native logging or telemetry facilities according to project context instead of bespoke wrappers.
+- Such skills should prefer SwiftFormat by Nick Lockwood and/or SwiftLint as baseline Swift formatting or linting tools, with at least one present in any Swift project.
+- Such skills should teach SwiftUI as component UI with small reusable views, small focused controller classes, straight data flow, and clear `App` / `Scene` / `View` lifecycle boundaries.
 - Such skills must not teach pattern slogans like value types by default or protocols at seams as rules that outrank local simplicity and readability.
 - Such skills should explicitly allow first-party and top-tier Swift ecosystem packages when they simplify the code and improve reasoning, especially packages such as `swift-configuration` and `swift-async-algorithms`.
 
@@ -112,6 +119,7 @@ Some alternatives for user customization/config include using their Agent's memo
 
 - Prefer `uv run` for Python command execution in examples and scripts.
 - Keep skill instructions deterministic, concise, and safety-forward.
+- Fully implement every genuinely useful and applicable skill capability, metadata surface, resource type, and validation path. Do not skip helpful skill features for convenience just because they are optional; omit a feature only when it is truly inapplicable, empty, misleading, or harmful for that specific skill.
 - Implement all applicable YAML fields in the Frontmatter.
 - Never auto-install skills; report required commands and wait for user confirmation.
 - Keep skill runtime resources inside the skill directory: `SKILL.md`, `agents/openai.yaml`, `scripts/`, `references/`, and `assets/`.

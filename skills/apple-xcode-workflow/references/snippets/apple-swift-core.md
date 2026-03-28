@@ -17,13 +17,20 @@ Use this snippet in repository `AGENTS.md` files when you want cross-project Swi
 - Prefer synthesized conformances (`Codable`, `Equatable`, `Hashable`, etc.) whenever they satisfy the actual requirements.
 - Prefer memberwise and otherwise synthesized initializers, default property values, and framework defaults over handwritten setup code.
 - Do not add `CodingKeys`, manual `Codable` methods, custom initializers, wrappers, helper types, protocols, coordinators, or extra layers unless they are required by a concrete constraint or they make the final code clearly easier to understand.
+- Prefer applicable existing framework or platform error types before inventing custom error wrappers or error hierarchies.
+- Prefer direct, simple error flows and small focused error enums only when they materially improve understanding.
 - Prefer stable, source-of-truth naming across layers when the data and meaning have not changed.
 - Treat naming consistency as a reliability feature: if the same data still serves the same purpose, keep the same name.
 - Do not rename fields just to match local style conventions when the external schema is already clear and stable.
 - Do not use automatic case-conversion strategies such as `.convertFromSnakeCase` or `.convertToSnakeCase` unless the project explicitly wants that behavior and it clearly improves readability overall.
 - When an API, cloud service, or wire format already provides clear names, preserve those names directly in Swift models and nearby code unless the meaning actually changes or a concrete collision must be resolved.
+- Preserve raw wire and persistence shapes by default; do not add DTO, domain, or view-model conversion layers unless meaning actually changes or a concrete boundary requires it.
+- Treat redundant wrappers, rename-and-copy layers, and duplicated logic as anti-patterns by default.
+- This guidance is optimized for an advanced Swift reader and may prefer dense but readable modern Swift over beginner-style explicitness.
 - Prefer explicit names that are consistent, unambiguous, and easy to scan at the call site.
-- Prefer shorthand syntax, trailing closures, enums, `AsyncSequence`, `AsyncStream`, and `AsyncAlgorithms` when they make the code shorter and clearer.
+- Prefer compact syntax when it improves local reasoning, including shorthand syntax, ternary expressions, trailing closures, enums, `switch`, `map`, `filter`, `forEach`, async iteration, `AsyncSequence`, `AsyncStream`, and `AsyncAlgorithms`.
+- Prefer explicit default values at initialization when they reduce optional-handling clutter and keep the code easier to follow.
+- When lines, chains, or expressions get long, prefer chopping them down into a clean vertical, top-down structure with straight visual flow.
 - Do not force value types by default, protocols at seams, actors by default, or other pattern slogans when a plainer concrete implementation is easier to reason about.
 - Keep code compliant with Swift 6 language mode.
 - Keep strict concurrency checking enabled.
@@ -31,7 +38,27 @@ Use this snippet in repository `AGENTS.md` files when you want cross-project Swi
 - Prefer Swift Testing (`import Testing`) as the default test framework, and use XCTest only when a dependency or platform constraint requires it.
 - Prefer first-party and top-tier Swift ecosystem packages from Apple, `swiftlang`, the Swift Server Work Group, and similar trusted core Swift projects when they simplify the code and make it easier to reason about.
 - Commonly approved examples include `swift-configuration` and `swift-async-algorithms` when they reduce bespoke code and improve readability.
+- For Apple app projects, prefer Apple-native logging facilities first and allow Swift Logging where it makes the project API clearer.
+- For packages, server-side, or cross-platform Swift, prefer Swift Logging as the primary logging API.
+- Prefer Swift OpenTelemetry for telemetry and instrumentation when telemetry is needed, and prefer existing ecosystem integrations over bespoke wrappers.
+- Prefer Nick Lockwood's SwiftFormat and/or SwiftLint as the default Swift formatting and linting tools; at least one should be configured and used in any Swift project.
 - Keep automation and CI commands deterministic, non-interactive, and explicit about toolchain, platform, and configuration assumptions.
+
+## SwiftUI and State Architecture
+
+- Treat SwiftUI views as component UI: keep them small, composable, reusable, and easy to scan from top to bottom.
+- Prefer straight, top-down data flow with small focused controller classes that own matching state for a view or small view cluster.
+- Do not build monolithic views, monolithic controllers, or broad shared mutable state when a smaller component boundary would be clearer.
+- Keep updates to view-driving state minimal and localized.
+- Prefer durable identity for types that drive SwiftUI state and view updates.
+- Treat `App` as the application entry and scene composition boundary, `Scene` as the container for scene-specific lifecycle and environment, and `View` as the component rendering layer.
+- Use app-level lifecycle concerns at the `App` boundary, scene lifecycle concerns at the `Scene` boundary, and view-local active or presentation behavior inside views.
+- Use `@Binding` to pass a focused writable piece of parent-owned state into a child view.
+- Use `@Bindable` when working with an observable model that should project bindings to its mutable properties in a view.
+- Prefer `@Query` for view-driven SwiftData fetching that should stay in sync with the model context; use explicit fetches only when the view should not be driven by a live query.
+- Prefer environment values for shared context that truly belongs to the surrounding hierarchy, not as a dumping ground for unrelated dependencies.
+- Prefer key-path-based APIs, predicates, and sort descriptors when they keep data access direct and readable.
+- Extract repeated chains of view modifiers into custom view modifiers early when that reduces clutter and clearly matches a view or family of views.
 
 ## Xcode Workspace and Project Baseline
 

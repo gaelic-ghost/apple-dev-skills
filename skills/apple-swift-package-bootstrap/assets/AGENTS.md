@@ -26,10 +26,12 @@
 - Prefer compact and concise code; use shorthand syntax and trailing-closure syntax when readability improves.
 - Do not add boilerplate, helper types, or extra layers just to make code look more architectural or more "Swifty".
 - Strongly prefer synthesized, implicit, and framework-provided behavior over handwritten setup code.
+- Prefer applicable existing framework or platform error types before inventing custom error wrappers or error hierarchies.
 - Prefer stable, source-of-truth naming across layers when the data and meaning have not changed.
 - Treat naming consistency as a reliability feature: if the same data still serves the same purpose, keep the same name.
 - Do not rename fields just to match local style conventions when the external schema is already clear and stable.
 - Do not use automatic case-conversion strategies such as `.convertFromSnakeCase` or `.convertToSnakeCase` unless the project explicitly wants that behavior and it clearly improves readability overall.
+- This guidance is optimized for an advanced Swift reader and may prefer dense but readable modern Swift over beginner-style explicitness.
 
 ## Types and Architecture
 
@@ -40,6 +42,8 @@
 - Prefer memberwise and otherwise synthesized initializers, default property values, and framework defaults over handwritten setup code.
 - Do not add `CodingKeys`, manual `Codable`, custom initializers, wrappers, helper types, protocols, coordinators, or extra layers unless they are required by a concrete constraint or make the final code clearly easier to understand.
 - When an API, cloud service, or wire format already provides clear names, preserve those names directly in Swift models and nearby code unless the meaning actually changes or a concrete collision must be resolved.
+- Preserve raw wire and persistence shapes by default; do not add DTO, domain, or view-model conversion layers unless meaning actually changes or a concrete boundary requires it.
+- Treat redundant wrappers, rename-and-copy layers, and duplicated logic as anti-patterns by default.
 - Use enums as namespaces only when they genuinely reduce clutter instead of adding indirection.
 - Keep code modular and cohesive without fragmenting simple logic across unnecessary files or types.
 - Prefer pure Swift solutions where practical.
@@ -49,12 +53,18 @@
 - Keep code compliant with Swift 6 language mode.
 - Keep strict concurrency checking enabled.
 - Use modern structured concurrency (`async`/`await`, task groups, actors, `AsyncSequence`) instead of legacy async patterns when it keeps the flow clearer and more direct.
+- Prefer compact syntax when it improves local reasoning, including shorthand syntax, ternary expressions, trailing closures, `switch`, `map`, `filter`, `forEach`, and async iteration.
+- Prefer explicit default values at initialization when they reduce optional-handling clutter and keep the code easier to follow.
+- When lines, chains, or expressions get long, prefer chopping them down into a clean vertical, top-down structure with straight visual flow.
 - For app-facing packages, prefer approachable concurrency defaults with main-actor isolation by default.
 - Introduce parallelism where it produces clear performance gains.
 
 ## State, Frameworks, and Dependencies
 
 - Prefer `@Observation` over Combine for observation/state propagation.
+- For Apple app projects, prefer Apple-native logging facilities first and allow Swift Logging where it makes the project API clearer.
+- For packages, server-side, or cross-platform Swift, prefer Swift Logging as the primary logging API.
+- Prefer Swift OpenTelemetry for telemetry and instrumentation when telemetry is needed, and prefer existing ecosystem integrations over bespoke wrappers.
 - Prefer frameworks and packages from Swift.org, Swift on Server, Apple, and Apple Open Source ecosystems when they simplify the code and make it easier to reason about.
 - Commonly approved examples include packages such as `swift-configuration`, `swift-async-algorithms`, and `swift-algorithms`.
 
@@ -62,8 +72,25 @@
 
 - Use Swift Testing (`import Testing`) as the default test framework.
 - Avoid XCTest unless an external constraint requires it.
+- Prefer Nick Lockwood's SwiftFormat and/or SwiftLint as baseline Swift formatting and linting tools; at least one should be configured and used in any Swift project.
 - Keep formatting consistent with `swift-format` conventions.
 - Keep linting clean against `swiftlint` with clear, maintainable rule intent.
+
+## SwiftUI and State Architecture
+
+- Treat SwiftUI views as component UI: keep them small, composable, reusable, and easy to scan from top to bottom.
+- Prefer straight, top-down data flow with small focused controller classes that own matching state for a view or small view cluster.
+- Do not build monolithic views, monolithic controllers, or broad shared mutable state when a smaller component boundary would be clearer.
+- Keep updates to view-driving state minimal and localized.
+- Prefer durable identity for types that drive SwiftUI state and view updates.
+- Treat `App` as the application entry and scene composition boundary, `Scene` as the container for scene-specific lifecycle and environment, and `View` as the component rendering layer.
+- Use app-level lifecycle concerns at the `App` boundary, scene lifecycle concerns at the `Scene` boundary, and view-local active or presentation behavior inside views.
+- Use `@Binding` to pass a focused writable piece of parent-owned state into a child view.
+- Use `@Bindable` when working with an observable model that should project bindings to its mutable properties in a view.
+- Prefer `@Query` for view-driven SwiftData fetching that should stay in sync with the model context; use explicit fetches only when the view should not be driven by a live query.
+- Prefer environment values for shared context that truly belongs to the surrounding hierarchy, not as a dumping ground for unrelated dependencies.
+- Prefer key-path-based APIs, predicates, and sort descriptors when they keep data access direct and readable.
+- Extract repeated chains of view modifiers into custom view modifiers early when that reduces clutter and clearly matches a view or family of views.
 
 ## CLI Tooling Preferences
 

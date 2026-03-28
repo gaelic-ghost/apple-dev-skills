@@ -1,4 +1,4 @@
 interface:
   display_name: "Apple Xcode Workflow"
-  short_description: "Guide Apple and Swift work in and around Xcode"
-  default_prompt: "Use apple-xcode-workflow for Apple and Swift tasks involving Xcode workspace inspection, diagnostics, builds, tests, runs, toolchain checks, or Apple and Swift documentation lookup."
+  short_description: "Guide Xcode execution, docs, and fallback workflows"
+  default_prompt: "Use $apple-xcode-workflow to inspect Xcode workspaces, run Apple builds or tests, look up Apple docs, and choose the right guarded fallback path."

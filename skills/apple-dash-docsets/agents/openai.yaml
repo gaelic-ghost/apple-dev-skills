@@ -1,4 +1,4 @@
 interface:
   display_name: "Apple Dash Docsets"
-  short_description: "Manage Dash docsets, discovery, and install guidance"
-  default_prompt: "Use apple-dash-docsets for Dash docset and cheatsheet work involving search and discovery, installing missing docsets, or generation guidance when a docset is unavailable."
+  short_description: "Manage Dash docsets, installs, and fallback guidance"
+  default_prompt: "Use $apple-dash-docsets to search Dash docsets, plan installs for missing docsets, or follow the right fallback path when Dash content is unavailable."

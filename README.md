@@ -27,6 +27,7 @@ This repository standardizes maintainer-side Python tooling around `uv`.
 ```bash
 uv sync --dev
 bash .github/scripts/sync_apple_swift_core_snippet.sh
+uv run python .github/scripts/validate_skill_creator_contract.py
 bash .github/scripts/validate_repo_docs.sh
 uv run pytest
 ```

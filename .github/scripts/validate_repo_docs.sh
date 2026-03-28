@@ -111,6 +111,9 @@ for skill_md in "${skill_mds[@]}"; do
   grep -Eiq "recommend.{0,120}references/snippets/apple-swift-core.md|references/snippets/apple-swift-core.md.{0,120}recommend" "$skill_md" || fail "Missing snippet recommendation guidance in $skill_md"
 done
 
+echo "Validating skill-creator contract..."
+uv run python .github/scripts/validate_skill_creator_contract.py >/dev/null
+
 echo "Validating workflow document content..."
 grep -q '```mermaid' "$workflow_doc" || fail "$workflow_doc must contain Mermaid diagrams."
 grep -q 'Agent ↔ User UX' "$workflow_doc" || fail "$workflow_doc must describe Agent ↔ User UX."

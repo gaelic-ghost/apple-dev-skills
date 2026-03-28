@@ -1,6 +1,6 @@
 ---
 name: apple-dash-docsets
-description: Manage Dash docsets and cheatsheets on macOS. Use when tasks involve Dash search and discovery, installing missing docsets, or generating guidance when a docset is unavailable.
+description: Manage Dash docsets and cheatsheets on macOS, including search and discovery, install guidance for missing docsets, local access fallback paths between Dash MCP, HTTP, and URL or Service integration, and generation guidance when a docset is unavailable. Use when Codex needs Dash docset or cheatsheet help rather than Apple or Xcode execution work.
 ---
 
 # Apple Dash Docsets
