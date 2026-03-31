@@ -25,6 +25,7 @@
 - [x] Milestone 10: Top-Level Skill Reset
 - [x] Milestone 11: Documentation Maintenance Cadence
 - [ ] Milestone 12: Deferred Audit Reporting and Future Swift Direction
+- [ ] Milestone 13: SwiftPM Bootstrap Parity
 
 ## Milestone 1: Initial Apple Skill Bundle
 
@@ -209,6 +210,25 @@ Tickets:
 Exit criteria:
 
 - [ ] A future roadmap update intentionally reactivates this milestone with concrete implementation work and validation criteria.
+
+## Milestone 13: SwiftPM Bootstrap Parity
+
+Scope:
+
+- [ ] Align the Swift package bootstrap skill with current `swift package init` behavior and option support.
+
+Tickets:
+
+- [ ] Audit current SwiftPM `swift package init` flags and template behavior on supported toolchains.
+- [ ] Update the bootstrap workflow to use current testing options instead of backfilling stale XCTest scaffolding when Swift Testing is requested.
+- [ ] Document how the skill should choose between `swift package init` flags and follow-up package edits when toolchain support differs.
+- [ ] Add validation coverage for executable-package bootstrap output so generated tests and package shape match documented expectations.
+
+Exit criteria:
+
+- [ ] The bootstrap skill matches current SwiftPM testing options and generated package behavior on supported toolchains.
+- [ ] Maintainer docs explain the expected fallback behavior when older toolchains lack newer `swift package init` options.
+- [ ] Validation catches drift between documented bootstrap behavior and actual generated package output.
 
 ## Historical Notes
 
