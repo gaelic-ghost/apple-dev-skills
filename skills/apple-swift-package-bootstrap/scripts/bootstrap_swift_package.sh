@@ -63,6 +63,7 @@ run_validation="true"
 initialize_git="true"
 copy_agents="true"
 probe_testing_mode="false"
+probe_bootstrap_inputs="false"
 
 ios_version=""
 macos_version=""
@@ -298,6 +299,10 @@ while [[ $# -gt 0 ]]; do
       probe_testing_mode="true"
       shift 2
       ;;
+    --probe-bootstrap-inputs)
+      probe_bootstrap_inputs="true"
+      shift
+      ;;
     -h|--help)
       usage
       exit 0
@@ -402,6 +407,11 @@ EOF
 
 if [[ "$probe_testing_mode" == "true" ]]; then
   echo "Testing mode supported: $testing_mode"
+  exit 0
+fi
+
+if [[ "$probe_bootstrap_inputs" == "true" ]]; then
+  echo "Bootstrap inputs supported for: $name"
   exit 0
 fi
 

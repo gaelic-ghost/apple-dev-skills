@@ -69,6 +69,17 @@ def probe_testing_mode(script_path: Path, testing_mode: str) -> tuple[bool, str]
     return proc.returncode == 0, proc.stderr.strip()
 
 
+def probe_bootstrap_inputs(command: list[str]) -> tuple[int, str]:
+    probe_command = [command[0], *command[1:], "--probe-bootstrap-inputs"]
+    proc = subprocess.run(
+        probe_command,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    return proc.returncode, proc.stderr.strip()
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--name")
@@ -176,6 +187,23 @@ def main() -> int:
         command.append("--skip-copy-agents")
 
     if args.dry_run:
+        probe_code, probe_stderr = probe_bootstrap_inputs(command)
+        if probe_code != 0:
+            payload = {
+                "status": "blocked" if probe_code == 2 else "failed",
+                "path_type": "primary",
+                "resolved_path": None,
+                "normalized_inputs": normalized_inputs,
+                "validation_result": "blocked (--dry-run input probe)" if probe_code == 2 else "failed (--dry-run input probe)",
+                "stderr": probe_stderr,
+                "next_step": (
+                    "Resolve the bootstrap prerequisite or input validation issue and rerun the workflow."
+                    if probe_code == 2
+                    else "Fix the dry-run validation failure and rerun the workflow."
+                ),
+            }
+            print(json.dumps(payload, indent=2, sort_keys=True))
+            return 1
         payload = {
             "status": "success",
             "path_type": "primary",

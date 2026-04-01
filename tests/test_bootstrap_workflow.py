@@ -145,6 +145,32 @@ class BootstrapWorkflowTests(unittest.TestCase):
         self.assertEqual(payload["status"], "blocked")
         self.assertIn("supported testing mode", payload["next_step"])
 
+    def test_dry_run_rejects_invalid_package_type(self) -> None:
+        code, payload = self.run_script(
+            "--name",
+            "DemoPkg",
+            "--type",
+            "bogus",
+            "--dry-run",
+        )
+        self.assertEqual(code, 1)
+        self.assertEqual(payload["status"], "blocked")
+        self.assertIn("input validation issue", payload["next_step"])
+        self.assertIn("--type must be", payload["stderr"])
+
+    def test_dry_run_rejects_invalid_version_profile(self) -> None:
+        code, payload = self.run_script(
+            "--name",
+            "DemoPkg",
+            "--version-profile",
+            "bogus",
+            "--dry-run",
+        )
+        self.assertEqual(code, 1)
+        self.assertEqual(payload["status"], "blocked")
+        self.assertIn("input validation issue", payload["next_step"])
+        self.assertIn("--version-profile must be", payload["stderr"])
+
     @unittest.skipUnless(shutil.which("swift"), "swift is required for toolchain compatibility coverage")
     def test_dry_run_rejects_unsupported_swift_testing_selection(self) -> None:
         real_swift = shutil.which("swift")
