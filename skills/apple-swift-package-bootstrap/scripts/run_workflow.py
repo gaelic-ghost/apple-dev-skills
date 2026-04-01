@@ -47,6 +47,28 @@ def parse_output(stdout: str) -> dict:
     return result
 
 
+def blocked_payload(normalized_inputs: dict, next_step: str, *, validation_result: str | None = None, stderr: str = "") -> dict:
+    return {
+        "status": "blocked",
+        "path_type": "primary",
+        "resolved_path": None,
+        "normalized_inputs": normalized_inputs,
+        "validation_result": validation_result,
+        "stderr": stderr,
+        "next_step": next_step,
+    }
+
+
+def probe_testing_mode(script_path: Path, testing_mode: str) -> tuple[bool, str]:
+    proc = subprocess.run(
+        [str(script_path), "--name", "ProbePackage", "--probe-testing-mode", testing_mode],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    return proc.returncode == 0, proc.stderr.strip()
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--name")
@@ -86,6 +108,15 @@ def main() -> int:
         "copy_agents_md": copy_agents,
     }
 
+    if testing_mode not in {"swift-testing", "xctest"}:
+        payload = blocked_payload(
+            normalized_inputs,
+            "Choose a supported testing mode and rerun the workflow.",
+            stderr="--testing-mode must be 'swift-testing' or 'xctest'",
+        )
+        print(json.dumps(payload, indent=2, sort_keys=True))
+        return 1
+
     if not name:
         payload = {
             "status": "blocked",
@@ -110,6 +141,17 @@ def main() -> int:
         }
         print(json.dumps(payload, indent=2, sort_keys=True))
         return 0
+
+    probe_ok, probe_stderr = probe_testing_mode(script_path, testing_mode)
+    if not probe_ok:
+        payload = blocked_payload(
+            normalized_inputs,
+            "Resolve the bootstrap prerequisite or toolchain selection issue and rerun the workflow.",
+            validation_result="blocked (--testing-mode probe)",
+            stderr=probe_stderr,
+        )
+        print(json.dumps(payload, indent=2, sort_keys=True))
+        return 1
 
     command = [
         str(script_path),
@@ -148,8 +190,18 @@ def main() -> int:
 
     proc = subprocess.run(command, capture_output=True, text=True, check=False)
     parsed = parse_output(proc.stdout)
+    status = "success" if proc.returncode == 0 else ("blocked" if proc.returncode == 2 else "failed")
+    next_step = (
+        "Use apple-xcode-workflow for build, test, or xcodebuild-based package work when Xcode-managed tooling is required."
+        if status == "success"
+        else (
+            "Resolve the bootstrap prerequisite or toolchain selection issue and rerun the workflow."
+            if status == "blocked"
+            else "Fix the bootstrap error and rerun the workflow."
+        )
+    )
     payload = {
-        "status": "success" if proc.returncode == 0 else "failed",
+        "status": status,
         "path_type": "primary",
         "resolved_path": parsed["resolved_path"],
         "normalized_inputs": normalized_inputs,
@@ -159,11 +211,7 @@ def main() -> int:
         "testing_mode": parsed["testing_mode"],
         "stdout": proc.stdout,
         "stderr": proc.stderr,
-        "next_step": (
-            "Use apple-xcode-workflow for build, test, or xcodebuild-based package work when Xcode-managed tooling is required."
-            if proc.returncode == 0
-            else "Fix the bootstrap error and rerun the workflow."
-        ),
+        "next_step": next_step,
     }
     print(json.dumps(payload, indent=2, sort_keys=True))
     return 0 if proc.returncode == 0 else 1

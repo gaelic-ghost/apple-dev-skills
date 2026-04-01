@@ -6,6 +6,7 @@ import shutil
 import subprocess
 import tempfile
 import unittest
+from contextlib import contextmanager
 from pathlib import Path
 
 
@@ -26,6 +27,19 @@ def write_config(tmpdir: str, skill: str, settings: dict) -> None:
             raw = f'"{value}"'
         lines.append(f"  {key}: {raw}")
     target.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+@contextmanager
+def fake_swift_in_path(script_body: str):
+    with tempfile.TemporaryDirectory() as tmpdir:
+        bin_dir = Path(tmpdir) / "bin"
+        bin_dir.mkdir()
+        swift_path = bin_dir / "swift"
+        swift_path.write_text(script_body, encoding="utf-8")
+        swift_path.chmod(0o755)
+        env = dict(os.environ)
+        env["PATH"] = f"{bin_dir}:{env['PATH']}"
+        yield env
 
 
 class BootstrapWorkflowTests(unittest.TestCase):
@@ -116,8 +130,98 @@ class BootstrapWorkflowTests(unittest.TestCase):
                 "--skip-validation",
             )
             self.assertEqual(code, 1)
-            self.assertEqual(payload["status"], "failed")
-            self.assertIn("Fix the bootstrap error", payload["next_step"])
+            self.assertEqual(payload["status"], "blocked")
+            self.assertIn("Resolve the bootstrap prerequisite", payload["next_step"])
+
+    def test_dry_run_rejects_invalid_testing_mode(self) -> None:
+        code, payload = self.run_script(
+            "--name",
+            "DemoPkg",
+            "--testing-mode",
+            "unsupported",
+            "--dry-run",
+        )
+        self.assertEqual(code, 1)
+        self.assertEqual(payload["status"], "blocked")
+        self.assertIn("supported testing mode", payload["next_step"])
+
+    @unittest.skipUnless(shutil.which("swift"), "swift is required for toolchain compatibility coverage")
+    def test_dry_run_rejects_unsupported_swift_testing_selection(self) -> None:
+        real_swift = shutil.which("swift")
+        assert real_swift is not None
+        script_body = f"""#!/bin/sh
+if [ "$1" = "package" ] && [ "$2" = "init" ] && [ "$3" = "--help" ]; then
+  cat <<'EOF'
+OVERVIEW: Initialize a new package.
+
+USAGE: swift package init [--type <type>] [--enable-xctest] [--disable-xctest] [--name <name>]
+EOF
+  exit 0
+fi
+exec "{real_swift}" "$@"
+"""
+        with fake_swift_in_path(script_body) as env:
+            code, payload = self.run_script(
+                "--name",
+                "DemoPkg",
+                "--testing-mode",
+                "swift-testing",
+                "--dry-run",
+                env=env,
+            )
+        self.assertEqual(code, 1)
+        self.assertEqual(payload["status"], "blocked")
+        self.assertIn("toolchain selection issue", payload["next_step"])
+        self.assertIn("does not support Swift Testing", payload["stderr"])
+
+    @unittest.skipUnless(shutil.which("swift"), "swift is required for failure-path coverage")
+    def test_runtime_reports_failed_when_package_init_fails(self) -> None:
+        real_swift = shutil.which("swift")
+        assert real_swift is not None
+        script_body = f"""#!/bin/sh
+if [ "$1" = "package" ] && [ "$2" = "init" ] && [ "$3" = "--help" ]; then
+  exec "{real_swift}" "$@"
+fi
+if [ "$1" = "package" ] && [ "$2" = "init" ]; then
+  echo "Simulated swift package init failure." >&2
+  exit 1
+fi
+exec "{real_swift}" "$@"
+"""
+        with tempfile.TemporaryDirectory() as tmpdir, fake_swift_in_path(script_body) as env:
+            code, payload = self.run_script(
+                "--name",
+                "DemoPkg",
+                "--destination",
+                tmpdir,
+                "--skip-validation",
+                env=env,
+            )
+        self.assertEqual(code, 1)
+        self.assertEqual(payload["status"], "failed")
+        self.assertIn("Fix the bootstrap error", payload["next_step"])
+
+    @unittest.skipUnless(shutil.which("swift"), "swift is required for XCTest bootstrap coverage")
+    def test_executable_bootstrap_creates_xctest_test_target(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            code, payload = self.run_script(
+                "--name",
+                "DemoPkg",
+                "--type",
+                "executable",
+                "--testing-mode",
+                "xctest",
+                "--destination",
+                tmpdir,
+                "--skip-validation",
+            )
+            self.assertEqual(code, 0)
+            package_dir = Path(payload["resolved_path"])
+            test_file = package_dir / "Tests" / "DemoPkgTests" / "DemoPkgTests.swift"
+            self.assertTrue(test_file.is_file())
+            test_text = test_file.read_text(encoding="utf-8")
+            self.assertIn("import XCTest", test_text)
+            self.assertIn("XCTestCase", test_text)
 
     @unittest.skipUnless(shutil.which("swift"), "swift is required for end-to-end bootstrap success")
     def test_wrapper_normalizes_shell_success(self) -> None:

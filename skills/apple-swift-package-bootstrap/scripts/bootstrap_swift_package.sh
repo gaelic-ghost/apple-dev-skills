@@ -16,6 +16,16 @@ Examples:
 USAGE
 }
 
+blocked() {
+  echo "$*" >&2
+  exit 2
+}
+
+failed() {
+  echo "$*" >&2
+  exit 1
+}
+
 name=""
 pkg_type="library"
 destination="."
@@ -25,6 +35,7 @@ testing_mode="swift-testing"
 run_validation="true"
 initialize_git="true"
 copy_agents="true"
+probe_testing_mode="false"
 
 ios_version=""
 macos_version=""
@@ -252,6 +263,11 @@ while [[ $# -gt 0 ]]; do
       copy_agents="false"
       shift
       ;;
+    --probe-testing-mode)
+      testing_mode="${2:-}"
+      probe_testing_mode="true"
+      shift 2
+      ;;
     -h|--help)
       usage
       exit 0
@@ -259,7 +275,7 @@ while [[ $# -gt 0 ]]; do
     *)
       echo "Unknown argument: $1" >&2
       usage >&2
-      exit 1
+      exit 2
       ;;
   esac
 done
@@ -291,69 +307,72 @@ esac
 if [[ -z "$name" ]]; then
   echo "--name is required" >&2
   usage >&2
-  exit 1
+  exit 2
 fi
 
 if [[ "$pkg_type" != "library" && "$pkg_type" != "executable" && "$pkg_type" != "tool" ]]; then
-  echo "--type must be 'library', 'executable', or 'tool'" >&2
-  exit 1
+  blocked "--type must be 'library', 'executable', or 'tool'"
 fi
 
 if [[ "$platform_mode" != "mac" && "$platform_mode" != "mobile" && "$platform_mode" != "multiplatform" ]]; then
-  echo "--platform must be 'mac', 'mobile', or 'multiplatform' (aliases: macos, ios, both)" >&2
-  exit 1
+  blocked "--platform must be 'mac', 'mobile', or 'multiplatform' (aliases: macos, ios, both)"
 fi
 
 if [[ "$version_profile" != "latest-major" && "$version_profile" != "current-minus-one" && "$version_profile" != "current-minus-two" ]]; then
-  echo "--version-profile must be 'latest-major', 'current-minus-one', 'current-minus-two' (or aliases: latest, minus-one, minus-two)" >&2
-  exit 1
+  blocked "--version-profile must be 'latest-major', 'current-minus-one', 'current-minus-two' (or aliases: latest, minus-one, minus-two)"
 fi
 
 if [[ "$testing_mode" != "swift-testing" && "$testing_mode" != "xctest" ]]; then
-  echo "--testing-mode must be 'swift-testing' or 'xctest'" >&2
-  exit 1
+  blocked "--testing-mode must be 'swift-testing' or 'xctest'"
 fi
 
 if [[ ! "$name" =~ ^[A-Za-z][A-Za-z0-9_-]*$ ]]; then
-  echo "--name must start with a letter and contain only letters, numbers, underscore, or hyphen" >&2
-  exit 1
+  blocked "--name must start with a letter and contain only letters, numbers, underscore, or hyphen"
 fi
 
 if ! command -v swift >/dev/null 2>&1; then
-  echo "Swift is not installed or not on PATH." >&2
-  exit 1
+  blocked "Swift is not installed or not on PATH."
 fi
 
 if [[ "$initialize_git" == "true" ]] && ! command -v git >/dev/null 2>&1; then
-  echo "git is not installed or not on PATH." >&2
-  exit 1
+  blocked "git is not installed or not on PATH."
 fi
 
 if [[ "$copy_agents" == "true" ]] && [[ ! -f "$agents_template" ]]; then
-  echo "Template missing: $agents_template" >&2
-  exit 1
+  blocked "Template missing: $agents_template"
 fi
 
 target_dir="$destination/$name"
 
+if [[ -e "$destination" && ! -d "$destination" ]]; then
+  blocked "Destination exists and is not a directory: $destination"
+fi
+
 if [[ -e "$target_dir" && ! -d "$target_dir" ]]; then
-  echo "Target exists and is not a directory: $target_dir" >&2
-  exit 1
+  blocked "Target exists and is not a directory: $target_dir"
 fi
 
 mkdir -p "$destination"
 
 if [[ -e "$target_dir" ]] && directory_has_non_ignorable_entries "$target_dir"; then
-  echo "Target directory exists and is not empty: $target_dir" >&2
-  exit 1
+  blocked "Target directory exists and is not empty: $target_dir"
 fi
 
 set_version_targets
 init_testing_args=()
+init_testing_output="$(configure_testing_mode "$testing_mode")"
 while IFS= read -r arg; do
   [[ -n "$arg" ]] || continue
   init_testing_args+=("$arg")
-done < <(configure_testing_mode "$testing_mode")
+done <<EOF
+$init_testing_output
+EOF
+
+if [[ "$probe_testing_mode" == "true" ]]; then
+  echo "Testing mode supported: $testing_mode"
+  exit 0
+fi
+
 mkdir -p "$target_dir"
 (
   cd "$target_dir"
@@ -363,8 +382,7 @@ mkdir -p "$target_dir"
     snippet="$(platforms_snippet)"
     name_line_num="$(grep -nE '^[[:space:]]*name:[[:space:]]*".*",?[[:space:]]*$' Package.swift | head -n 1 | cut -d: -f1)"
     if [[ -z "$name_line_num" ]]; then
-      echo "Validation failed: unable to locate package name line in Package.swift." >&2
-      exit 1
+      failed "Validation failed: unable to locate package name line in Package.swift."
     fi
 
     {
@@ -386,28 +404,23 @@ mkdir -p "$target_dir"
   ensure_test_target "$testing_mode" "$name"
 
   if [[ ! -f Package.swift ]]; then
-    echo "Validation failed: Package.swift missing after initialization." >&2
-    exit 1
+    failed "Validation failed: Package.swift missing after initialization."
   fi
 
   if [[ "$initialize_git" == "true" ]] && [[ ! -d .git ]]; then
-    echo "Validation failed: git repository was not initialized." >&2
-    exit 1
+    failed "Validation failed: git repository was not initialized."
   fi
 
   if [[ "$copy_agents" == "true" ]] && [[ ! -f AGENTS.md ]]; then
-    echo "Validation failed: AGENTS.md missing." >&2
-    exit 1
+    failed "Validation failed: AGENTS.md missing."
   fi
 
   if [[ ! -d Tests ]]; then
-    echo "Validation failed: Tests target directory missing." >&2
-    exit 1
+    failed "Validation failed: Tests target directory missing."
   fi
 
   if ! grep -q "${name}Tests" Package.swift; then
-    echo "Validation failed: test target entry not found in Package.swift." >&2
-    exit 1
+    failed "Validation failed: test target entry not found in Package.swift."
   fi
 
   if [[ "$run_validation" == "true" ]]; then

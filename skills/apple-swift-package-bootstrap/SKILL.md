@@ -39,7 +39,7 @@ Create a new Swift package repository with one top-level entry point and a simpl
 4. Select testing mode before scaffold creation:
    - prefer `swift-testing` on current toolchains
    - use `xctest` when explicitly requested or when older toolchains require it
-   - stop with a clear toolchain error instead of pretending Swift Testing is available when the local `swift package init` command cannot select it
+   - stop with `blocked` and a clear toolchain error instead of pretending Swift Testing is available when the local `swift package init` command cannot select it
 5. Let the wrapper invoke the bundled script:
    ```bash
    scripts/bootstrap_swift_package.sh --name <Name> --type <library|executable|tool> --destination <dir> --platform <mac|macos|mobile|ios|multiplatform|both> --version-profile <latest-major|current-minus-one|current-minus-two|latest|minus-one|minus-two> --testing-mode <swift-testing|xctest>
@@ -82,7 +82,7 @@ Create a new Swift package repository with one top-level entry point and a simpl
 
 - `status`
   - `success`: the package was created and verification succeeded
-  - `blocked`: prerequisites or target-directory constraints prevented the run
+  - `blocked`: prerequisites, unsupported testing-mode/toolchain selections, or target-directory constraints prevented the run
   - `failed`: the script started but did not complete successfully
 - `path_type`
   - `primary`: the bundled script completed successfully
@@ -100,6 +100,7 @@ Create a new Swift package repository with one top-level entry point and a simpl
 - Stop with `blocked` if `assets/AGENTS.md` is missing.
 - Stop with `blocked` if the target exists and contains non-ignorable files.
 - Stop with `blocked` if `name` is missing.
+- Stop with `blocked` if the requested testing mode cannot be honored by the active `swift package init` command.
 
 ## Fallbacks and Handoffs
 

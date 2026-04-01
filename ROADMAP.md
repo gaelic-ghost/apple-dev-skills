@@ -208,6 +208,7 @@ Tickets:
 - [ ] Hold a placeholder for future non-xcode swift skill design direction.
 - [ ] Add Dash end-to-end coverage for real install and fallback flows beyond dry-run and blocked-path assertions.
 - [ ] Add Xcode end-to-end coverage for real MCP or CLI fallback execution beyond policy-shaping tests.
+- [ ] Add broader bootstrap coverage for blocked-vs-failed negative paths, alternate testing modes, and dry-run toolchain-validation behavior beyond the immediate SwiftPM parity fixes.
 
 Exit criteria:
 
