@@ -150,6 +150,9 @@ class BootstrapWorkflowTests(unittest.TestCase):
         real_swift = shutil.which("swift")
         assert real_swift is not None
         script_body = f"""#!/bin/sh
+if [ "$1" = "--version" ]; then
+  exec "{real_swift}" "$@"
+fi
 if [ "$1" = "package" ] && [ "$2" = "init" ] && [ "$3" = "--help" ]; then
   cat <<'EOF'
 OVERVIEW: Initialize a new package.
@@ -173,6 +176,88 @@ exec "{real_swift}" "$@"
         self.assertEqual(payload["status"], "blocked")
         self.assertIn("toolchain selection issue", payload["next_step"])
         self.assertIn("does not support Swift Testing", payload["stderr"])
+
+    @unittest.skipUnless(shutil.which("swift"), "swift is required for toolchain floor coverage")
+    def test_dry_run_accepts_swift_5_10_floor(self) -> None:
+        real_swift = shutil.which("swift")
+        assert real_swift is not None
+        script_body = f"""#!/bin/sh
+if [ "$1" = "--version" ]; then
+  cat <<'EOF'
+Apple Swift version 5.10 (swift-5.10-RELEASE)
+Target: arm64-apple-macosx14.0
+EOF
+  exit 0
+fi
+if [ "$1" = "package" ] && [ "$2" = "init" ] && [ "$3" = "--help" ]; then
+  exec "{real_swift}" "$@"
+fi
+exec "{real_swift}" "$@"
+"""
+        with fake_swift_in_path(script_body) as env:
+            code, payload = self.run_script(
+                "--name",
+                "DemoPkg",
+                "--testing-mode",
+                "xctest",
+                "--dry-run",
+                env=env,
+            )
+        self.assertEqual(code, 0)
+        self.assertEqual(payload["status"], "success")
+
+    @unittest.skipUnless(shutil.which("swift"), "swift is required for toolchain floor coverage")
+    def test_dry_run_blocks_swift_5_9_toolchain(self) -> None:
+        real_swift = shutil.which("swift")
+        assert real_swift is not None
+        script_body = f"""#!/bin/sh
+if [ "$1" = "--version" ]; then
+  cat <<'EOF'
+Apple Swift version 5.9.2 (swift-5.9.2-RELEASE)
+Target: arm64-apple-macosx14.0
+EOF
+  exit 0
+fi
+if [ "$1" = "package" ] && [ "$2" = "init" ] && [ "$3" = "--help" ]; then
+  exec "{real_swift}" "$@"
+fi
+exec "{real_swift}" "$@"
+"""
+        with fake_swift_in_path(script_body) as env:
+            code, payload = self.run_script(
+                "--name",
+                "DemoPkg",
+                "--dry-run",
+                env=env,
+            )
+        self.assertEqual(code, 1)
+        self.assertEqual(payload["status"], "blocked")
+        self.assertIn("Swift 5.10+", payload["stderr"])
+
+    @unittest.skipUnless(shutil.which("swift"), "swift is required for toolchain floor coverage")
+    def test_dry_run_blocks_unparseable_swift_version(self) -> None:
+        real_swift = shutil.which("swift")
+        assert real_swift is not None
+        script_body = f"""#!/bin/sh
+if [ "$1" = "--version" ]; then
+  echo "mystery toolchain output"
+  exit 0
+fi
+if [ "$1" = "package" ] && [ "$2" = "init" ] && [ "$3" = "--help" ]; then
+  exec "{real_swift}" "$@"
+fi
+exec "{real_swift}" "$@"
+"""
+        with fake_swift_in_path(script_body) as env:
+            code, payload = self.run_script(
+                "--name",
+                "DemoPkg",
+                "--dry-run",
+                env=env,
+            )
+        self.assertEqual(code, 1)
+        self.assertEqual(payload["status"], "blocked")
+        self.assertIn("Unable to parse", payload["stderr"])
 
     @unittest.skipUnless(shutil.which("swift"), "swift is required for failure-path coverage")
     def test_runtime_reports_failed_when_package_init_fails(self) -> None:

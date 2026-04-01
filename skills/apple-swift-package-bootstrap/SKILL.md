@@ -37,9 +37,10 @@ Create a new Swift package repository with one top-level entry point and a simpl
    - `minus-two -> current-minus-two`
 3. Run `scripts/run_workflow.py` so documented defaults are loaded from customization state and normalized into one JSON contract.
 4. Select testing mode before scaffold creation:
-   - prefer `swift-testing` on current toolchains
-   - use `xctest` when explicitly requested or when older toolchains require it
-   - stop with `blocked` and a clear toolchain error instead of pretending Swift Testing is available when the local `swift package init` command cannot select it
+   - require a supported and validated `Swift 5.10+` toolchain floor before bootstrap planning continues
+   - prefer `swift-testing` on supported current toolchains
+   - use `xctest` when explicitly requested or when the supported toolchain requires it
+   - stop with `blocked` when the local toolchain is older than `5.10` or when the local `swift package init` command cannot select the requested testing mode
 5. Let the wrapper invoke the bundled script:
    ```bash
    scripts/bootstrap_swift_package.sh --name <Name> --type <library|executable|tool> --destination <dir> --platform <mac|macos|mobile|ios|multiplatform|both> --version-profile <latest-major|current-minus-one|current-minus-two|latest|minus-one|minus-two> --testing-mode <swift-testing|xctest>
@@ -77,12 +78,13 @@ Create a new Swift package repository with one top-level entry point and a simpl
   - `version_profile` defaults to `current-minus-one`
   - `testing_mode` defaults to `swift-testing`
   - validation runs unless `--skip-validation` is passed
+  - supported and validated Swift toolchain floor is `5.10+`
 
 ## Outputs
 
 - `status`
   - `success`: the package was created and verification succeeded
-  - `blocked`: prerequisites, unsupported testing-mode/toolchain selections, or target-directory constraints prevented the run
+  - `blocked`: prerequisites, unsupported toolchains, unsupported testing-mode selections, or target-directory constraints prevented the run
   - `failed`: the script started but did not complete successfully
 - `path_type`
   - `primary`: the bundled script completed successfully
@@ -96,6 +98,8 @@ Create a new Swift package repository with one top-level entry point and a simpl
 ## Guards and Stop Conditions
 
 - Stop with `blocked` if `swift` is missing.
+- Stop with `blocked` if `swift --version` cannot be parsed into a supported toolchain version.
+- Stop with `blocked` if the local Swift toolchain is older than `5.10`.
 - Stop with `blocked` if `git` is missing.
 - Stop with `blocked` if `assets/AGENTS.md` is missing.
 - Stop with `blocked` if the target exists and contains non-ignorable files.

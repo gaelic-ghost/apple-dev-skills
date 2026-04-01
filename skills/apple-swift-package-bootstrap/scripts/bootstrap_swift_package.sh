@@ -26,6 +26,33 @@ failed() {
   exit 1
 }
 
+load_swift_version() {
+  swift_version_output="$(swift --version 2>/dev/null || true)"
+  if [[ -z "$swift_version_output" ]]; then
+    blocked "Unable to determine the local Swift toolchain version. The bootstrap skill supports Swift 5.10+."
+  fi
+
+  if [[ "$swift_version_output" =~ Swift[[:space:]]+version[[:space:]]+([0-9]+)\.([0-9]+) ]]; then
+    swift_major_version="${BASH_REMATCH[1]}"
+    swift_minor_version="${BASH_REMATCH[2]}"
+    return 0
+  fi
+
+  blocked "Unable to parse the local Swift toolchain version from 'swift --version'. The bootstrap skill supports Swift 5.10+."
+}
+
+ensure_supported_swift_toolchain() {
+  load_swift_version
+
+  if (( swift_major_version < 5 )); then
+    blocked "Swift $swift_major_version.$swift_minor_version is too old for this bootstrap workflow. The supported and validated floor is Swift 5.10+."
+  fi
+
+  if (( swift_major_version == 5 && swift_minor_version < 10 )); then
+    blocked "Swift $swift_major_version.$swift_minor_version is too old for this bootstrap workflow. The supported and validated floor is Swift 5.10+."
+  fi
+}
+
 name=""
 pkg_type="library"
 destination="."
@@ -39,6 +66,9 @@ probe_testing_mode="false"
 
 ios_version=""
 macos_version=""
+swift_version_output=""
+swift_major_version=""
+swift_minor_version=""
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 agents_template="$script_dir/../assets/AGENTS.md"
 
@@ -333,6 +363,8 @@ fi
 if ! command -v swift >/dev/null 2>&1; then
   blocked "Swift is not installed or not on PATH."
 fi
+
+ensure_supported_swift_toolchain
 
 if [[ "$initialize_git" == "true" ]] && ! command -v git >/dev/null 2>&1; then
   blocked "git is not installed or not on PATH."

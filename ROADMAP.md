@@ -222,16 +222,17 @@ Scope:
 
 Tickets:
 
-- [ ] Audit current SwiftPM `swift package init` flags and template behavior on supported toolchains.
+- [ ] Audit current SwiftPM `swift package init` flags and template behavior on supported `Swift 5.10+` toolchains.
 - [ ] Update the bootstrap workflow to use current `swift package init` testing options and keep generated tests aligned with the selected testing mode.
-- [ ] Document how the skill should choose between `swift package init` flags and follow-up package edits when toolchain support differs.
+- [ ] Document and enforce `Swift 5.10+` as the supported and validated bootstrap floor, and block older toolchains such as `5.9` with clear upgrade guidance.
+- [ ] Document how the skill should choose between `swift package init` flags and follow-up package edits when toolchain support differs within the supported `5.10+` floor.
 - [ ] Document when Swift packages should stay on `swift build` and when they should hand off to `xcodebuild` through `apple-xcode-workflow`.
 - [ ] Add validation coverage for executable-package bootstrap output so generated tests and package shape match documented expectations.
 
 Exit criteria:
 
-- [ ] The bootstrap skill matches current SwiftPM testing options and generated package behavior on supported toolchains.
-- [ ] Maintainer docs explain the expected fallback behavior when older toolchains lack newer `swift package init` options.
+- [ ] The bootstrap skill matches current SwiftPM testing options and generated package behavior on supported `Swift 5.10+` toolchains.
+- [ ] Maintainer docs explain the expected blocked behavior for toolchains older than `5.10` and the expected fallback behavior within the supported `5.10+` floor when newer `swift package init` options are unavailable.
 - [ ] Maintainer docs explain when Swift package builds should use `xcodebuild` because Xcode-managed toolchain behavior is required.
 - [ ] Validation catches drift between documented bootstrap behavior and actual generated package output.
 

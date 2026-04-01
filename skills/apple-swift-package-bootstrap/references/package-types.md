@@ -32,10 +32,12 @@ The bootstrap script applies these by patching `Package.swift` with string platf
 
 ## Testing Modes
 
+- Supported and validated Swift toolchain floor: `5.10+`.
+- Toolchains older than `5.10`, including `5.9`, are outside the supported bootstrap floor and should be blocked with clear upgrade guidance.
 - `swift-testing`: preferred default on current toolchains that expose `swift package init --enable-swift-testing`.
 - `xctest`: use when the package must stay on XCTest or when the active toolchain does not support Swift Testing selection the way the workflow requires.
 
-On current Swift toolchains, the bootstrap workflow should prefer `swift package init` testing flags over patching stale templates after the fact. When `swift-testing` is requested on an older toolchain that lacks those flags, stop with a clear toolchain error instead of silently claiming Swift Testing support that the local CLI cannot provide.
+On supported Swift toolchains, the bootstrap workflow should prefer `swift package init` testing flags over patching stale templates after the fact. When the active toolchain is older than `5.10`, stop with a clear blocked message instead of attempting best-effort compatibility below the supported floor. When `swift-testing` is requested on a supported toolchain that still lacks the relevant selection flags, stop with a clear toolchain error instead of silently claiming Swift Testing support that the local CLI cannot provide.
 
 Executable package templates may still require follow-up test-target creation even on current toolchains. When that happens, keep the package shape simple and make the generated test file match the selected testing mode.
 
