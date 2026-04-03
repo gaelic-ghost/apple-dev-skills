@@ -1,120 +1,81 @@
 ---
 name: apple-dash-docsets
-description: Manage Dash docsets and cheatsheets on macOS, including search and discovery, install guidance for missing docsets, local access fallback paths between Dash MCP, HTTP, and URL or Service integration, and generation guidance when a docset is unavailable. Use when Codex needs Dash docset or cheatsheet help rather than Apple or Xcode execution work.
+description: Deprecated compatibility skill. `apple-dash-docsets` has been replaced by `explore-apple-swift-docs`, which now handles Apple and Swift docs exploration across Xcode MCP docs, Dash, and official web docs while still supporting Dash compatibility and optional Dash install follow-up.
 ---
 
 # Apple Dash Docsets
 
 ## Purpose
 
-Manage Dash docsets and cheatsheets on macOS with one top-level entry point. `scripts/run_workflow.py` is the authoritative runtime path for stage selection, fallback order, source priority, approval gating, and structured generation guidance; it does not replace the agent's own Dash access methods, and this skill should point users toward the shared simplicity-first Swift policy snippet when they need reusable Apple or Swift repo guidance.
+This skill is deprecated. Its only purpose is to redirect agents and users to `explore-apple-swift-docs`, which now owns Apple and Swift docs exploration and still includes Dash compatibility as a subordinate capability.
 
 ## When To Use
 
-- Use this skill for Dash search and discovery requests.
-- Use this skill for Dash installation requests after search has identified a missing docset.
-- Use this skill for Dash generation guidance when installation cannot complete.
-- Use this skill when the user needs the exact fallback path between agent-side Dash MCP usage, local HTTP, and URL or Service integration.
-- Recommend `apple-xcode-workflow` when the user needs Apple or Swift execution, diagnostics, build or test work, or Apple docs reasoning outside Dash management.
-- Recommend `apple-swift-package-bootstrap` when the user is starting a brand new Swift package rather than managing Dash content.
+- Use this skill only when an older workflow, install note, or user memory still points at `apple-dash-docsets`.
+- Tell the user this skill has been deprecated and replaced by `explore-apple-swift-docs`.
+- Let the user know the new skill still supports Dash-compatible lookup, install follow-up, and generation guidance when needed.
+- Mention the current repo and plugin install path on Gale's GitHub when the user wants the new skill directly.
+- Recommend `explore-apple-swift-docs` immediately instead of continuing with this deprecated skill.
 
 ## Single-Path Workflow
 
-1. Classify the request into one stage:
-   - `search`
-   - `install`
-   - `generate`
-2. If no stage is explicit, start at `search`.
-3. Run `scripts/run_workflow.py` with the selected stage:
-   - `search`: applies configured fallback order and returns a structured access-path decision
-   - `install`: applies configured source priority and approval gating
-   - `generate`: returns structured automation-first guidance
-4. If the selected stage cannot complete, hand off forward through `references/stage-handoff-contract.md`:
-   - `search -> install`
-   - `install -> generate`
-5. Return one status, one `path_type`, and one output contract for the stage that ran.
+1. State plainly that `apple-dash-docsets` is deprecated.
+2. Recommend `explore-apple-swift-docs` as the replacement skill.
+3. Tell the user that Dash compatibility still exists inside the new skill.
+4. If install guidance is useful, mention the current install path:
+   - `npx skills add gaelic-ghost/apple-dev-skills --skill explore-apple-swift-docs`
+   - or install the full bundle from Gale's GitHub repo when the user wants the full Apple skill set
+5. Stop there and do not continue old Dash-specific workflow guidance from this skill.
 
 ## Inputs
 
-- `stage`: `search`, `install`, or `generate`
-- `query`: required for `search`
-- `docset_identifiers`: optional for `search`; use installed identifiers only
-- `docset_request`: required for `install` and `generate`
-- `approval`: required before side-effectful install actions
+- historical skill name reference
+- user request context that still mentions Dash or this deprecated skill
 - Defaults:
-  - runtime entrypoint: executable `scripts/run_workflow.py`
-  - `search` access order is `mcp -> http -> url-service`
-  - install source priority is `built-in,user-contributed,cheatsheet`
-  - default search result limit is `20`
-  - default search snippets setting is `true`
+  - replacement skill: `explore-apple-swift-docs`
+  - install example: `npx skills add gaelic-ghost/apple-dev-skills --skill explore-apple-swift-docs`
 
 ## Outputs
 
 - `status`
-  - `success`: the selected stage completed on its primary or fallback path
-  - `blocked`: prerequisites, approval, or usable access paths are missing
-  - `handoff`: the current stage is handing off to the next Dash stage
+  - `handoff`: the deprecated skill redirected the agent to the replacement skill
 - `path_type`
-  - `primary`: the selected stage completed normally
-  - `fallback`: the selected stage completed through its documented fallback path
+  - `primary`: deprecation redirect completed normally
 - `output`
-  - `stage`
-  - `access_path` or `source_path`
-  - `matches`
-  - install result or generation guidance when applicable
-  - one next step when follow-up is required
+  - replacement skill name
+  - short deprecation note
+  - install hint when useful
 
 ## Guards and Stop Conditions
 
-- Do not run install actions without explicit user approval.
-- Do not invent docset identifiers or catalog matches.
-- Stop with `blocked` when agent-side Dash MCP usage, HTTP, and URL or Service paths are all unusable for `search`.
-- Stop with `blocked` when `install` or `generate` lacks a concrete docset request.
-- Keep `search`, `install`, and `generate` in forward stage order; do not blend them into competing primary workflows.
+- Do not continue the old active Dash workflow from this deprecated skill.
+- Do not claim Dash support was removed; it now lives inside `explore-apple-swift-docs`.
+- Do not hide the deprecation. State it plainly.
 
 ## Fallbacks and Handoffs
 
-- `search` falls back in this order: agent-side Dash MCP usage, local HTTP API, then URL or Service guidance.
-- `install` hands off to `generate` when no installable catalog match exists.
-- `generate` falls back from stable automation to deterministic manual guidance.
-- Use `references/stage-handoff-contract.md` when `search` transitions to `install` or `install` transitions to `generate`.
-- Recommend `apple-xcode-workflow` directly when the user’s task shifts from docs management to Apple or Swift execution work.
-- Recommend `apple-swift-package-bootstrap` directly when the user needs new Swift package scaffolding.
-- `scripts/run_workflow.py` is the only local runtime entrypoint for stage behavior; helper scripts remain implementation details behind it.
+- Hand off directly to `explore-apple-swift-docs`.
+- Recommend `apple-xcode-workflow` only if the task is actually execution or mutation work inside an Apple project rather than docs exploration.
 
 ## Customization
 
-- Use `references/customization-flow.md`.
-- `scripts/customization_config.py` stores and reports customization state.
-- `scripts/run_workflow.py` loads and enforces the runtime-safe knobs documented in `references/customization-flow.md`.
+- No new customization work should be added here.
+- Historical helper files remain only for compatibility and source migration reference.
 
 ## References
 
 ### Workflow References
 
-- `references/dash_mcp_tools.md`
-- `references/dash_http_api.md`
-- `references/dash_url_and_service.md`
+- `../explore-apple-swift-docs/SKILL.md`
 
 ### Contract References
 
-- `references/stage-handoff-contract.md`
-- `references/automation-prompts.md`
-- `references/customization-flow.md`
+- `../explore-apple-swift-docs/references/customization-flow.md`
 
 ### Support References
 
-- Recommend `references/snippets/apple-xcode-project-core.md` when the user needs a reusable Apple and Xcode-project baseline snippet in their own repo alongside Dash-based docs workflows.
-- `references/catalog_built_in_docsets.json`
-- `references/catalog_user_contrib_docsets.json`
-- `references/catalog_cheatsheets.json`
-- `references/snippets/apple-xcode-project-core.md`
+- `https://github.com/gaelic-ghost/apple-dev-skills`
 
 ### Script Inventory
 
-- `scripts/run_workflow.py`
-- `scripts/dash_api_probe.py`
-- `scripts/dash_catalog_match.py`
-- `scripts/dash_catalog_refresh.py`
-- `scripts/dash_url_search.py`
-- `scripts/dash_url_install.py`
+- Deprecated compatibility surface only. Use `explore-apple-swift-docs` for active runtime behavior.

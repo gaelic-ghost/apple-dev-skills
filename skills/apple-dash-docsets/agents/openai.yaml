@@ -1,4 +1,4 @@
 interface:
-  display_name: "Apple Dash Docsets"
-  short_description: "Manage Dash docsets, installs, and fallback guidance"
-  default_prompt: "Use $apple-dash-docsets to search Dash docsets, plan installs for missing docsets, or follow the right fallback path when Dash content is unavailable."
+  display_name: "Apple Dash Docsets (Deprecated)"
+  short_description: "Deprecated redirect to Apple and Swift docs skill"
+  default_prompt: "Tell the user that $apple-dash-docsets is deprecated, recommend $explore-apple-swift-docs instead, note that Dash compatibility still exists there, and mention Gale's GitHub repo install option when useful."

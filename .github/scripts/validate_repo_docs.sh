@@ -55,7 +55,7 @@ echo "Validating workflow document structure..."
 workflow_doc="docs/maintainers/workflow-atlas.md"
 require_contains "$workflow_doc" "## Repo Workflow Map"
 require_contains "$workflow_doc" '## `apple-xcode-workflow`'
-require_contains "$workflow_doc" '## `apple-dash-docsets`'
+require_contains "$workflow_doc" '## `explore-apple-swift-docs`'
 require_contains "$workflow_doc" '## `apple-swift-package-bootstrap`'
 require_contains "$workflow_doc" '## `bootstrap-xcode-app-project`'
 require_contains "$workflow_doc" '## `sync-xcode-project-guidance`'
@@ -68,21 +68,26 @@ require_contains "$audit_doc" "## Audit Procedure"
 require_contains "$audit_doc" "## Reporting Shape"
 
 echo "Validating skill directory layout..."
-skill_mds=()
-while IFS= read -r line; do
-  skill_mds+=("$line")
-done < <(find . -type f -name SKILL.md \
-  -not -path "./.git/*" \
-  -not -path "./.github/*" \
-  | sort)
-[[ ${#skill_mds[@]} -eq 6 ]] || fail "Expected exactly 6 active skills, found ${#skill_mds[@]}."
+active_skill_mds=(
+  "./skills/apple-xcode-workflow/SKILL.md"
+  "./skills/explore-apple-swift-docs/SKILL.md"
+  "./skills/apple-swift-package-bootstrap/SKILL.md"
+  "./skills/bootstrap-xcode-app-project/SKILL.md"
+  "./skills/sync-xcode-project-guidance/SKILL.md"
+  "./skills/sync-swift-package-guidance/SKILL.md"
+)
+[[ ${#active_skill_mds[@]} -eq 6 ]] || fail "Expected exactly 6 active skills, found ${#active_skill_mds[@]}."
+
+[[ -f "./skills/apple-dash-docsets/SKILL.md" ]] || fail "Missing deprecated compatibility skill ./skills/apple-dash-docsets/SKILL.md"
+require_contains "./skills/apple-dash-docsets/SKILL.md" "deprecated"
+require_contains "./skills/apple-dash-docsets/SKILL.md" "explore-apple-swift-docs"
 
 shared_xcode_snippet="./shared/agents-snippets/apple-xcode-project-core.md"
 shared_package_snippet="./shared/agents-snippets/apple-swift-package-core.md"
 [[ -f "$shared_xcode_snippet" ]] || fail "Missing shared snippet: $shared_xcode_snippet"
 [[ -f "$shared_package_snippet" ]] || fail "Missing shared snippet: $shared_package_snippet"
 
-for skill_md in "${skill_mds[@]}"; do
+for skill_md in "${active_skill_mds[@]}"; do
   skill_dir="${skill_md%/SKILL.md}"
   [[ -f "$skill_dir/agents/openai.yaml" ]] || fail "Missing $skill_dir/agents/openai.yaml"
   [[ -f "$skill_dir/references/customization.template.yaml" ]] || fail "Missing $skill_dir/references/customization.template.yaml"

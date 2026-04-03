@@ -1,4 +1,4 @@
 interface:
   display_name: "Apple Xcode Workflow"
-  short_description: "Guide Xcode execution, docs, and fallback workflows"
-  default_prompt: "Use $apple-xcode-workflow to inspect Xcode workspaces, run Apple builds or tests, look up Apple docs, and choose the right guarded fallback path."
+  short_description: "Guide Xcode execution, mutation safety, and fallback workflows"
+  default_prompt: "Use $apple-xcode-workflow to inspect Xcode workspaces, run Apple builds or tests, and choose the right guarded execution fallback path after docs have been handled."

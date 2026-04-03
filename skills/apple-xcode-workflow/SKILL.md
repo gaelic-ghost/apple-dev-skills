@@ -1,23 +1,24 @@
 ---
 name: apple-xcode-workflow
-description: Guide Apple and Swift development work in or around Xcode, including workspace inspection, diagnostics, builds, tests, runs, toolchain checks, Apple and Swift documentation lookup, mutation guard decisions, and official CLI fallback planning. Use for existing Apple or Swift projects when Xcode-aware execution or Apple docs reasoning is needed.
+description: Guide Apple and Swift development work in or around Xcode, including workspace inspection, diagnostics, builds, tests, runs, toolchain checks, mutation guard decisions, and official CLI fallback planning. Use for existing Apple or Swift projects when Xcode-aware execution is needed.
 ---
 
 # Apple Xcode Workflow
 
 ## Purpose
 
-Use this skill as the top-level entry point for Apple and Swift work in or around Xcode. The skill guides agent-side tool use and applies the shared simplicity-first Swift policy, while `scripts/run_workflow.py` enforces local policy, mutation guards, cooldown behavior, docs routing, and structured fallback planning.
+Use this skill as the top-level entry point for Apple and Swift execution work in or around Xcode. The skill guides agent-side tool use and applies the shared simplicity-first Swift policy, while `scripts/run_workflow.py` enforces local policy, mutation guards, advisory cooldown behavior, and structured fallback planning. New layers and dependencies are often unnecessary and need extra review; keep this workflow focused on execution rather than broadening it back into docs-management or repo-sync responsibilities.
 
 ## When To Use
 
 - Use this skill for Xcode workspace inspection, read or search, diagnostics, build, test, and run tasks.
 - Use this skill for Swift toolchain checks and official Apple CLI fallback.
-- Use this skill for Apple and Swift documentation requests that should prefer Dash local sources before official web docs.
 - Use this skill when direct filesystem mutation in an Xcode-managed scope may be required.
-- Recommend `apple-dash-docsets` when the user needs Dash docset search, install, or generation work instead of Apple execution work.
+- Use this skill after Apple or Swift docs have already been gathered through `explore-apple-swift-docs` and the work has shifted into execution or implementation.
+- Recommend `explore-apple-swift-docs` when the user needs Apple or Swift documentation lookup, source selection, Dash compatibility, or docs install follow-up rather than execution work.
 - Recommend `apple-swift-package-bootstrap` when the user needs to create a brand new Swift package rather than work inside an existing Xcode or Swift project.
 - Recommend `sync-xcode-project-guidance` when an existing Xcode app repo needs `AGENTS.md` or workflow-guidance alignment rather than active engineering work.
+- Mention that `apple-dash-docsets` has been deprecated and replaced by `explore-apple-swift-docs` if an older workflow still references it.
 
 ## Single-Path Workflow
 
@@ -26,11 +27,9 @@ Use this skill as the top-level entry point for Apple and Swift work in or aroun
    - read, search, or diagnostics
    - build, test, or run
    - package or toolchain management
-   - docs lookup
    - mutation
 2. Apply the Apple docs gate before any Apple design, architecture, implementation, or refactor guidance:
-   - read the relevant Apple documentation first
-   - use Dash or Xcode-local documentation first, then official Apple documentation if needed
+   - use `explore-apple-swift-docs` to gather the relevant Apple documentation first
    - state the documented API behavior, lifecycle rule, or workflow requirement being relied on before proposing changes
    - do not rely on memory as the primary source when Apple docs exist
    - if the docs and the current code conflict, stop and report that conflict
@@ -39,7 +38,7 @@ Use this skill as the top-level entry point for Apple and Swift work in or aroun
    - apply the detailed local policy in `references/snippets/apple-xcode-project-core.md`
    - preserve its simplicity-first, shape-preserving, and anti-ceremony Swift guidance
    - preserve its project-appropriate logging, telemetry, and SwiftUI architecture guidance
-4. Run `scripts/run_workflow.py` to apply runtime configuration, mutation-guard checks, docs-routing order, advisory cooldown, and CLI fallback planning.
+4. Run `scripts/run_workflow.py` to apply runtime configuration, mutation-guard checks, advisory cooldown, and CLI fallback planning.
 5. Use the guidance in `references/mcp-tool-matrix.md` for agent-executed MCP operations.
 6. If MCP fails, use the structured fallback output from `scripts/run_workflow.py` together with `references/cli-fallback-matrix.md`.
 7. Report which parts were agent-executed, which parts were locally enforced by script, the Apple docs relied on, and any required next step.
@@ -50,13 +49,11 @@ Use this skill as the top-level entry point for Apple and Swift work in or aroun
 - `workspace_path`: optional absolute path for the target Xcode or Swift workspace.
 - `tab_identifier`: optional MCP tab identifier when already known.
 - `mcp_failure_reason`: optional input when continuing from an earlier MCP failure.
-- `docs_query`: required when `operation_type` is `docs`.
 - `filesystem_fallback_opt_in`: optional explicit opt-in when planning direct filesystem fallback in Xcode-managed scope.
 - Defaults:
   - runtime entrypoint: executable `scripts/run_workflow.py`
   - agent-side MCP retries once for transient failures
   - advisory cooldown is `21` days
-  - docs source order is `dash-mcp,dash-local,official-web`
   - mutation operations require the explicit guard in Xcode-managed scope
 
 ## Outputs
@@ -71,7 +68,6 @@ Use this skill as the top-level entry point for Apple and Swift work in or aroun
 - `output`
   - operation type
   - `guard_result`
-  - `docs_route`
   - `fallback_commands`
   - advisory status
   - one next step or handoff payload when needed
@@ -82,18 +78,16 @@ Use this skill as the top-level entry point for Apple and Swift work in or aroun
 - Do not skip the mutation guard for direct filesystem edits inside Xcode-managed scope.
 - Stop with `blocked` when the required workspace context cannot be resolved and the operation cannot safely continue.
 - Stop with `blocked` when allowlist or sandbox rules prevent the official CLI fallback and no safe alternative exists.
-- Stop with `blocked` when `operation_type=docs` and `docs_query` is missing.
 
 ## Fallbacks and Handoffs
 
 - Official CLI execution is the only fallback path when the primary agent-side MCP path cannot complete.
 - Use `references/mcp-failure-handoff.md` for the canonical fallback and handoff payload.
 - Use `references/allowlist-guidance.md` when a safe official CLI fallback is blocked by local rules.
-- Use `references/dash-docs-flow.md` to describe docs lookup as an operation profile under this same execution engine.
-- Recommend `apple-dash-docsets` directly when the task becomes Dash management work.
+- Recommend `explore-apple-swift-docs` directly when the task becomes Apple or Swift docs exploration work.
 - Recommend `apple-swift-package-bootstrap` directly when the task becomes new-package scaffolding.
 - Recommend `sync-xcode-project-guidance` directly when the repo needs Xcode-specific guidance sync rather than execution.
-- `scripts/run_workflow.py` plans fallback commands and docs-route changes; MCP execution itself remains agent-side tool usage guided by this skill.
+- `scripts/run_workflow.py` plans fallback commands; MCP execution itself remains agent-side tool usage guided by this skill.
 
 ## Customization
 
@@ -112,7 +106,6 @@ Use this skill as the top-level entry point for Apple and Swift work in or aroun
 - `references/toolchain-management.md`
 - `references/mutation-risk-policy.md`
 - `references/mutation-via-mcp.md`
-- `references/dash-docs-flow.md`
 
 ### Contract References
 
@@ -121,6 +114,7 @@ Use this skill as the top-level entry point for Apple and Swift work in or aroun
 
 ### Support References
 
+- Recommend `explore-apple-swift-docs` when the user needs Apple or Swift docs exploration or Dash-compatible docs access.
 - Recommend `sync-xcode-project-guidance` when the user needs repo guidance aligned inside an existing Xcode app repo.
 - Recommend `references/snippets/apple-xcode-project-core.md` when the user needs to add or merge the shared Xcode-project guidance into an end-user repo.
 - `references/allowlist-guidance.md`

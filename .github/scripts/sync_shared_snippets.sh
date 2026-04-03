@@ -26,9 +26,9 @@ sync_one() {
 
 sync_one \
   "$ROOT_DIR/shared/agents-snippets/apple-xcode-project-core.md" \
-  "$ROOT_DIR/skills/apple-dash-docsets/references/snippets/apple-xcode-project-core.md" \
   "$ROOT_DIR/skills/apple-xcode-workflow/references/snippets/apple-xcode-project-core.md" \
   "$ROOT_DIR/skills/bootstrap-xcode-app-project/references/snippets/apple-xcode-project-core.md" \
+  "$ROOT_DIR/skills/explore-apple-swift-docs/references/snippets/apple-xcode-project-core.md" \
   "$ROOT_DIR/skills/sync-xcode-project-guidance/references/snippets/apple-xcode-project-core.md"
 
 sync_one \

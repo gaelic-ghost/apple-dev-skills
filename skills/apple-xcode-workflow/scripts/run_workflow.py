@@ -27,7 +27,6 @@ VALID_OPERATION_TYPES = {
     "test",
     "run",
     "package-toolchain-management",
-    "docs",
     "mutation",
 }
 
@@ -37,22 +36,6 @@ def load_effective_config() -> dict:
         customization_config.load_template(),
         customization_config.load_durable(),
     )
-
-
-def split_csv(raw: str) -> list[str]:
-    return [item.strip() for item in raw.split(",") if item.strip()]
-
-
-def normalize_docs_route(raw: str) -> list[str]:
-    normalized: list[str] = []
-    for item in split_csv(raw):
-        if item == "dash-mcp":
-            normalized.append("dash-mcp")
-        elif item == "dash-local":
-            normalized.append("dash-local")
-        elif item == "official-web":
-            normalized.append("official-web")
-    return normalized or ["dash-mcp", "dash-local", "official-web"]
 
 
 def detect_managed_scope(workspace_path: str | None) -> dict:
@@ -187,25 +170,12 @@ def build_fallback_commands(operation_type: str, workspace_path: str | None, map
     return commands
 
 
-def docs_route_from_config(route_order: list[str], mcp_failure_reason: str | None) -> tuple[str, list[str]]:
-    if not route_order:
-        route_order = ["dash-mcp", "dash-local", "official-web"]
-    selected = route_order[0]
-    if mcp_failure_reason:
-        for candidate in route_order:
-            if candidate != "dash-mcp":
-                selected = candidate
-                break
-    return selected, route_order
-
-
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--operation-type", required=True, choices=sorted(VALID_OPERATION_TYPES))
     parser.add_argument("--workspace-path")
     parser.add_argument("--tab-identifier")
     parser.add_argument("--mcp-failure-reason")
-    parser.add_argument("--docs-query")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--filesystem-fallback-opt-in", action="store_true")
     parser.add_argument("--advisory-state-file")
@@ -217,7 +187,6 @@ def main() -> int:
     config = load_effective_config()
     settings = config["settings"]
 
-    docs_route_order = normalize_docs_route(str(settings.get("docsRoutingOrder", "dash-mcp,dash-local,official-web")))
     advisory = advisory_status(int(settings.get("advisoryCooldownDays", 21)), args.advisory_state_file)
     fallback_commands = build_fallback_commands(
         args.operation_type,
@@ -231,31 +200,11 @@ def main() -> int:
         "filesystem_fallback_allowed": True,
         "reason": "not-applicable",
     }
-    docs_route: dict | None = None
     status = "success"
     path_type = "primary"
     next_step = "Proceed with the agent-side MCP path."
 
-    if args.operation_type == "docs" and not args.docs_query:
-        status = "blocked"
-        next_step = "Provide --docs-query for docs requests."
-
-    if args.operation_type == "docs" and status != "blocked":
-        selected_route, effective_route = docs_route_from_config(docs_route_order, args.mcp_failure_reason)
-        docs_route = {
-            "query": args.docs_query,
-            "configured_order": effective_route,
-            "selected_route": selected_route,
-        }
-        if args.mcp_failure_reason and selected_route != effective_route[0]:
-            path_type = "fallback"
-            next_step = f"Use {selected_route} for docs lookup because MCP was unavailable."
-        elif selected_route.startswith("dash"):
-            next_step = f"Use {selected_route} for docs lookup before official web docs."
-        else:
-            next_step = "Use official Apple and Swift docs directly."
-
-    if args.operation_type == "mutation" and status != "blocked":
+    if args.operation_type == "mutation":
         scope = detect_managed_scope(args.workspace_path)
         guard_result = {
             "applied": True,
@@ -272,7 +221,7 @@ def main() -> int:
         elif not scope.get("managed"):
             guard_result["reason"] = "non-managed-scope"
 
-    if args.mcp_failure_reason and status != "blocked" and args.operation_type != "docs":
+    if args.mcp_failure_reason and status != "blocked":
         path_type = "fallback"
         next_step = (
             f"Use the first documented fallback command because MCP reported {args.mcp_failure_reason}."
@@ -288,12 +237,11 @@ def main() -> int:
         "tab_identifier": args.tab_identifier,
         "mcp_failure_reason": args.mcp_failure_reason,
         "guard_result": guard_result,
-        "docs_route": docs_route,
         "advisory": advisory,
         "fallback_commands": fallback_commands,
         "retry_count": int(settings.get("mcpRetryCount", 1)),
         "next_step": next_step,
-        "execution_model": "agent-mcp-orchestrated" if args.operation_type != "docs" else "agent-mcp-or-local-docs",
+        "execution_model": "agent-mcp-orchestrated",
         "dry_run": args.dry_run,
     }
     print(json.dumps(payload, indent=2, sort_keys=True))

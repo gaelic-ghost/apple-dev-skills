@@ -20,20 +20,19 @@ This document describes the maintainer-facing workflow view of the active skills
 flowchart TD
     U["User request"] --> A["Agent classifies request"]
     A --> X["apple-xcode-workflow"]
-    A --> DD["apple-dash-docsets"]
+    A --> D["explore-apple-swift-docs"]
     A --> B["apple-swift-package-bootstrap"]
     A --> AX["bootstrap-xcode-app-project"]
     A --> SX["sync-xcode-project-guidance"]
     A --> SP["sync-swift-package-guidance"]
-    X --> XD["May recommend apple-dash-docsets"]
+    X --> XD["May recommend explore-apple-swift-docs"]
     X --> XB["May recommend apple-swift-package-bootstrap"]
     X --> XS["May recommend bootstrap-xcode-app-project only when the user actually means new-project creation"]
     X --> SG["May recommend sync-xcode-project-guidance for repo guidance alignment"]
-    DD --> DX["May recommend apple-xcode-workflow"]
-    DD --> DB["May recommend apple-swift-package-bootstrap"]
+    D --> DX["May recommend apple-xcode-workflow"]
+    D --> DB["May recommend bootstrap-xcode-app-project"]
     B --> BX["May recommend apple-xcode-workflow"]
     B --> BS["May recommend sync-swift-package-guidance after bootstrap or later repo-guidance drift"]
-    B --> BD["May recommend apple-dash-docsets"]
     AX --> AS["May recommend sync-xcode-project-guidance after bootstrap"]
     SX --> SXW["Hands off to apple-xcode-workflow after sync"]
     SP --> SPB["Uses swift build and swift test by default after sync, and may recommend apple-xcode-workflow for Xcode-managed package work"]
@@ -43,7 +42,8 @@ flowchart TD
 
 - The repo has no Apple router or orchestrator layer.
 - The six active skills are parallel top-level entry points for different situations.
-- Cross-skill recommendation is decentralized inside each skill.
+- `apple-dash-docsets` is deprecated and remains on disk only as a compatibility redirect to `explore-apple-swift-docs`.
+- Cross-skill recommendation is decentralized inside each active skill.
 - End-user `AGENTS.md` guidance is recommended from each skill's local snippet copy, not from a router.
 - Planned next-surface addition is rename cleanup for the remaining legacy-prefixed skills.
 
@@ -73,7 +73,7 @@ flowchart TD
 ### Agent ↔ User UX
 
 - Entry:
-  - The user asks for Apple, Swift, Dash, package-bootstrap, or native app-bootstrap help.
+  - The user asks for Apple, Swift, package-bootstrap, native app-bootstrap, or Apple-docs help.
 - Agent behavior:
   - The agent chooses the best matching top-level skill directly and may recommend another top-level skill if the task shifts.
 - User-visible response:
@@ -85,7 +85,7 @@ flowchart TD
 
 ### Purpose
 
-Provide the canonical Apple and Swift workflow guidance with one local runtime-policy entrypoint and one agent-side execution path.
+Provide the canonical Apple and Swift execution workflow for existing Xcode-managed or Xcode-adjacent work, with one local runtime-policy entrypoint and one agent-side execution path.
 
 ### Workflow Diagram
 
@@ -116,21 +116,11 @@ flowchart LR
     SAFE -->|No| BL["Blocked"]
 ```
 
-```mermaid
-flowchart LR
-    D["operation_type=docs"] --> P["Use same execution engine"]
-    P --> SRC["Prefer Dash local docs"]
-    SRC --> MISS{"Dash unavailable or insufficient?"}
-    MISS -->|No| DONE["Success / primary or fallback"]
-    MISS -->|Yes| WEB["Use official Apple or Swift docs"]
-    WEB --> NOTE["Handoff only if user needs Dash install or generate guidance"]
-```
-
 ### Branch and Path Notes
 
 - `run_workflow.py` is the local runtime entrypoint.
 - Mutation is a guard, not a second top-level workflow.
-- Docs lookup is an operation profile under the same execution engine.
+- Apple or Swift docs exploration now lives outside this skill in `explore-apple-swift-docs`.
 - Official CLI execution remains the only documented fallback plan when the primary agent-side MCP path cannot complete.
 
 ### Inputs
@@ -141,12 +131,11 @@ flowchart LR
   - `workspace_path`
   - `tab_identifier`
   - `mcp_failure_reason`
-  - `docs_query`
+  - `filesystem_fallback_opt_in`
 - Defaults:
   - repo-maintainer runtime entrypoint `scripts/run_workflow.py`
   - one retry for transient MCP failure
   - advisory cooldown `21` days
-  - docs source order `dash-mcp,dash-local,official-web`
   - mutation operations require the explicit guard in Xcode-managed scope
 
 ### Outputs
@@ -161,14 +150,13 @@ flowchart LR
 - Primary output fields:
   - operation type
   - `guard_result`
-  - `docs_route`
   - `fallback_commands`
   - next step or handoff payload
 
 ### Agent ↔ User UX
 
 - Entry:
-  - The user asks for Apple or Swift execution, diagnostics, docs, toolchain, or mutation work.
+  - The user asks for Apple or Swift execution, diagnostics, toolchain, or mutation work.
 - Agent behavior:
   - The agent classifies the operation, runs `run_workflow.py` for local policy and fallback planning, then uses MCP tools or the planned fallback path.
 - User-visible response:
@@ -186,84 +174,59 @@ flowchart LR
 - `handoff`: supporting context passed to a later step or another skill
 - `blocked`: mutation guard failed, context missing, or safe fallback unavailable
 
-## `apple-dash-docsets`
+## `explore-apple-swift-docs`
 
 ### Purpose
 
-Manage Dash docsets through one runtime entrypoint and a straight internal stage flow.
+Provide the canonical Apple and Swift documentation exploration workflow across Xcode MCP docs, Dash, and official web docs, with optional Dash follow-up when local Dash coverage is desired.
 
 ### Workflow Diagram
 
 ```mermaid
 flowchart TD
-    I["Stage input"] --> S{"Stage explicit?"}
-    S -->|No| SEARCH["Start at search"]
-    S -->|search| SEARCH
-    S -->|install| INSTALL
-    S -->|generate| GENERATE
+    I["Docs input"] --> M{"Mode explicit?"}
+    M -->|No| E["Start at explore"]
+    M -->|explore| E
+    M -->|dash-install| DI
+    M -->|dash-generate| DG
 
-    SEARCH --> RT["run_workflow.py"]
-    RT --> SEARCHOK{"Search stage completes?"}
-    SEARCHOK -->|Yes| OUT1["Success / primary or fallback"]
-    SEARCHOK -->|No| HI["Handoff to install"]
-
-    INSTALL --> INSTALLOK{"Install stage completes?"}
-    INSTALLOK -->|Yes| OUT2["Success / primary"]
-    INSTALLOK -->|No installable match| HG["Handoff to generate"]
-    INSTALLOK -->|Blocked| BL["Blocked"]
-
-    GENERATE --> GENOK{"Generation path completes?"}
-    GENOK -->|Automation| OUT3["Success / primary"]
-    GENOK -->|Manual guidance| OUT4["Success / fallback"]
-    GENOK -->|Blocked| BL
-```
-
-```mermaid
-flowchart LR
-    SEARCH["search"] --> MCP["Agent uses Dash MCP"]
-    MCP --> OK{"Success?"}
-    OK -->|Yes| DONE["Success / primary"]
-    OK -->|No| HTTP["HTTP API"]
-    HTTP --> HTTPOK{"Success?"}
-    HTTPOK -->|Yes| DONE2["Success / fallback"]
-    HTTPOK -->|No| URL["URL / Service guidance"]
-    URL --> URLOK{"Usable?"}
-    URLOK -->|Yes| DONE3["Success / fallback"]
-    URLOK -->|No| BL["Blocked"]
-```
-
-```mermaid
-flowchart LR
-    INSTALL["install"] --> MATCH{"Installable catalog match?"}
-    MATCH -->|Yes| RUN["Install path"]
-    MATCH -->|No| HANDOFF["Handoff to generate"]
-    RUN --> OUT["Success / primary"]
-    HANDOFF --> NEXT["status=handoff, path_type=primary"]
+    E --> RW["run_workflow.py"]
+    RW --> SRC{"Usable docs source?"}
+    SRC -->|Yes| OUT1["Success / primary or fallback"]
+    SRC -->|No| BL["Blocked"]
+    DI --> MATCH{"Installable Dash catalog match?"}
+    MATCH -->|Yes| INST["Dash install path"]
+    MATCH -->|No| HAND["Handoff to dash-generate"]
+    INST --> OUT2["Success / primary"]
+    DG --> GEN{"Generation guidance shape?"}
+    GEN -->|Automation-first| OUT3["Success / primary"]
+    GEN -->|Manual fallback| OUT4["Success / fallback"]
 ```
 
 ### Branch and Path Notes
 
-- `run_workflow.py` is the local runtime entrypoint for all stages.
-- Default progression is `search -> install -> generate`.
-- Direct entry to `install` or `generate` remains supported.
-- `search` has a fallback ladder.
-- `install` does not fall back to generation internally; it hands off forward.
-- `generate` is terminal guidance and can itself fall back from automation to manual guidance.
+- `run_workflow.py` is the local runtime entrypoint for all docs modes.
+- Default progression is `explore -> dash-install -> dash-generate`.
+- Direct entry to `dash-install` or `dash-generate` remains supported.
+- Xcode MCP docs are the default primary source when available.
+- Dash remains optional and subordinate rather than the public identity of the skill.
 
 ### Inputs
 
 - Required:
-  - `query` for `search`
-  - `docset_request` for `install` and `generate`
+  - `query` for `explore`
+  - `docset_request` for `dash-install` and `dash-generate`
 - Optional:
-  - `stage`
-  - `docset_identifiers`
+  - `mode`
+  - `docs_kind`
+  - `preferred_source`
+  - `mcp_failure_reason`
   - `approval`
 - Defaults:
   - repo-maintainer runtime entrypoint `scripts/run_workflow.py`
-  - start at `search` when no stage is explicit
-  - search order `mcp -> http -> url-service`
-  - install source priority `built-in,user-contributed,cheatsheet`
+  - start at `explore` when no mode is explicit
+  - source order `xcode-mcp-docs,dash,official-web`
+  - Dash install source priority `built-in,user-contributed,cheatsheet`
   - default search result limit `20`
   - default search snippets `true`
 
@@ -277,28 +240,29 @@ flowchart LR
   - `primary`
   - `fallback`
 - Primary output fields:
-  - `stage`
-  - `access_path` or `source_path`
+  - `mode`
+  - `source_used`
+  - `configured_order` or `source_path`
 
 ### Agent ↔ User UX
 
 - Entry:
-  - The user asks to search Dash, install a missing docset, or get generation guidance.
+  - The user asks to search Apple or Swift docs, use local docs first, compare docs sources, or follow up on Dash-specific docs access.
 - Agent behavior:
-  - The agent selects a stage, calls `run_workflow.py`, and uses the structured stage result to choose the right Dash access path instead of stitching helper scripts together manually.
+  - The agent selects a docs mode, calls `run_workflow.py`, and uses the structured result to choose the right docs source instead of stitching Xcode MCP, Dash, and web heuristics together manually.
 - User-visible response:
-  - On success: the user sees what stage ran and what path completed it.
-  - On handoff: the user sees the next stage and why it is needed.
-  - On blocked: the user sees the missing approval, missing request, or exhausted access path.
+  - On success: the user sees what docs source was selected and why.
+  - On handoff: the user sees the next mode and why it is needed.
+  - On blocked: the user sees the missing approval, missing request, or exhausted docs source path.
 - Interaction style:
-  - Stage-based docs-management workflow with one forward handoff contract.
+  - Single docs-exploration workflow with subordinate Dash follow-up.
 
 ### Failure / Fallback / Handoff States
 
-- `success` + `primary`: selected stage completed on its normal path
-- `success` + `fallback`: selected stage completed on a documented fallback path
-- `handoff`: supporting context passed to the next Dash stage
-- `blocked`: no usable access path, missing approval, or missing stage input
+- `success` + `primary`: selected mode completed on its normal path
+- `success` + `fallback`: selected mode completed on a documented fallback path
+- `handoff`: supporting context passed to the next docs mode
+- `blocked`: no usable docs source, missing approval, or missing mode input
 
 ## `bootstrap-xcode-app-project`
 
@@ -319,7 +283,7 @@ flowchart TD
     G -->|xcodegen| GEN["bootstrap_xcode_app_project.py"]
     GUIDED --> BL2["Blocked with guided next step"]
     GEN --> OK{"Generation success?"}
-    OK -->|Yes| VALIDATE["Project introspection / validation"]
+    OK -->|Yes| VALIDATE["Project introspection and validation"]
     OK -->|No| FAIL["Failed"]
     VALIDATE --> OUT["Success / primary"]
 ```
@@ -329,7 +293,7 @@ flowchart TD
 - `run_workflow.py` is the local runtime entrypoint.
 - The first supported mutating implementation path is `xcodegen`.
 - The standard Xcode-created-project path is documented and guided, but not yet safely automated.
-- Successful bootstrap hands off existing-project work to `apple-xcode-workflow`.
+- Successful bootstrap hands off existing-project work to `sync-xcode-project-guidance`, then to `apple-xcode-workflow`.
 
 ### Inputs
 
@@ -345,12 +309,6 @@ flowchart TD
   - `org_identifier`
   - `skip_validation`
   - `dry_run`
-- Defaults:
-  - repo-maintainer runtime entrypoint `scripts/run_workflow.py`
-  - `project_kind=app`
-  - platform default from customization
-  - `ui_stack=swiftui`
-  - generator default from customization
 
 ### Outputs
 
@@ -361,12 +319,6 @@ flowchart TD
 - `path_type`
   - `primary`
   - `fallback`
-- Primary output fields:
-  - resolved path
-  - normalized inputs
-  - bundle identifier
-  - validation result
-  - next step or handoff
 
 ### Agent ↔ User UX
 
@@ -375,11 +327,9 @@ flowchart TD
 - Agent behavior:
   - The agent applies the Apple docs gate, resolves the generator path, then either runs the supported XcodeGen scaffold path or returns the documented guided Xcode next step.
 - User-visible response:
-  - On success: the user sees the created repo path and handoff to existing-project workflow.
+  - On success: the user sees the created repo path and handoff to guidance sync.
   - On blocked: the user sees whether the blocker was generator selection, missing prerequisites, or a guided-only path.
   - On failed: the user sees the concrete generation or validation failure.
-- Interaction style:
-  - Bootstrap engine with a deterministic supported path and an explicit guided path for the non-automated branch.
 
 ### Failure / Fallback / Handoff States
 
@@ -408,78 +358,77 @@ flowchart TD
 
 ### Branch and Path Notes
 
-- `run_workflow.py` is the local runtime entrypoint.
 - The skill is intentionally bounded to repo-guidance alignment for existing Xcode app repos.
-- New-project creation still belongs to `bootstrap-xcode-app-project`.
-- Active engineering work after sync still belongs to `apple-xcode-workflow`.
-
-### Inputs
-
-- Required:
-  - repo root or current working directory context
-- Optional:
-  - `workspace_path`
-  - `skip_validation`
-  - `dry_run`
-- Defaults:
-  - repo-maintainer runtime entrypoint `scripts/run_workflow.py`
-  - template copy when `AGENTS.md` is missing
-  - bounded section append when `AGENTS.md` already exists
-
-### Outputs
-
-- `status`
-  - `success`
-  - `blocked`
-  - `failed`
-- `path_type`
-  - `primary`
-  - `fallback`
-- Primary output fields:
-  - resolved repo root
-  - detected workspace or project markers
-  - `AGENTS.md` path
-  - actions applied or planned
-  - validation result
+- New-project creation belongs to `bootstrap-xcode-app-project`.
+- Active engineering work after sync belongs to `apple-xcode-workflow`.
 
 ### Agent ↔ User UX
 
 - Entry:
-  - The user asks to add, merge, refresh, or align guidance in an existing Xcode app repo.
+  - The user asks to align or add repo guidance in an existing Xcode app repo.
 - Agent behavior:
-  - The agent classifies the repo, runs the sync wrapper, and applies a bounded `AGENTS.md` create-or-append path.
+  - The agent verifies the repo shape, applies the guidance sync script, then hands execution work back to `apple-xcode-workflow`.
 - User-visible response:
-  - On success: the user sees what was created or appended and the handoff to `apple-xcode-workflow`.
-  - On blocked: the user sees whether the repo classification, path resolution, or append policy caused the stop.
-  - On failed: the user sees the exact sync or validation failure.
-- Interaction style:
-  - Guidance-sync engine with one bounded mutating path and one dry-run fallback.
+  - On success: the user sees that repo guidance is aligned and what to use next.
+  - On blocked: the user sees the exact repo-shape blocker.
 
 ### Failure / Fallback / Handoff States
 
-- `success` + `primary`: the repo guidance was created, appended, or already satisfied
-- `success` + `fallback`: a non-mutating dry-run plan was returned
-- `blocked`: the repo is not an existing Xcode app repo or sync policy prevented completion
-- `failed`: the sync path ran but validation did not pass
+- `success` + `primary`: repo guidance sync completed
+
+## `apple-swift-package-bootstrap`
+
+### Purpose
+
+Provide the canonical new Swift package bootstrap workflow with one runtime-policy entrypoint and one deterministic scaffold path.
+
+### Workflow Diagram
+
+```mermaid
+flowchart TD
+    I["Bootstrap input"] --> C["Classify Swift package bootstrap request"]
+    C --> RW["run_workflow.py"]
+    RW --> GEN["bootstrap_swift_package.py"]
+    GEN --> VALIDATE{"Package validation success?"}
+    VALIDATE -->|Yes| OUT["Success / primary"]
+    VALIDATE -->|No| FAIL["Failed"]
+```
+
+### Branch and Path Notes
+
+- This skill is bounded to plain Swift package creation.
+- Existing-package guidance sync belongs to `sync-swift-package-guidance`.
+- Xcode-specific execution after bootstrap may belong to `apple-xcode-workflow`.
+
+### Agent ↔ User UX
+
+- Entry:
+  - The user asks to create a new Swift package.
+- Agent behavior:
+  - The agent resolves package defaults, runs the deterministic bootstrap path, then hands later guidance-drift work to the sync skill when needed.
+- User-visible response:
+  - On success: the user sees the created package path and baseline validation.
+  - On failed: the user sees the exact scaffold or validation blocker.
+
+### Failure / Fallback / Handoff States
+
+- `success` + `primary`: package bootstrap completed
 
 ## `sync-swift-package-guidance`
 
 ### Purpose
 
-Provide the canonical existing-repo guidance-sync workflow for plain Swift package repositories so package bootstrap can stay focused on creation and immediate scaffold validation.
+Provide the canonical existing-repo guidance-sync workflow for plain Swift packages so package bootstrap and Xcode execution can stay focused.
 
 ### Workflow Diagram
 
 ```mermaid
 flowchart TD
     I["Repo input"] --> C["Classify existing Swift package guidance-sync request"]
-    C --> DOCS["Apply SwiftPM docs gate"]
-    DOCS --> RW["run_workflow.py"]
-    RW --> DETECT{"Existing Package.swift at repo root?"}
+    C --> RW["run_workflow.py"]
+    RW --> DETECT{"Plain Package.swift repo?"}
     DETECT -->|No| BL["Blocked"]
-    DETECT -->|Yes| AMBIG{"Xcode app markers also present?"}
-    AMBIG -->|Yes| BL2["Blocked"]
-    AMBIG -->|No| APPLY["sync_swift_package_guidance.py"]
+    DETECT -->|Yes| APPLY["sync_swift_package_guidance.py"]
     APPLY --> VALIDATE{"Guidance sync valid?"}
     VALIDATE -->|Yes| OUT["Success / primary"]
     VALIDATE -->|No| FAIL["Failed"]
@@ -487,145 +436,20 @@ flowchart TD
 
 ### Branch and Path Notes
 
-- `run_workflow.py` is the local runtime entrypoint.
-- The skill is intentionally bounded to repo-guidance alignment for existing plain Swift package repos.
+- This skill is intentionally bounded to repo-guidance alignment for plain Swift packages.
 - New-package creation still belongs to `apple-swift-package-bootstrap`.
-- Ordinary package development after sync uses `swift build` and `swift test` by default.
-- Xcode-managed package execution still belongs to `apple-xcode-workflow`.
-
-### Inputs
-
-- Required:
-  - repo root or current working directory context
-- Optional:
-  - `skip_validation`
-  - `dry_run`
-- Defaults:
-  - repo-maintainer runtime entrypoint `scripts/run_workflow.py`
-  - template copy when `AGENTS.md` is missing
-  - bounded section append when `AGENTS.md` already exists
-
-### Outputs
-
-- `status`
-  - `success`
-  - `blocked`
-  - `failed`
-- `path_type`
-  - `primary`
-  - `fallback`
-- Primary output fields:
-  - resolved repo root
-  - detected package and Xcode markers
-  - `AGENTS.md` path
-  - actions applied or planned
-  - validation result
+- Xcode-managed package execution may still belong to `apple-xcode-workflow`.
 
 ### Agent ↔ User UX
 
 - Entry:
-  - The user asks to add, merge, refresh, or align guidance in an existing Swift package repo.
+  - The user asks to align or add repo guidance in an existing Swift package repo.
 - Agent behavior:
-  - The agent classifies the repo, runs the sync wrapper, and applies a bounded `AGENTS.md` create-or-append path.
+  - The agent verifies the repo shape, applies the guidance sync script, then hands ordinary package work back to `swift build`, `swift test`, or `apple-xcode-workflow` when Xcode-managed behavior matters.
 - User-visible response:
-  - On success: the user sees what was created or appended and the follow-on default package workflow.
-  - On blocked: the user sees whether repo classification, repo-boundary ambiguity, path resolution, or append policy caused the stop.
-  - On failed: the user sees the exact sync or validation failure.
-- Interaction style:
-  - Guidance-sync engine with one bounded mutating path and one dry-run fallback.
+  - On success: the user sees that repo guidance is aligned and what to use next.
+  - On blocked: the user sees the exact repo-shape blocker.
 
 ### Failure / Fallback / Handoff States
 
-- `success` + `primary`: the repo guidance was created, appended, or already satisfied
-- `success` + `fallback`: a non-mutating dry-run plan was returned
-- `blocked`: the repo is not a plain Swift package repo, or sync policy prevented completion
-- `failed`: the sync path ran but validation did not pass
-
-## `apple-swift-package-bootstrap`
-
-### Purpose
-
-Create a new Swift package repository with one top-level entry point. `scripts/run_workflow.py` is the runtime wrapper, and `scripts/bootstrap_swift_package.sh` remains the implementation core for scaffold creation and validation.
-
-### Workflow Diagram
-
-```mermaid
-flowchart TD
-    I["Bootstrap request"] --> N["Normalize aliases and defaults"]
-    N --> RW["run_workflow.py"]
-    RW --> BS["bootstrap_swift_package.sh"]
-    BS --> OK{"Scaffold succeeds?"}
-    OK -->|Yes| VERIFY["Verify repo contents and validation commands"]
-    OK -->|No| FAIL["Failed"]
-    VERIFY --> VOK{"Verification succeeds?"}
-    VOK -->|Yes| OUT1["Success / primary"]
-    VOK -->|No| FAIL
-```
-
-```mermaid
-flowchart LR
-    B["Bundled script unavailable?"] --> M["Manual swift package init guidance"]
-    M --> OUT["Success / fallback"]
-```
-
-### Branch and Path Notes
-
-- `run_workflow.py` is the documented runtime entrypoint.
-- `scripts/bootstrap_swift_package.sh` remains the preferred scaffold path.
-- Manual `swift package init` guidance is a narrow fallback, not a peer primary workflow.
-- Successful scaffolds should hand off later execution work to `apple-xcode-workflow`.
-- Successful scaffolds should hand off later repo-guidance refresh work to `sync-swift-package-guidance`.
-
-### Inputs
-
-- Required:
-  - `name`
-- Optional:
-  - `type`
-  - `destination`
-  - `platform`
-  - `version_profile`
-  - `skip_validation`
-  - `dry_run`
-- Defaults:
-  - repo-maintainer runtime entrypoint `scripts/run_workflow.py`
-  - `type=library`
-  - `destination=.`
-  - `platform=multiplatform`
-  - `version_profile=current-minus-one`
-  - validation runs unless `--skip-validation` is passed
-
-### Outputs
-
-- `status`
-  - `success`
-  - `blocked`
-  - `failed`
-- `path_type`
-  - `primary`
-  - `fallback`
-- Primary output fields:
-  - resolved package path
-  - normalized inputs
-  - validation result
-  - next step
-
-### Agent ↔ User UX
-
-- Entry:
-  - The user asks to create a new Swift package repo or customize bootstrap defaults.
-- Agent behavior:
-  - The agent resolves defaults through `run_workflow.py`, lets the wrapper invoke the bundled script, and reports the normalized result.
-- User-visible response:
-  - On success: the user sees the created path, normalized options, and validation result.
-  - On fallback: the user sees the manual bootstrap path and why the bundled path was unavailable.
-  - On blocked: the user sees the missing prerequisite or unsafe target-directory condition.
-- Interaction style:
-  - Deterministic scaffolding workflow with one preferred script path and one manual fallback.
-
-### Failure / Fallback / Handoff States
-
-- `success` + `primary`: bundled scaffold path completed successfully
-- `success` + `fallback`: manual scaffold guidance is being used instead of the script
-- `failed`: the bundled script started but did not complete
-- `blocked`: prerequisites or target-directory rules prevented the run
+- `success` + `primary`: repo guidance sync completed

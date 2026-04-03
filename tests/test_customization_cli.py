@@ -9,8 +9,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SKILL_SCRIPTS = {
-    "apple-dash-docsets": ROOT / "skills/apple-dash-docsets/scripts/customization_config.py",
     "apple-xcode-workflow": ROOT / "skills/apple-xcode-workflow/scripts/customization_config.py",
+    "explore-apple-swift-docs": ROOT / "skills/explore-apple-swift-docs/scripts/customization_config.py",
     "apple-swift-package-bootstrap": ROOT / "skills/apple-swift-package-bootstrap/scripts/customization_config.py",
 }
 

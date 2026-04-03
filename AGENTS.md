@@ -87,6 +87,13 @@ Applicability guidance:
 - Keep per-skill internal copies of relevant snippets under `references/snippets/`.
 - In each skill `SKILL.md`, reference local snippet copies and recommend adding snippets to end-user repos when the task involves baseline policy setup.
 
+## Specialization Boundaries
+
+- Keep `apple-xcode-workflow` focused on execution, diagnostics, mutation safety, and fallback planning for existing Xcode-managed or Xcode-adjacent work.
+- Keep `explore-apple-swift-docs` focused on Apple and Swift docs exploration across Xcode MCP docs, Dash, and official web docs.
+- When an execution workflow needs documentation context, prefer entering or recommending `explore-apple-swift-docs` first rather than rebuilding docs-source selection inside `apple-xcode-workflow`.
+- Treat `apple-dash-docsets` as deprecated compatibility guidance only. The active docs skill is `explore-apple-swift-docs`.
+
 ## Anatomy of an Agent Skill
 
 The structure of a Skill, including purposes of each component:

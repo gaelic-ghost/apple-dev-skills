@@ -26,10 +26,11 @@
 - [x] Milestone 11: Documentation Maintenance Cadence
 - [ ] Milestone 12: Deferred Audit Reporting and Future Swift Direction
 - [ ] Milestone 13: SwiftPM Bootstrap Parity
-- [ ] Milestone 14: Plugin-First Packaging Foundation
+- [x] Milestone 14: Plugin-First Packaging Foundation
 - [x] Milestone 15: Xcode App Bootstrap and Guidance Sync Skills
-- [ ] Milestone 16: Existing Skill Rename and Install-Surface Cleanup
-- [ ] Milestone 17: Claude Code Plugin Extras
+- [x] Milestone 16: Apple and Swift Docs Skill Extraction
+- [ ] Milestone 17: Existing Skill Rename and Install-Surface Cleanup
+- [ ] Milestone 18: Claude Code Plugin Extras
 
 ## Milestone 1: Initial Apple Skill Bundle
 
@@ -274,7 +275,24 @@ Exit criteria:
 
 - [x] New native Apple app creation and existing-repo guidance sync are available as dedicated skills with clear trigger boundaries and explicit handoffs.
 
-## Milestone 16: Existing Skill Rename and Install-Surface Cleanup
+## Milestone 16: Apple and Swift Docs Skill Extraction
+
+Scope:
+
+- [x] Extract Apple and Swift docs exploration into a dedicated skill so the main Xcode workflow can stay focused on execution work.
+
+Tickets:
+
+- [x] Ship `explore-apple-swift-docs` as the active docs skill across Xcode MCP docs, Dash, and official web docs.
+- [x] Deprecate `apple-dash-docsets` into a compatibility redirect instead of keeping it in the active public surface.
+- [x] Move docs-source routing responsibility out of `apple-xcode-workflow` and keep only the Apple docs gate plus a smooth handoff.
+- [x] Update README, maintainer docs, validation, and tests to treat `explore-apple-swift-docs` as the active docs skill.
+
+Exit criteria:
+
+- [x] Apple and Swift docs exploration has its own dedicated active skill, and the main Xcode workflow no longer owns docs-source machinery.
+
+## Milestone 17: Existing Skill Rename and Install-Surface Cleanup
 
 Scope:
 
@@ -291,7 +309,7 @@ Exit criteria:
 
 - [ ] The active install surface uses the final intended names, and repo docs no longer teach stale IDs as the preferred user-facing surface.
 
-## Milestone 17: Claude Code Plugin Extras
+## Milestone 18: Claude Code Plugin Extras
 
 Scope:
 

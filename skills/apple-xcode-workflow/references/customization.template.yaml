@@ -3,6 +3,5 @@ isCustomized: false
 settings:
   mcpRetryCount: 1
   requireExplicitMutationOptInForFilesystemFallback: true
-  docsRoutingOrder: "dash-mcp,dash-local,official-web"
   advisoryCooldownDays: 21
   fallbackCommandMappingProfile: "official-default"

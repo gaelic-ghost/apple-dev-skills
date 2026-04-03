@@ -84,9 +84,7 @@ class XcodeWorkflowTests(unittest.TestCase):
             env["APPLE_DEV_SKILLS_CONFIG_HOME"] = tmpdir
             code, payload = self.run_script(
                 "--operation-type",
-                "docs",
-                "--docs-query",
-                "Swift",
+                "build",
                 "--advisory-state-file",
                 str(state_file),
                 env=env,

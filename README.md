@@ -5,9 +5,9 @@ Canonical Apple development skills with an in-progress plugin-first packaging la
 ## Active Skills
 
 - `apple-xcode-workflow`
-  - Top-level Apple and Swift skill for Xcode work, execution, diagnostics, toolchains, mutation decisions, and docs lookup.
-- `apple-dash-docsets`
-  - Top-level Dash skill with one entry point and internal `search -> install -> generate` workflows.
+  - Top-level Apple and Swift execution skill for Xcode work, diagnostics, toolchains, mutation decisions, and guarded fallback planning.
+- `explore-apple-swift-docs`
+  - Top-level docs skill for Apple and Swift docs exploration across Xcode MCP docs, Dash, and official web docs, with optional Dash follow-up when needed.
 - `apple-swift-package-bootstrap`
   - Top-level skill for new Swift package scaffolding only, with verification and `AGENTS.md` generation.
 - `bootstrap-xcode-app-project`
@@ -24,7 +24,7 @@ Every active skill now follows the same documentation contract:
 - named `fallback` and `handoff` behavior
 - customization knobs labeled `policy-only` unless runtime enforcement exists
 
-Maintainer-facing workflow diagrams, input/output contracts, and Agent ↔ User UX maps live in [docs/maintainers/workflow-atlas.md](./docs/maintainers/workflow-atlas.md). Audit procedure and source-of-truth guidance live in [docs/maintainers/reality-audit.md](./docs/maintainers/reality-audit.md).
+Maintainer-facing workflow diagrams, input and output contracts, and Agent ↔ User UX maps live in [docs/maintainers/workflow-atlas.md](./docs/maintainers/workflow-atlas.md). Audit procedure and source-of-truth guidance live in [docs/maintainers/reality-audit.md](./docs/maintainers/reality-audit.md).
 
 ## Packaging and Delegation
 
@@ -89,8 +89,8 @@ Common starting points:
 
 - Xcode work:
   `npx skills add gaelic-ghost/apple-dev-skills --skill apple-xcode-workflow`
-- Dash work:
-  `npx skills add gaelic-ghost/apple-dev-skills --skill apple-dash-docsets`
+- Apple or Swift docs exploration:
+  `npx skills add gaelic-ghost/apple-dev-skills --skill explore-apple-swift-docs`
 - New Swift package bootstrap:
   `npx skills add gaelic-ghost/apple-dev-skills --skill apple-swift-package-bootstrap`
 - New native Apple app bootstrap:
@@ -109,7 +109,8 @@ This repo previously experimented with a router layer and later removed it.
 | `apple-skills-router-advise-install` | removed |
 | `apple-skills-router` | removed |
 | `apple-xcode-workflow-execute` | `apple-xcode-workflow` |
-| `apple-dash-docset-manage` | `apple-dash-docsets` |
+| `apple-dash-docset-manage` | `explore-apple-swift-docs` |
+| `apple-dash-docsets` | deprecated compatibility shim that redirects to `explore-apple-swift-docs` |
 
 The current active skill surface now includes both guidance-sync skills alongside the app and package bootstrap surfaces.
 
@@ -117,7 +118,7 @@ Future rename cleanup for the remaining `apple-*` skills is tracked in [ROADMAP.
 
 ## AGENTS Guidance
 
-Repository-consumable Swift/Apple baseline policy snippets:
+Repository-consumable Swift and Apple baseline policy snippets:
 
 - [shared/agents-snippets/apple-xcode-project-core.md](./shared/agents-snippets/apple-xcode-project-core.md)
 - [shared/agents-snippets/apple-swift-package-core.md](./shared/agents-snippets/apple-swift-package-core.md)
@@ -125,13 +126,20 @@ Repository-consumable Swift/Apple baseline policy snippets:
 Use these snippets for cross-project standards that belong in end-user `AGENTS.md`.
 
 - Each active skill ships the local snippet copy that matches its workflow surface so individually installed skills can recommend it directly.
+- For Apple or Swift docs exploration, prefer `explore-apple-swift-docs` over older Dash-specific guidance.
 - For new Swift package repositories, `apple-swift-package-bootstrap` copies its full `assets/AGENTS.md` template, which already incorporates the Swift-package baseline.
 - For existing Xcode app repositories, prefer `sync-xcode-project-guidance` over manual snippet merging when the goal is to align repo guidance.
 - For existing Swift package repositories, prefer `sync-swift-package-guidance` over manual snippet merging when the goal is to align repo guidance.
 - For existing repositories, use the shared snippets for targeted updates or the skill-local copies when reading an installed skill in isolation.
 - For cross-repo AGENTS drift and documentation alignment workflows, use dedicated docs-alignment skills maintained outside this repository.
 
-## Retired Skill Note
+## Deprecated Skill Note
+
+`apple-dash-docsets` is no longer part of the active skill surface.
+
+- Use `explore-apple-swift-docs` for Apple or Swift docs exploration.
+- The new docs skill still includes Dash compatibility and optional Dash install follow-up.
+- The old skill remains on disk only as a compatibility redirect for older references.
 
 `apple-swift-package-agents-sync` is no longer part of the active skill surface.
 
@@ -165,9 +173,10 @@ Use these snippets for cross-project standards that belong in end-user `AGENTS.m
 │       └── apple-xcode-project-core.md
 └── skills/
     ├── bootstrap-xcode-app-project/
-    ├── apple-xcode-workflow/
     ├── apple-dash-docsets/
     ├── apple-swift-package-bootstrap/
+    ├── apple-xcode-workflow/
+    ├── explore-apple-swift-docs/
     ├── sync-swift-package-guidance/
     └── sync-xcode-project-guidance/
 ```

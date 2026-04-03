@@ -18,7 +18,7 @@ Create a new Swift package repository with one top-level entry point and a simpl
 - Do not use this skill as the default path for guidance sync inside an already-existing Swift package repo.
 - Recommend `apple-xcode-workflow` when the user is working in an existing Xcode project or needs Apple-platform execution after bootstrap.
 - Recommend `sync-swift-package-guidance` when an existing Swift package repo needs `AGENTS.md` or workflow-guidance alignment rather than fresh bootstrap.
-- Recommend `apple-dash-docsets` when the user needs Dash docset search, install, or generation work.
+- Recommend `explore-apple-swift-docs` when the user needs Apple or Swift docs exploration, Dash-compatible lookup, or Dash follow-up work.
 
 ## Single-Path Workflow
 
@@ -118,7 +118,7 @@ Create a new Swift package repository with one top-level entry point and a simpl
 - After a successful scaffold, hand off later repo-guidance alignment work to `sync-swift-package-guidance`.
 - For ordinary package work, prefer `swift build` and `swift test`.
 - For package builds that need Xcode-managed SDK or toolchain behavior, use `apple-xcode-workflow` and `xcodebuild` guidance instead of stretching the bootstrap skill into an execution skill.
-- Recommend `apple-dash-docsets` directly when the user’s next step is Dash docset or cheatsheet management.
+- Recommend `explore-apple-swift-docs` directly when the user’s next step is Apple or Swift docs exploration or Dash-compatible docs management.
 - `scripts/run_workflow.py` is the top-level runtime entrypoint and converts the shell script result into the documented JSON contract.
 
 ## Customization
