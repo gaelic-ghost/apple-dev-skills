@@ -57,6 +57,12 @@ Applicability guidance:
   - a `subagent` is a delegated runtime worker with its own context and tool policy
 - For Codex, treat skills as the primary authoring format and plugins as the installable distribution unit that can bundle skills, apps, and MCP servers.
 - For Codex work, prefer starting with a local skill when iterating on one workflow in one repository. Escalate to plugin packaging only when the workflow should be distributed across teams, published through a marketplace, or shipped together with app integrations or MCP configuration.
+- For Codex work in this repository, keep root `skills/` as the canonical workflow-authoring surface and treat `plugins/apple-dev-skills/` as the plugin packaging root.
+- Follow canonical Codex and Claude project-level discovery guidance on macOS and Linux through POSIX symlink mirrors instead of duplicate skill trees:
+  - `.agents/skills -> ../skills`
+  - `.claude/skills -> ../skills`
+  - `plugins/apple-dev-skills/skills -> ../../skills`
+- Treat those symlink mirrors as discovery and packaging conveniences, not as independent sources of truth.
 - For Claude Code, keep in mind that plugins can package more than skills alone. Claude plugins may bundle commands, hooks, MCP or LSP configuration, skills, and plugin-scoped subagents.
 - For Claude Code subagents, treat them as Markdown-plus-frontmatter runtime personas with their own prompts, tool access, and context window. They are not a replacement for shared skills or repo guidance.
 - For Codex subagents, treat them as explicit delegation infrastructure for bounded parallel or specialized work. They should not be assumed to exist unless the host supports them and the task actually benefits from delegation.
@@ -152,6 +158,8 @@ Some alternatives for user customization/config include using their Agent's memo
 - Implement all applicable YAML fields in the Frontmatter.
 - Never auto-install skills; report required commands and wait for user confirmation.
 - Keep skill runtime resources inside the skill directory: `SKILL.md`, `agents/openai.yaml`, `scripts/`, `references/`, and `assets/`.
+- Keep active repo-authored skills under the top-level `skills/` directory, and keep install packaging surfaces under `plugins/apple-dev-skills/`.
+- Prefer symlinks over hardlinks for discovery mirrors in this repository. Hardlinks are not a durable repository contract.
 - Do not make installed skills depend on repo-level docs under `docs/`.
 - Repo-maintainer docs live under `docs/maintainers/`.
 - Use `docs/maintainers/reality-audit.md` as the maintainer operating guide for source-of-truth order, audit procedure, durable review criteria, and reusable repo-maintenance conventions.

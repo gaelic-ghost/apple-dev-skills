@@ -24,6 +24,14 @@ echo "Validating root docs presence..."
 [[ -f docs/maintainers/workflow-atlas.md ]] || fail "Missing docs/maintainers/workflow-atlas.md."
 [[ -f docs/maintainers/reality-audit.md ]] || fail "Missing docs/maintainers/reality-audit.md."
 
+echo "Validating local discovery mirrors..."
+[[ -L ".agents/skills" ]] || fail "Expected .agents/skills to be a symlink to ../skills"
+[[ "$(readlink .agents/skills)" == "../skills" ]] || fail "Expected .agents/skills -> ../skills"
+[[ -L ".claude/skills" ]] || fail "Expected .claude/skills to be a symlink to ../skills"
+[[ "$(readlink .claude/skills)" == "../skills" ]] || fail "Expected .claude/skills -> ../skills"
+[[ -L "plugins/apple-dev-skills/skills" ]] || fail "Expected plugins/apple-dev-skills/skills to be a symlink to ../../skills"
+[[ "$(readlink plugins/apple-dev-skills/skills)" == "../../skills" ]] || fail "Expected plugins/apple-dev-skills/skills -> ../../skills"
+
 echo "Validating authoritative resource links in root docs..."
 required_resource_strings=(
   "/Users/galew/.codex/skills/.system/skill-creator/SKILL.md"
@@ -46,10 +54,20 @@ echo "Validating README maintainer pointer..."
 require_contains "README.md" 'Maintainers: authoritative skill-authoring resources live in `AGENTS.md`.'
 require_contains "README.md" 'docs/maintainers/workflow-atlas.md'
 require_contains "README.md" 'docs/maintainers/reality-audit.md'
+require_contains "README.md" '.agents/skills -> ../skills'
+require_contains "README.md" '.claude/skills -> ../skills'
+require_contains "README.md" 'plugins/apple-dev-skills/skills -> ../../skills'
 
 echo "Validating AGENTS maintainer pointers..."
 require_contains "AGENTS.md" 'docs/maintainers/reality-audit.md'
 require_contains "AGENTS.md" 'docs/maintainers/workflow-atlas.md'
+require_contains "AGENTS.md" '.agents/skills -> ../skills'
+require_contains "AGENTS.md" '.claude/skills -> ../skills'
+require_contains "AGENTS.md" 'plugins/apple-dev-skills/skills -> ../../skills'
+
+echo "Validating plugin and marketplace metadata..."
+require_contains "plugins/apple-dev-skills/.codex-plugin/plugin.json" '"skills": "./skills/"'
+require_contains ".agents/plugins/marketplace.json" '"installation": "AVAILABLE"'
 
 echo "Validating workflow document structure..."
 workflow_doc="docs/maintainers/workflow-atlas.md"

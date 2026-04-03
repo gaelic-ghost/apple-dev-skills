@@ -1,5 +1,5 @@
 {
-  "name": "apple-dev-skills-local",
+  "name": "gaelic-ghost-apple-dev-skills",
   "interface": {
     "displayName": "Apple Dev Skills"
   },
@@ -11,7 +11,7 @@
         "path": "./plugins/apple-dev-skills"
       },
       "policy": {
-        "installation": "NOT_AVAILABLE",
+        "installation": "AVAILABLE",
         "authentication": "ON_INSTALL"
       },
       "category": "Productivity"

@@ -1,6 +1,6 @@
 # apple-dev-skills
 
-Canonical Apple development skills with an in-progress plugin-first packaging layout for Codex and Claude Code.
+Canonical Apple development skills with a plugin-first packaging layout for Codex and Claude Code.
 
 ## Active Skills
 
@@ -34,12 +34,17 @@ Shared guidance across both ecosystems:
 
 - keep reusable workflow behavior in root `skills/`
 - keep deterministic helper logic skill-scoped so both Codex and Claude can rely on it
-- do not treat plugin-root `assets/` as a shared runtime resource layer; in current Codex docs they are install-surface presentation assets
-- treat plugin manifests and marketplace wiring as install-surface metadata, not as the workflow source of truth
+- treat plugin manifests, hooks, and marketplace wiring as install-surface metadata, not as the workflow source of truth
+- use POSIX symlink mirrors for local Codex and Claude project discovery on macOS and Linux:
+  - `.agents/skills -> ../skills`
+  - `.claude/skills -> ../skills`
+  - `plugins/apple-dev-skills/skills -> ../../skills`
 
 Current plugin scaffolding lives under:
 
 - `plugins/apple-dev-skills/`
+- `.agents/skills`
+- `.claude/skills`
 - `.agents/plugins/marketplace.json`
 
 Maintainer guidance for those adjacent surfaces now exists in [AGENTS.md](./AGENTS.md):
@@ -49,7 +54,7 @@ Maintainer guidance for those adjacent surfaces now exists in [AGENTS.md](./AGEN
 - Claude Code plugins are a broader distribution layer that may bundle skills, commands, hooks, `bin/`, MCP or LSP config, and plugin-scoped subagents.
 - Codex and Claude subagents are delegation/runtime workers, not replacements for repo guidance or top-level skills.
 
-The plugin scaffold in this repo is intentionally conservative:
+The plugin package in this repo is intentionally conservative:
 
 - Codex-compatible common denominator first
 - Claude-only extras layered on top under `plugins/apple-dev-skills/hooks/` and `plugins/apple-dev-skills/bin/`
@@ -72,6 +77,8 @@ Use `uv run pytest` for the repo's test suite and other repo-root validation com
 Run the snippet sync script before validation whenever files under `shared/agents-snippets/` change.
 
 ## Install
+
+Standalone skill installation is handled through the Vercel `skills` CLI against root `skills/`. Plugin packaging and local marketplace wiring target `plugins/apple-dev-skills/`. For local project discovery on macOS and Linux, this repo also exposes `.agents/skills` and `.claude/skills` as symlink mirrors into root `skills/`.
 
 Install one skill:
 
@@ -137,8 +144,11 @@ Use these snippets for cross-project standards that belong in end-user `AGENTS.m
 ```text
 .
 ├── .agents/
+│   ├── skills -> ../skills
 │   └── plugins/
 │       └── marketplace.json
+├── .claude/
+│   └── skills -> ../skills
 ├── README.md
 ├── ROADMAP.md
 ├── docs/
@@ -152,7 +162,7 @@ Use these snippets for cross-project standards that belong in end-user `AGENTS.m
 │       ├── assets/
 │       ├── bin/
 │       ├── hooks/
-│       └── skills/
+│       └── skills -> ../../skills
 ├── shared/
 │   └── agents-snippets/
 │       ├── apple-swift-package-core.md
@@ -166,7 +176,7 @@ Use these snippets for cross-project standards that belong in end-user `AGENTS.m
     └── xcode-app-project-workflow/
 ```
 
-The plugin directories are packaging scaffolds. The canonical workflow content still lives under root `skills/` until packaging sync is fully implemented.
+The canonical workflow content still lives under root `skills/`. The discovery mirrors are local POSIX symlinks for macOS and Linux development, including WSL 2 when Windows is involved.
 
 Maintainers: authoritative skill-authoring resources live in `AGENTS.md`.
 
