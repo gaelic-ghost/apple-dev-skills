@@ -1,0 +1,32 @@
+{
+  "name": "apple-dev-skills",
+  "version": "0.0.0-local",
+  "description": "In-development Apple development plugin bundling skills, future MCP servers, and install-surface metadata.",
+  "author": {
+    "name": "Gale",
+    "email": "mail@galewilliams.com",
+    "url": "https://github.com/gaelic-ghost"
+  },
+  "repository": "https://github.com/gaelic-ghost/apple-dev-skills",
+  "homepage": "https://github.com/gaelic-ghost/apple-dev-skills",
+  "license": "MIT",
+  "keywords": [
+    "apple",
+    "xcode",
+    "swift",
+    "skills",
+    "plugin"
+  ],
+  "interface": {
+    "displayName": "Apple Dev Skills",
+    "shortDescription": "Plugin scaffold for Apple development workflows",
+    "longDescription": "In-development plugin scaffold for Apple development workflows shared across Codex and Claude Code.",
+    "developerName": "Gale",
+    "category": "Productivity",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://github.com/gaelic-ghost/apple-dev-skills"
+  }
+}

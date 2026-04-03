@@ -3,12 +3,13 @@
 ## Baseline Provenance
 
 - This template is the full bootstrap `AGENTS.md` used for new Swift package repositories.
-- It intentionally incorporates the shared Swift/Apple baseline from `shared/agents-snippets/apple-swift-core.md`.
+- It intentionally incorporates the shared Swift-package baseline from `shared/agents-snippets/apple-swift-package-core.md`.
 - Keep baseline guidance aligned with the shared snippet and use this template for deterministic scaffold output.
 
 ## Repository Expectations
 
 - Use Swift Package Manager (SPM) as the source of truth for package structure and dependencies.
+- Use `sync-swift-package-guidance` if this repo's package-specific `AGENTS.md` guidance later drifts and needs to be refreshed or merged forward.
 - Prefer `swift package` CLI commands for structural changes whenever the command exists.
 - Use `swift package add-dependency` to add dependencies instead of hand-editing package graphs.
 - Use `swift package add-target` to add library, executable, or test targets.

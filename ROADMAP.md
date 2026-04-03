@@ -2,14 +2,14 @@
 
 ## Vision
 
-- Keep `apple-dev-skills` as a small, durable Apple development skill bundle with clear top-level entry points, deterministic local helpers, and maintainer docs that track shipped reality.
+- Keep `apple-dev-skills` as a durable Apple development skill source-of-truth repo with plugin-first packaging for Codex and Claude Code.
 
 ## Product principles
 
-- Keep the active public surface constrained to focused top-level skills with clear handoffs.
+- Keep root `skills/` as the canonical workflow-authoring surface.
 - Prefer deterministic local scripts and validation over implied workflow behavior.
-- Keep installed skills self-contained and compatible with managed, read-only install locations.
-- Treat tests, shipped skill assets, and maintainer validation as the source of truth for roadmap updates.
+- Keep cross-ecosystem behavior grounded in the Codex-and-Claude common denominator first, then add Claude-only extras separately.
+- Treat tests, shipped skill assets, plugin manifests, and maintainer validation as the source of truth for roadmap updates.
 
 ## Milestone Progress
 
@@ -26,8 +26,10 @@
 - [x] Milestone 11: Documentation Maintenance Cadence
 - [ ] Milestone 12: Deferred Audit Reporting and Future Swift Direction
 - [ ] Milestone 13: SwiftPM Bootstrap Parity
-- [ ] Milestone 14: Dedicated Xcode macOS App Project Skill
-- [ ] Milestone 15: Dedicated Xcode iOS/iPadOS App Project Skill
+- [ ] Milestone 14: Plugin-First Packaging Foundation
+- [x] Milestone 15: Xcode App Bootstrap and Guidance Sync Skills
+- [ ] Milestone 16: Existing Skill Rename and Install-Surface Cleanup
+- [ ] Milestone 17: Claude Code Plugin Extras
 
 ## Milestone 1: Initial Apple Skill Bundle
 
@@ -176,7 +178,7 @@ Tickets:
 
 Exit criteria:
 
-- [x] The active public surface is the current three-skill top-level model.
+- [x] The active public skill surface is the current three-skill top-level model.
 
 ## Milestone 11: Documentation Maintenance Cadence
 
@@ -199,13 +201,13 @@ Exit criteria:
 
 Scope:
 
-- [ ] Keep future roadmap work explicitly deferred while the current three-skill surface remains stable.
+- [ ] Keep future roadmap work explicitly deferred until there is a concrete operational need.
 
 Tickets:
 
 - [ ] Defer recurring maintainer audit/report cadence refinement until it has a clearer operational need.
 - [ ] Park follow-up roadmap/reporting cleanup that is not required for the current shipped surface.
-- [ ] Hold a placeholder for future non-xcode swift skill design direction.
+- [ ] Hold a placeholder for future non-Xcode Swift skill design direction.
 - [ ] Add Dash end-to-end coverage for real install and fallback flows beyond dry-run and blocked-path assertions.
 - [ ] Add Xcode end-to-end coverage for real MCP or CLI fallback execution beyond policy-shaping tests.
 - [ ] Add broader bootstrap coverage for blocked-vs-failed negative paths, alternate testing modes, and dry-run toolchain-validation behavior beyond the immediate SwiftPM parity fixes.
@@ -236,46 +238,72 @@ Exit criteria:
 - [ ] Maintainer docs explain when Swift package builds should use `xcodebuild` because Xcode-managed toolchain behavior is required.
 - [ ] Validation catches drift between documented bootstrap behavior and actual generated package output.
 
-## Milestone 14: Dedicated Xcode macOS App Project Skill
+## Milestone 14: Plugin-First Packaging Foundation
 
 Scope:
 
-- [ ] Add a future dedicated skill for Xcode macOS app-project collaboration without overloading the generic Xcode workflow skill.
+- [ ] Establish the repository's plugin-first install shape while keeping root `skills/` as the workflow-authoring source of truth.
 
 Tickets:
 
-- [ ] Define the top-level macOS app-project skill contract, inputs, outputs, fallbacks, and handoffs.
-- [ ] Document MCP-first macOS app-project execution with official `xcodebuild` fallback for app targets, schemes, and test flows.
-- [ ] Add Apple-docs-first guidance for macOS app architecture, lifecycle, and app-project mutation safety.
-- [ ] Add references and validation coverage for macOS app-project workflows, including signing/build-setting awareness where relevant.
+- [ ] Add a repo-local Codex plugin scaffold with `.codex-plugin/plugin.json` and a local marketplace entry.
+- [ ] Add a repo-local Claude Code plugin scaffold with `.claude-plugin/plugin.json`.
+- [ ] Document the supported common-denominator plugin structure shared by Codex and Claude.
+- [ ] Document which plugin surfaces are Codex-only, Claude-only, or shared.
+- [ ] Keep plugin packaging metadata and assets in sync with the canonical root skills as that packaging layer grows.
 
 Exit criteria:
 
-- [ ] A shipped top-level skill exists for Xcode macOS app projects with the same contract quality as the current active skills.
-- [ ] The skill can guide macOS app-project inspection, diagnostics, build, test, and run collaboration without relying on `apple-xcode-workflow` as the only app-project surface.
+- [ ] The repository contains a documented plugin scaffold for both ecosystems, and maintainers can point to one canonical packaging plan without implying unsupported Codex plugin behavior.
 
-## Milestone 15: Dedicated Xcode iOS/iPadOS App Project Skill
+## Milestone 15: Xcode App Bootstrap and Guidance Sync Skills
 
 Scope:
 
-- [ ] Add a future dedicated skill for Xcode iOS and iPadOS app-project collaboration with explicit simulator- and destination-aware workflows.
+- [x] Add the new Xcode app bootstrap surface and split repo-guidance sync into dedicated skills instead of overloading the main Xcode workflow skill.
 
 Tickets:
 
-- [ ] Define the top-level iOS/iPadOS app-project skill contract, inputs, outputs, fallbacks, and handoffs.
-- [ ] Document MCP-first mobile app-project execution with official `xcodebuild` fallback for simulator, destination, scheme, and test flows.
-- [ ] Add Apple-docs-first guidance for UIKit and SwiftUI mobile app architecture, lifecycle, and app-project mutation safety.
-- [ ] Add references and validation coverage for iOS/iPadOS app-project workflows, including simulator-oriented troubleshooting and destination selection guidance.
+- [x] Ship `bootstrap-xcode-app-project` for new native Apple app creation on macOS.
+- [x] Ship `sync-xcode-project-guidance` for bringing existing Xcode app repos up to the expected docs and guidance baseline.
+- [x] Ship `sync-swift-package-guidance` for bringing existing Swift package repos up to the expected docs and guidance baseline.
+- [x] Define clean handoffs between the bootstrap skill, the sync skills, and the main Xcode workflow skill.
+- [x] Add customization guidance for `XcodeGen` as an optional project-generation preference, without making it the only supported bootstrap path.
 
 Exit criteria:
 
-- [ ] A shipped top-level skill exists for Xcode iOS/iPadOS app projects with the same contract quality as the current active skills.
-- [ ] The skill can guide mobile app-project inspection, diagnostics, build, test, and run collaboration without collapsing macOS and iOS/iPadOS concerns into one generic app skill.
+- [x] New native Apple app creation and existing-repo guidance sync are available as dedicated skills with clear trigger boundaries and explicit handoffs.
 
-## Historical Notes
+## Milestone 16: Existing Skill Rename and Install-Surface Cleanup
 
-- [x] 2026-02-28: Roadmap tracking began alongside documentation parity and CI validation work.
-- [x] 2026-03-01: M6 and M7 completed, closing readiness/parity follow-ups and plugin compatibility work.
-- [x] 2026-03-05: M8 through M10 reshaped the repository around canonical naming, router removal, and the three-skill top-level surface.
-- [x] 2026-03-06: M11 completed by aligning maintainer docs, repo validation, and shipped customization-template layout with current repo standards.
-- [x] 2026-03-06: Added a repo-level `uv` Python maintainer baseline and standardized tests and YAML validation around `pytest` and `PyYAML`.
+Scope:
+
+- [ ] Rename the remaining legacy-prefixed skills where a search-oriented action name improves install UX and discoverability.
+
+Tickets:
+
+- [ ] Audit the current skill names for the plugin-first install model and Codex/Claude search surfaces.
+- [ ] Rename any retained `apple-*` skills whose names no longer carry useful disambiguation once the plugin name already provides Apple scope.
+- [ ] Update README, roadmap, marketplace entries, plugin manifests, and install examples to the new names.
+- [ ] Preserve migration notes for any renamed skill IDs so maintainers can map old references cleanly.
+
+Exit criteria:
+
+- [ ] The active install surface uses the final intended names, and repo docs no longer teach stale IDs as the preferred user-facing surface.
+
+## Milestone 17: Claude Code Plugin Extras
+
+Scope:
+
+- [ ] Add Claude-only plugin enhancements on top of the shared Codex/Claude common denominator without making cross-ecosystem workflows depend on them.
+
+Tickets:
+
+- [ ] Flesh out `hooks/` for Claude-only automation where it clearly helps maintainers or end users.
+- [ ] Add `bin/` helpers only for Claude-only convenience wrappers that do not become required for the shared workflow contract.
+- [ ] Document which Claude-only extras are optional sugar versus canonical workflow behavior.
+- [ ] Validate that Claude-only extras degrade gracefully when absent from Codex.
+
+Exit criteria:
+
+- [ ] Claude-only plugin extras exist as clearly separated enhancements, and the core workflow remains usable through the shared skill surface in both ecosystems.

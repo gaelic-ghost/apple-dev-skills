@@ -57,6 +57,9 @@ require_contains "$workflow_doc" "## Repo Workflow Map"
 require_contains "$workflow_doc" '## `apple-xcode-workflow`'
 require_contains "$workflow_doc" '## `apple-dash-docsets`'
 require_contains "$workflow_doc" '## `apple-swift-package-bootstrap`'
+require_contains "$workflow_doc" '## `bootstrap-xcode-app-project`'
+require_contains "$workflow_doc" '## `sync-xcode-project-guidance`'
+require_contains "$workflow_doc" '## `sync-swift-package-guidance`'
 
 echo "Validating reality audit guide..."
 audit_doc="docs/maintainers/reality-audit.md"
@@ -72,10 +75,12 @@ done < <(find . -type f -name SKILL.md \
   -not -path "./.git/*" \
   -not -path "./.github/*" \
   | sort)
-[[ ${#skill_mds[@]} -eq 3 ]] || fail "Expected exactly 3 active skills, found ${#skill_mds[@]}."
+[[ ${#skill_mds[@]} -eq 6 ]] || fail "Expected exactly 6 active skills, found ${#skill_mds[@]}."
 
-shared_snippet="./shared/agents-snippets/apple-swift-core.md"
-[[ -f "$shared_snippet" ]] || fail "Missing shared snippet: $shared_snippet"
+shared_xcode_snippet="./shared/agents-snippets/apple-xcode-project-core.md"
+shared_package_snippet="./shared/agents-snippets/apple-swift-package-core.md"
+[[ -f "$shared_xcode_snippet" ]] || fail "Missing shared snippet: $shared_xcode_snippet"
+[[ -f "$shared_package_snippet" ]] || fail "Missing shared snippet: $shared_package_snippet"
 
 for skill_md in "${skill_mds[@]}"; do
   skill_dir="${skill_md%/SKILL.md}"
@@ -103,12 +108,24 @@ for skill_md in "${skill_mds[@]}"; do
     [[ -d "$skill_dir/scripts" ]] || fail "Missing $skill_dir/scripts/ (referenced by $skill_md)"
   fi
 
-  local_snippet="$skill_dir/references/snippets/apple-swift-core.md"
+  case "$skill_dir" in
+    ./skills/apple-swift-package-bootstrap|./skills/sync-swift-package-guidance)
+      local_snippet="$skill_dir/references/snippets/apple-swift-package-core.md"
+      shared_snippet="$shared_package_snippet"
+      snippet_ref='references/snippets/apple-swift-package-core.md'
+      ;;
+    *)
+      local_snippet="$skill_dir/references/snippets/apple-xcode-project-core.md"
+      shared_snippet="$shared_xcode_snippet"
+      snippet_ref='references/snippets/apple-xcode-project-core.md'
+      ;;
+  esac
+
   [[ -f "$local_snippet" ]] || fail "Missing $local_snippet"
   cmp -s "$shared_snippet" "$local_snippet" || fail "Snippet drift detected between $shared_snippet and $local_snippet"
 
-  grep -Fq "references/snippets/apple-swift-core.md" "$skill_md" || fail "Missing local snippet reference in $skill_md"
-  grep -Eiq "recommend.{0,120}references/snippets/apple-swift-core.md|references/snippets/apple-swift-core.md.{0,120}recommend" "$skill_md" || fail "Missing snippet recommendation guidance in $skill_md"
+  grep -Fq "$snippet_ref" "$skill_md" || fail "Missing local snippet reference in $skill_md"
+  grep -Eiq "recommend.{0,120}$snippet_ref|$snippet_ref.{0,120}recommend" "$skill_md" || fail "Missing snippet recommendation guidance in $skill_md"
 done
 
 echo "Validating skill-creator contract..."

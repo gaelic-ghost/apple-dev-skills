@@ -15,7 +15,9 @@ Create a new Swift package repository with one top-level entry point and a simpl
 - Use this skill when the user wants consistent package defaults, `AGENTS.md` generation, and immediate validation.
 - Use this skill when the user wants to customize the documented bootstrap defaults for future runs.
 - Do not use this skill as the default path for normal Xcode app collaboration work.
+- Do not use this skill as the default path for guidance sync inside an already-existing Swift package repo.
 - Recommend `apple-xcode-workflow` when the user is working in an existing Xcode project or needs Apple-platform execution after bootstrap.
+- Recommend `sync-swift-package-guidance` when an existing Swift package repo needs `AGENTS.md` or workflow-guidance alignment rather than fresh bootstrap.
 - Recommend `apple-dash-docsets` when the user needs Dash docset search, install, or generation work.
 
 ## Single-Path Workflow
@@ -52,11 +54,12 @@ Create a new Swift package repository with one top-level entry point and a simpl
    - `Tests/`
    - `swift build` and `swift test` unless `--skip-validation` was requested
 7. Ensure the generated guidance encodes the shared Swift policy:
-   - apply the detailed local policy in `references/snippets/apple-swift-core.md`
+   - apply the detailed local policy in `references/snippets/apple-swift-package-core.md`
    - keep the generated repo aligned with the simplicity-first, shape-preserving, and anti-ceremony Swift guidance in that snippet
-   - preserve the project-appropriate logging, telemetry, and SwiftUI architecture guidance from that snippet
+   - preserve the project-appropriate logging and telemetry guidance from that snippet
 8. Hand off package execution guidance cleanly:
    - use `swift build` and `swift test` by default
+   - recommend `sync-swift-package-guidance` when a later repo-guidance refresh or merge is needed for the created package repo
    - recommend `apple-xcode-workflow` for package builds that need Xcode-managed toolchain behavior, such as package builds that depend on Xcode-provided Metal or other Apple-managed build assets
 9. Return one JSON execution summary with the created path, normalized options, and validation result.
 
@@ -112,6 +115,7 @@ Create a new Swift package repository with one top-level entry point and a simpl
 - Use manual `swift package init` guidance only when the script is unavailable or the user explicitly asks for the manual path.
 - `tool` is an advanced explicit passthrough, not a default branch of the workflow.
 - After a successful scaffold, hand off build, test, or Xcode-managed package execution tasks to `apple-xcode-workflow`.
+- After a successful scaffold, hand off later repo-guidance alignment work to `sync-swift-package-guidance`.
 - For ordinary package work, prefer `swift build` and `swift test`.
 - For package builds that need Xcode-managed SDK or toolchain behavior, use `apple-xcode-workflow` and `xcodebuild` guidance instead of stretching the bootstrap skill into an execution skill.
 - Recommend `apple-dash-docsets` directly when the user’s next step is Dash docset or cheatsheet management.
@@ -137,9 +141,9 @@ Create a new Swift package repository with one top-level entry point and a simpl
 
 ### Support References
 
-- Recommend `references/snippets/apple-swift-core.md` when the new package repo should start with reusable Apple and Swift baseline policy content next to the generated `AGENTS.md`.
+- Recommend `references/snippets/apple-swift-package-core.md` when the new package repo should start with reusable SwiftPM baseline policy content next to the generated `AGENTS.md`.
 - `assets/AGENTS.md`
-- `references/snippets/apple-swift-core.md`
+- `references/snippets/apple-swift-package-core.md`
 
 ### Script Inventory
 

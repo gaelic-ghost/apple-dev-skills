@@ -1,0 +1,20 @@
+{
+  "name": "apple-dev-skills-local",
+  "interface": {
+    "displayName": "Apple Dev Skills"
+  },
+  "plugins": [
+    {
+      "name": "apple-dev-skills",
+      "source": {
+        "source": "local",
+        "path": "./plugins/apple-dev-skills"
+      },
+      "policy": {
+        "installation": "NOT_AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

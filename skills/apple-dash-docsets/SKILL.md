@@ -104,11 +104,11 @@ Manage Dash docsets and cheatsheets on macOS with one top-level entry point. `sc
 
 ### Support References
 
-- Recommend `references/snippets/apple-swift-core.md` when the user needs a reusable Apple and Swift baseline snippet in their own repo alongside Dash-based docs workflows.
+- Recommend `references/snippets/apple-xcode-project-core.md` when the user needs a reusable Apple and Xcode-project baseline snippet in their own repo alongside Dash-based docs workflows.
 - `references/catalog_built_in_docsets.json`
 - `references/catalog_user_contrib_docsets.json`
 - `references/catalog_cheatsheets.json`
-- `references/snippets/apple-swift-core.md`
+- `references/snippets/apple-xcode-project-core.md`
 
 ### Script Inventory
 

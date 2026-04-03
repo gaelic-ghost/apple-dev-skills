@@ -12,8 +12,12 @@ Use the highest-confidence artifact first and only fall back when the higher lay
    - `agents/openai.yaml`
    - `references/`
    - `scripts/`
-3. Repository validation rules in `.github/scripts/validate_repo_docs.sh`
-4. Root maintainer and discoverability docs
+3. Plugin packaging metadata under `plugins/apple-dev-skills/` and `.agents/plugins/marketplace.json`
+   - `.codex-plugin/plugin.json`
+   - `.claude-plugin/plugin.json`
+   - plugin-only packaging directories such as `hooks/`, `bin/`, and `assets/`
+4. Repository validation rules in `.github/scripts/validate_repo_docs.sh`
+5. Root maintainer and discoverability docs
    - `README.md`
    - `AGENTS.md`
    - `ROADMAP.md`
@@ -27,19 +31,25 @@ Use the highest-confidence artifact first and only fall back when the higher lay
    - `agents/openai.yaml`
    - `references/customization.template.yaml`
    - `references/`
-   - local snippet copy under `references/snippets/`
-3. Run `bash .github/scripts/validate_repo_docs.sh` and treat failures as documentation-contract drift unless code assets prove otherwise.
-4. Run `uv run pytest` and treat failures as runtime drift.
-5. Reconcile root docs to the tested, shipped state instead of preserving stale historical wording.
-6. Update `ROADMAP.md` in the same change when milestone or status text is no longer truthful.
+   - the skill-appropriate local snippet copy under `references/snippets/`
+3. Check plugin packaging metadata for drift:
+   - root `skills/` still define the canonical workflow behavior
+   - Codex plugin metadata does not claim unsupported plugin capabilities
+   - Claude-only extras remain optional and clearly separated
+4. Run `bash .github/scripts/validate_repo_docs.sh` and treat failures as documentation-contract drift unless code assets prove otherwise.
+5. Run `uv run pytest` and treat failures as runtime drift.
+6. Reconcile root docs to the tested, shipped state instead of preserving stale historical wording.
+7. Update `ROADMAP.md` in the same change when milestone or status text is no longer truthful.
 
 ## Durable Review Criteria
 
 - Root docs must describe the same active skill surface.
+- Root docs must describe the current plugin packaging shape without treating plugin wrappers as the workflow source of truth.
 - Maintainer-doc links in root docs must resolve on disk.
 - Validation rules must check the canonical maintainer-doc paths, not legacy locations.
 - Historical notes may mention retired skills or paths only in migration context.
 - Maintainer docs must not imply that repo-root files are required when the canonical files live under `docs/maintainers/`.
+- Plugin docs must keep the Codex common denominator and Claude-only extras explicit.
 
 ## Current Canonical Maintainer Docs
 

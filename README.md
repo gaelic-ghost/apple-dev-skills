@@ -1,6 +1,6 @@
 # apple-dev-skills
 
-Canonical Codex skills for Apple development workflows focused on Xcode execution, Dash docsets, and Swift package bootstrap.
+Canonical Apple development skills with an in-progress plugin-first packaging layout for Codex and Claude Code.
 
 ## Active Skills
 
@@ -10,6 +10,12 @@ Canonical Codex skills for Apple development workflows focused on Xcode executio
   - Top-level Dash skill with one entry point and internal `search -> install -> generate` workflows.
 - `apple-swift-package-bootstrap`
   - Top-level skill for new Swift package scaffolding only, with verification and `AGENTS.md` generation.
+- `bootstrap-xcode-app-project`
+  - Top-level skill for new native Apple app bootstrap, with a supported `XcodeGen` path and a guarded guided-Xcode path.
+- `sync-xcode-project-guidance`
+  - Top-level skill for bringing an existing Xcode app repo's `AGENTS.md` and workflow guidance up to baseline.
+- `sync-swift-package-guidance`
+  - Top-level skill for bringing an existing Swift package repo's `AGENTS.md` and workflow guidance up to baseline.
 
 Every active skill now follows the same documentation contract:
 
@@ -22,15 +28,32 @@ Maintainer-facing workflow diagrams, input/output contracts, and Agent ↔ User 
 
 ## Packaging and Delegation
 
-This repository currently ships skills as its canonical public surface. It does not currently ship a Codex plugin manifest, a Codex marketplace entry, or Claude Code subagent definitions.
+This repository now tracks a plugin-first packaging plan while keeping root `skills/` as the canonical workflow-authoring surface.
+
+Shared guidance across both ecosystems:
+
+- keep reusable workflow behavior in root `skills/`
+- keep deterministic helper logic skill-scoped so both Codex and Claude can rely on it
+- do not treat plugin-root `assets/` as a shared runtime resource layer; in current Codex docs they are install-surface presentation assets
+- treat plugin manifests and marketplace wiring as install-surface metadata, not as the workflow source of truth
+
+Current plugin scaffolding lives under:
+
+- `plugins/apple-dev-skills/`
+- `.agents/plugins/marketplace.json`
 
 Maintainer guidance for those adjacent surfaces now exists in [AGENTS.md](./AGENTS.md):
 
 - Codex plugins are the installable distribution layer that can bundle skills, apps, and MCP servers.
-- Claude Code plugins are a broader distribution layer that may bundle skills, commands, hooks, MCP or LSP config, and plugin-scoped subagents.
+- Codex plugin docs currently document `skills/`, `.app.json`, `.mcp.json`, and `assets/` as the packaged component surfaces.
+- Claude Code plugins are a broader distribution layer that may bundle skills, commands, hooks, `bin/`, MCP or LSP config, and plugin-scoped subagents.
 - Codex and Claude subagents are delegation/runtime workers, not replacements for repo guidance or top-level skills.
 
-If this repo later adds plugin or subagent packaging, the shipped skills under `skills/` should remain the authoring source of truth unless the repository guidance is intentionally changed.
+The plugin scaffold in this repo is intentionally conservative:
+
+- Codex-compatible common denominator first
+- Claude-only extras layered on top under `plugins/apple-dev-skills/hooks/` and `plugins/apple-dev-skills/bin/`
+- no essential workflow behavior should depend on Claude-only extras
 
 ## Maintainer Python Tooling
 
@@ -38,7 +61,7 @@ This repository standardizes maintainer-side Python tooling around `uv`.
 
 ```bash
 uv sync --dev
-bash .github/scripts/sync_apple_swift_core_snippet.sh
+bash .github/scripts/sync_shared_snippets.sh
 uv run python .github/scripts/validate_skill_creator_contract.py
 bash .github/scripts/validate_repo_docs.sh
 uv run pytest
@@ -46,7 +69,7 @@ uv run pytest
 
 Use the executable skill entrypoints directly, for example `skills/apple-xcode-workflow/scripts/run_workflow.py`.
 Use `uv run pytest` for the repo's test suite and other repo-root validation commands.
-Run the snippet sync script before validation whenever `shared/agents-snippets/apple-swift-core.md` changes.
+Run the snippet sync script before validation whenever files under `shared/agents-snippets/` change.
 
 ## Install
 
@@ -70,6 +93,12 @@ Common starting points:
   `npx skills add gaelic-ghost/apple-dev-skills --skill apple-dash-docsets`
 - New Swift package bootstrap:
   `npx skills add gaelic-ghost/apple-dev-skills --skill apple-swift-package-bootstrap`
+- New native Apple app bootstrap:
+  `npx skills add gaelic-ghost/apple-dev-skills --skill bootstrap-xcode-app-project`
+- Existing Xcode repo guidance sync:
+  `npx skills add gaelic-ghost/apple-dev-skills --skill sync-xcode-project-guidance`
+- Existing Swift package repo guidance sync:
+  `npx skills add gaelic-ghost/apple-dev-skills --skill sync-swift-package-guidance`
 
 ## Migration
 
@@ -82,19 +111,24 @@ This repo previously experimented with a router layer and later removed it.
 | `apple-xcode-workflow-execute` | `apple-xcode-workflow` |
 | `apple-dash-docset-manage` | `apple-dash-docsets` |
 
-The active public surface is now the three top-level skills listed above. Update install commands, references, and automation prompts accordingly.
+The current active skill surface now includes both guidance-sync skills alongside the app and package bootstrap surfaces.
+
+Future rename cleanup for the remaining `apple-*` skills is tracked in [ROADMAP.md](./ROADMAP.md).
 
 ## AGENTS Guidance
 
-Repository-consumable Swift/Apple baseline policy snippet:
+Repository-consumable Swift/Apple baseline policy snippets:
 
-- [shared/agents-snippets/apple-swift-core.md](./shared/agents-snippets/apple-swift-core.md)
+- [shared/agents-snippets/apple-xcode-project-core.md](./shared/agents-snippets/apple-xcode-project-core.md)
+- [shared/agents-snippets/apple-swift-package-core.md](./shared/agents-snippets/apple-swift-package-core.md)
 
-Use this snippet for cross-project standards that belong in end-user `AGENTS.md`.
+Use these snippets for cross-project standards that belong in end-user `AGENTS.md`.
 
-- Each active skill ships its own local copy of this snippet so individually installed skills can recommend it directly.
-- For new Swift package repositories, `apple-swift-package-bootstrap` copies its full `assets/AGENTS.md` template, which already incorporates this baseline.
-- For existing repositories, use the shared snippet for targeted updates or the skill-local copies when reading an installed skill in isolation.
+- Each active skill ships the local snippet copy that matches its workflow surface so individually installed skills can recommend it directly.
+- For new Swift package repositories, `apple-swift-package-bootstrap` copies its full `assets/AGENTS.md` template, which already incorporates the Swift-package baseline.
+- For existing Xcode app repositories, prefer `sync-xcode-project-guidance` over manual snippet merging when the goal is to align repo guidance.
+- For existing Swift package repositories, prefer `sync-swift-package-guidance` over manual snippet merging when the goal is to align repo guidance.
+- For existing repositories, use the shared snippets for targeted updates or the skill-local copies when reading an installed skill in isolation.
 - For cross-repo AGENTS drift and documentation alignment workflows, use dedicated docs-alignment skills maintained outside this repository.
 
 ## Retired Skill Note
@@ -102,26 +136,43 @@ Use this snippet for cross-project standards that belong in end-user `AGENTS.md`
 `apple-swift-package-agents-sync` is no longer part of the active skill surface.
 
 - New repository scaffolds should use `apple-swift-package-bootstrap`.
-- Existing repositories should use the shared snippet plus external docs-alignment skills when AGENTS maintenance is needed.
+- Existing Swift package repositories should use `sync-swift-package-guidance` when AGENTS maintenance is needed.
 
 ## Repository Layout
 
 ```text
 .
+├── .agents/
+│   └── plugins/
+│       └── marketplace.json
 ├── README.md
 ├── ROADMAP.md
 ├── docs/
 │   └── maintainers/
 │       ├── reality-audit.md
 │       └── workflow-atlas.md
+├── plugins/
+│   └── apple-dev-skills/
+│       ├── .codex-plugin/
+│       ├── .claude-plugin/
+│       ├── assets/
+│       ├── bin/
+│       ├── hooks/
+│       └── skills/
 ├── shared/
 │   └── agents-snippets/
-│       └── apple-swift-core.md
+│       ├── apple-swift-package-core.md
+│       └── apple-xcode-project-core.md
 └── skills/
+    ├── bootstrap-xcode-app-project/
     ├── apple-xcode-workflow/
     ├── apple-dash-docsets/
-    └── apple-swift-package-bootstrap/
+    ├── apple-swift-package-bootstrap/
+    ├── sync-swift-package-guidance/
+    └── sync-xcode-project-guidance/
 ```
+
+The plugin directories are packaging scaffolds. The canonical workflow content still lives under root `skills/` until packaging sync is fully implemented.
 
 Maintainers: authoritative skill-authoring resources live in `AGENTS.md`.
 
