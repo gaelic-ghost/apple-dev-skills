@@ -251,7 +251,7 @@ def main() -> int:
         "agents_copied": agents_copied,
         "stdout": proc_generate.stdout + validation_stdout,
         "stderr": proc_generate.stderr + validation_stderr,
-        "next_step": "Use apple-xcode-workflow for normal work inside the generated project.",
+        "next_step": "Use xcode-app-project-workflow for normal work inside the generated project.",
     }
     print(json.dumps(payload, indent=2, sort_keys=True))
     return 0

@@ -1,6 +1,6 @@
 # MCP Failure Handoff Contract
 
-Use this payload shape when `apple-xcode-workflow` hands off from an MCP attempt to the official CLI fallback or to a follow-up workflow.
+Use this payload shape when `xcode-app-project-workflow` hands off from an MCP attempt to the official CLI fallback or to a follow-up workflow.
 
 ## Inputs
 

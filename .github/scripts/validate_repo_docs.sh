@@ -54,7 +54,7 @@ require_contains "AGENTS.md" 'docs/maintainers/workflow-atlas.md'
 echo "Validating workflow document structure..."
 workflow_doc="docs/maintainers/workflow-atlas.md"
 require_contains "$workflow_doc" "## Repo Workflow Map"
-require_contains "$workflow_doc" '## `apple-xcode-workflow`'
+require_contains "$workflow_doc" '## `xcode-app-project-workflow`'
 require_contains "$workflow_doc" '## `explore-apple-swift-docs`'
 require_contains "$workflow_doc" '## `bootstrap-swift-package`'
 require_contains "$workflow_doc" '## `bootstrap-xcode-app-project`'
@@ -69,7 +69,7 @@ require_contains "$audit_doc" "## Reporting Shape"
 
 echo "Validating skill directory layout..."
 active_skill_mds=(
-  "./skills/apple-xcode-workflow/SKILL.md"
+  "./skills/xcode-app-project-workflow/SKILL.md"
   "./skills/explore-apple-swift-docs/SKILL.md"
   "./skills/bootstrap-swift-package/SKILL.md"
   "./skills/bootstrap-xcode-app-project/SKILL.md"
@@ -77,13 +77,6 @@ active_skill_mds=(
   "./skills/sync-swift-package-guidance/SKILL.md"
 )
 [[ ${#active_skill_mds[@]} -eq 6 ]] || fail "Expected exactly 6 active skills, found ${#active_skill_mds[@]}."
-
-[[ -f "./skills/apple-dash-docsets/SKILL.md" ]] || fail "Missing deprecated compatibility skill ./skills/apple-dash-docsets/SKILL.md"
-require_contains "./skills/apple-dash-docsets/SKILL.md" "deprecated"
-require_contains "./skills/apple-dash-docsets/SKILL.md" "explore-apple-swift-docs"
-[[ -f "./skills/apple-swift-package-bootstrap/SKILL.md" ]] || fail "Missing deprecated compatibility skill ./skills/apple-swift-package-bootstrap/SKILL.md"
-require_contains "./skills/apple-swift-package-bootstrap/SKILL.md" "deprecated"
-require_contains "./skills/apple-swift-package-bootstrap/SKILL.md" "bootstrap-swift-package"
 
 shared_xcode_snippet="./shared/agents-snippets/apple-xcode-project-core.md"
 shared_package_snippet="./shared/agents-snippets/apple-swift-package-core.md"

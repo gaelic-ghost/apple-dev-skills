@@ -19,7 +19,7 @@ This document describes the maintainer-facing workflow view of the active skills
 ```mermaid
 flowchart TD
     U["User request"] --> A["Agent classifies request"]
-    A --> X["apple-xcode-workflow"]
+    A --> X["xcode-app-project-workflow"]
     A --> D["explore-apple-swift-docs"]
     A --> B["bootstrap-swift-package"]
     A --> AX["bootstrap-xcode-app-project"]
@@ -29,23 +29,22 @@ flowchart TD
     X --> XB["May recommend bootstrap-swift-package"]
     X --> XS["May recommend bootstrap-xcode-app-project only when the user actually means new-project creation"]
     X --> SG["May recommend sync-xcode-project-guidance for repo guidance alignment"]
-    D --> DX["May recommend apple-xcode-workflow"]
+    D --> DX["May recommend xcode-app-project-workflow"]
     D --> DB["May recommend bootstrap-xcode-app-project"]
-    B --> BX["May recommend apple-xcode-workflow"]
+    B --> BX["May recommend xcode-app-project-workflow"]
     B --> BS["May recommend sync-swift-package-guidance after bootstrap or later repo-guidance drift"]
     AX --> AS["May recommend sync-xcode-project-guidance after bootstrap"]
-    SX --> SXW["Hands off to apple-xcode-workflow after sync"]
-    SP --> SPB["Uses swift build and swift test by default after sync, and may recommend apple-xcode-workflow for Xcode-managed package work"]
+    SX --> SXW["Hands off to xcode-app-project-workflow after sync"]
+    SP --> SPB["Uses swift build and swift test by default after sync, and may recommend xcode-app-project-workflow for Xcode-managed package work"]
 ```
 
 ### Branch and Path Notes
 
 - The repo has no Apple router or orchestrator layer.
 - The six active skills are parallel top-level entry points for different situations.
-- `apple-dash-docsets` is deprecated and remains on disk only as a compatibility redirect to `explore-apple-swift-docs`.
 - Cross-skill recommendation is decentralized inside each active skill.
 - End-user `AGENTS.md` guidance is recommended from each skill's local snippet copy, not from a router.
-- Planned next-surface addition is rename cleanup for the remaining legacy-prefixed skills.
+- The active skill surface now uses the intended install-facing names directly.
 
 ### Packaging and Delegation Notes
 
@@ -81,7 +80,7 @@ flowchart TD
 - Interaction style:
   - The repo-level UX is currently a bundle of six parallel top-level skills, with plugin packaging layered around them and rename cleanup still pending.
 
-## `apple-xcode-workflow`
+## `xcode-app-project-workflow`
 
 ### Purpose
 
@@ -293,7 +292,7 @@ flowchart TD
 - `run_workflow.py` is the local runtime entrypoint.
 - The first supported mutating implementation path is `xcodegen`.
 - The standard Xcode-created-project path is documented and guided, but not yet safely automated.
-- Successful bootstrap hands off existing-project work to `sync-xcode-project-guidance`, then to `apple-xcode-workflow`.
+- Successful bootstrap hands off existing-project work to `sync-xcode-project-guidance`, then to `xcode-app-project-workflow`.
 
 ### Inputs
 
@@ -339,7 +338,7 @@ flowchart TD
 
 ### Purpose
 
-Provide the canonical existing-repo guidance-sync workflow for Xcode app repositories so `apple-xcode-workflow` can stay focused on execution.
+Provide the canonical existing-repo guidance-sync workflow for Xcode app repositories so `xcode-app-project-workflow` can stay focused on execution.
 
 ### Workflow Diagram
 
@@ -360,14 +359,14 @@ flowchart TD
 
 - The skill is intentionally bounded to repo-guidance alignment for existing Xcode app repos.
 - New-project creation belongs to `bootstrap-xcode-app-project`.
-- Active engineering work after sync belongs to `apple-xcode-workflow`.
+- Active engineering work after sync belongs to `xcode-app-project-workflow`.
 
 ### Agent ↔ User UX
 
 - Entry:
   - The user asks to align or add repo guidance in an existing Xcode app repo.
 - Agent behavior:
-  - The agent verifies the repo shape, applies the guidance sync script, then hands execution work back to `apple-xcode-workflow`.
+  - The agent verifies the repo shape, applies the guidance sync script, then hands execution work back to `xcode-app-project-workflow`.
 - User-visible response:
   - On success: the user sees that repo guidance is aligned and what to use next.
   - On blocked: the user sees the exact repo-shape blocker.
@@ -398,7 +397,7 @@ flowchart TD
 
 - This skill is bounded to plain Swift package creation.
 - Existing-package guidance sync belongs to `sync-swift-package-guidance`.
-- Xcode-specific execution after bootstrap may belong to `apple-xcode-workflow`.
+- Xcode-specific execution after bootstrap may belong to `xcode-app-project-workflow`.
 
 ### Agent ↔ User UX
 
@@ -438,14 +437,14 @@ flowchart TD
 
 - This skill is intentionally bounded to repo-guidance alignment for plain Swift packages.
 - New-package creation still belongs to `bootstrap-swift-package`.
-- Xcode-managed package execution may still belong to `apple-xcode-workflow`.
+- Xcode-managed package execution may still belong to `xcode-app-project-workflow`.
 
 ### Agent ↔ User UX
 
 - Entry:
   - The user asks to align or add repo guidance in an existing Swift package repo.
 - Agent behavior:
-  - The agent verifies the repo shape, applies the guidance sync script, then hands ordinary package work back to `swift build`, `swift test`, or `apple-xcode-workflow` when Xcode-managed behavior matters.
+  - The agent verifies the repo shape, applies the guidance sync script, then hands ordinary package work back to `swift build`, `swift test`, or `xcode-app-project-workflow` when Xcode-managed behavior matters.
 - User-visible response:
   - On success: the user sees that repo guidance is aligned and what to use next.
   - On blocked: the user sees the exact repo-shape blocker.

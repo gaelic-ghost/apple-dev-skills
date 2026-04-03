@@ -89,10 +89,9 @@ Applicability guidance:
 
 ## Specialization Boundaries
 
-- Keep `apple-xcode-workflow` focused on execution, diagnostics, mutation safety, and fallback planning for existing Xcode-managed or Xcode-adjacent work.
+- Keep `xcode-app-project-workflow` focused on execution, diagnostics, mutation safety, and fallback planning for existing Xcode-managed or Xcode-adjacent work.
 - Keep `explore-apple-swift-docs` focused on Apple and Swift docs exploration across Xcode MCP docs, Dash, and official web docs.
-- When an execution workflow needs documentation context, prefer entering or recommending `explore-apple-swift-docs` first rather than rebuilding docs-source selection inside `apple-xcode-workflow`.
-- Treat `apple-dash-docsets` as deprecated compatibility guidance only. The active docs skill is `explore-apple-swift-docs`.
+- When an execution workflow needs documentation context, prefer entering or recommending `explore-apple-swift-docs` first rather than rebuilding docs-source selection inside `xcode-app-project-workflow`.
 
 ## Anatomy of an Agent Skill
 

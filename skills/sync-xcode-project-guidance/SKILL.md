@@ -13,12 +13,12 @@ Bring an existing Xcode app repository up to the expected guidance baseline with
 
 - Use this skill when an existing macOS, iOS, or iPadOS app repo needs `AGENTS.md` added, refreshed, or merged with the current Xcode workflow baseline.
 - Use this skill when the repository already has an `.xcodeproj` or `.xcworkspace` and the user wants project guidance, onboarding rules, or workflow policy brought up to date.
-- Use this skill when the user wants the repo guidance that used to be implied by `apple-xcode-workflow` to be made explicit in the repo itself.
+- Use this skill when the user wants the repo guidance that used to be implied by `xcode-app-project-workflow` to be made explicit in the repo itself.
 - Do not use this skill for new-project creation from nothing.
 - Do not use this skill for ordinary build, test, run, diagnostics, docs lookup, or mutation work inside an existing Xcode project.
 - Do not use this skill for plain Swift packages, libraries, or tools that are not native Apple apps.
 - Recommend `bootstrap-xcode-app-project` when the repo does not exist yet.
-- Recommend `apple-xcode-workflow` when the task is active execution, diagnostics, docs lookup, or mutation work inside an existing Xcode project.
+- Recommend `xcode-app-project-workflow` when the task is active execution, diagnostics, docs lookup, or mutation work inside an existing Xcode project.
 - Recommend `sync-swift-package-guidance` when the repo is a plain Swift package instead of an Xcode app project.
 
 ## Single-Path Workflow
@@ -51,10 +51,10 @@ Bring an existing Xcode app repository up to the expected guidance baseline with
    - if `AGENTS.md` exists but lacks the managed section, append `assets/append-section.md` as a bounded section
 7. Validate the synced repo guidance:
    - verify `AGENTS.md` exists
-   - verify the synced file mentions `apple-xcode-workflow`
+   - verify the synced file mentions `xcode-app-project-workflow`
    - verify the synced file preserves the no-direct-`.pbxproj` rule
 8. Hand off ongoing engineering work cleanly:
-   - recommend `apple-xcode-workflow` for active Xcode collaboration after the repo guidance is aligned
+   - recommend `xcode-app-project-workflow` for active Xcode collaboration after the repo guidance is aligned
    - recommend `bootstrap-xcode-app-project` only when the user actually needs a fresh repo instead of guidance sync
 
 ## Inputs
@@ -98,7 +98,7 @@ Bring an existing Xcode app repository up to the expected guidance baseline with
 ## Fallbacks and Handoffs
 
 - The only current fallback is a non-mutating dry-run or guided result that explains what the sync would do.
-- After a successful sync, hand off ongoing execution and diagnostics work to `apple-xcode-workflow`.
+- After a successful sync, hand off ongoing execution and diagnostics work to `xcode-app-project-workflow`.
 - Recommend `bootstrap-xcode-app-project` when the repository still needs to be created from scratch.
 - Recommend `sync-swift-package-guidance` when the repo is a plain Swift package rather than an Xcode app project.
 

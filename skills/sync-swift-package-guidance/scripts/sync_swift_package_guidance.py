@@ -169,7 +169,7 @@ def main() -> int:
         "detected_state": detected_state,
         "validation_result": validation_result,
         "actions": actions,
-        "next_step": "Use swift build and swift test for ordinary package work, and use apple-xcode-workflow only when package work needs Xcode-managed tooling.",
+        "next_step": "Use swift build and swift test for ordinary package work, and use xcode-app-project-workflow only when package work needs Xcode-managed tooling.",
     }
     print(json.dumps(payload, indent=2, sort_keys=True))
     return 0

@@ -5,7 +5,7 @@
 #   "PyYAML>=6.0.2,<7",
 # ]
 # ///
-"""Runtime workflow policy engine for apple-xcode-workflow."""
+"""Runtime workflow policy engine for xcode-app-project-workflow."""
 
 from __future__ import annotations
 

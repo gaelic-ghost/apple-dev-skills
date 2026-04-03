@@ -9,5 +9,5 @@
 ## Guidance Boundaries
 
 - This skill owns repo-guidance alignment for existing Xcode app repos.
-- `apple-xcode-workflow` owns active execution, docs lookup, mutation, build, test, and run work.
+- `xcode-app-project-workflow` owns active execution, docs lookup, mutation, build, test, and run work.
 - `bootstrap-xcode-app-project` owns new-project creation from nothing.

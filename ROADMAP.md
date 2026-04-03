@@ -229,7 +229,7 @@ Tickets:
 - [ ] Update the bootstrap workflow to use current `swift package init` testing options and keep generated tests aligned with the selected testing mode.
 - [ ] Document and enforce `Swift 5.10+` as the supported and validated bootstrap floor, and block older toolchains such as `5.9` with clear upgrade guidance.
 - [ ] Document how the skill should choose between `swift package init` flags and follow-up package edits when toolchain support differs within the supported `5.10+` floor.
-- [ ] Document when Swift packages should stay on `swift build` and when they should hand off to `xcodebuild` through `apple-xcode-workflow`.
+- [ ] Document when Swift packages should stay on `swift build` and when they should hand off to `xcodebuild` through `xcode-app-project-workflow`.
 - [ ] Add validation coverage for executable-package bootstrap output so generated tests and package shape match documented expectations.
 
 Exit criteria:
@@ -285,7 +285,7 @@ Tickets:
 
 - [x] Ship `explore-apple-swift-docs` as the active docs skill across Xcode MCP docs, Dash, and official web docs.
 - [x] Deprecate `apple-dash-docsets` into a compatibility redirect instead of keeping it in the active public surface.
-- [x] Move docs-source routing responsibility out of `apple-xcode-workflow` and keep only the Apple docs gate plus a smooth handoff.
+- [x] Move docs-source routing responsibility out of `xcode-app-project-workflow` and keep only the Apple docs gate plus a smooth handoff.
 - [x] Update README, maintainer docs, validation, and tests to treat `explore-apple-swift-docs` as the active docs skill.
 
 Exit criteria:
@@ -296,18 +296,18 @@ Exit criteria:
 
 Scope:
 
-- [ ] Rename the remaining legacy-prefixed skills where a search-oriented action name improves install UX and discoverability.
+- [x] Rename the remaining legacy-prefixed skills where a search-oriented action name improves install UX and discoverability.
 
 Tickets:
 
-- [ ] Audit the current skill names for the plugin-first install model and Codex/Claude search surfaces.
-- [ ] Rename any retained `apple-*` skills whose names no longer carry useful disambiguation once the plugin name already provides Apple scope.
-- [ ] Update README, roadmap, marketplace entries, plugin manifests, and install examples to the new names.
-- [ ] Preserve migration notes for any renamed skill IDs so maintainers can map old references cleanly.
+- [x] Audit the current skill names for the plugin-first install model and Codex/Claude search surfaces.
+- [x] Rename any retained `apple-*` skills whose names no longer carry useful disambiguation once the plugin name already provides Apple scope.
+- [x] Update README, roadmap, marketplace entries, plugin manifests, and install examples to the new names.
+- [x] Preserve migration notes for any renamed skill IDs so maintainers can map old references cleanly.
 
 Exit criteria:
 
-- [ ] The active install surface uses the final intended names, and repo docs no longer teach stale IDs as the preferred user-facing surface.
+- [x] The active install surface uses the final intended names, and repo docs no longer teach stale IDs as the preferred user-facing surface.
 
 ## Milestone 18: Claude Code Plugin Extras
 

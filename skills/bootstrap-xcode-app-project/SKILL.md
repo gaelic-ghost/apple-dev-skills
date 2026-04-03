@@ -18,7 +18,7 @@ Create a new native Apple app repository from nothing to a usable baseline on di
 - Do not use this skill for ordinary collaboration inside an existing Xcode project.
 - Do not use this skill for plain Swift packages, libraries, or tools that are not native Apple apps.
 - Recommend `bootstrap-swift-package` when the user wants a regular SwiftPM package instead of a native Apple app.
-- Recommend `apple-xcode-workflow` when the project already exists and the task is execution, diagnostics, docs lookup, mutation, build, test, or run work inside that existing project.
+- Recommend `xcode-app-project-workflow` when the project already exists and the task is execution, diagnostics, docs lookup, mutation, build, test, or run work inside that existing project.
 
 ## Single-Path Workflow
 
@@ -62,7 +62,7 @@ Create a new native Apple app repository from nothing to a usable baseline on di
    - if validation is enabled, verify project generation and basic project introspection succeeded
 9. Hand off existing-project work cleanly:
    - recommend `sync-xcode-project-guidance` when the repo guidance should be refreshed or merged after creation
-   - recommend `apple-xcode-workflow` for normal Xcode collaboration after bootstrap and guidance sync
+   - recommend `xcode-app-project-workflow` for normal Xcode collaboration after bootstrap and guidance sync
 
 ## Inputs
 
@@ -118,7 +118,7 @@ Create a new native Apple app repository from nothing to a usable baseline on di
 
 - Preferred implementation path in the first iteration is `XcodeGen` plus generated scaffold files.
 - Use the standard Xcode-created-project path only as a guided fallback for now.
-- After a successful bootstrap, hand off to `sync-xcode-project-guidance` for repo-guidance alignment when needed, then to `apple-xcode-workflow` for build, test, run, diagnostics, mutation, and docs work.
+- After a successful bootstrap, hand off to `sync-xcode-project-guidance` for repo-guidance alignment when needed, then to `xcode-app-project-workflow` for build, test, run, diagnostics, mutation, and docs work.
 - Recommend `bootstrap-swift-package` directly when the task is really package bootstrap.
 - Recommend `sync-xcode-project-guidance` when the repo already exists and only needs repo-guidance or documentation alignment.
 

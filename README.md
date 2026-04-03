@@ -4,8 +4,8 @@ Canonical Apple development skills with an in-progress plugin-first packaging la
 
 ## Active Skills
 
-- `apple-xcode-workflow`
-  - Top-level Apple and Swift execution skill for Xcode work, diagnostics, toolchains, mutation decisions, and guarded fallback planning. Planned rename: `xcode-app-project-workflow`.
+- `xcode-app-project-workflow`
+  - Top-level Apple and Swift execution skill for Xcode work, diagnostics, toolchains, mutation decisions, and guarded fallback planning.
 - `explore-apple-swift-docs`
   - Top-level docs skill for Apple and Swift docs exploration across Xcode MCP docs, Dash, and official web docs, with optional Dash follow-up when needed.
 - `bootstrap-swift-package`
@@ -67,7 +67,7 @@ bash .github/scripts/validate_repo_docs.sh
 uv run pytest
 ```
 
-Use the executable skill entrypoints directly, for example `skills/apple-xcode-workflow/scripts/run_workflow.py`.
+Use the executable skill entrypoints directly, for example `skills/xcode-app-project-workflow/scripts/run_workflow.py`.
 Use `uv run pytest` for the repo's test suite and other repo-root validation commands.
 Run the snippet sync script before validation whenever files under `shared/agents-snippets/` change.
 
@@ -76,7 +76,7 @@ Run the snippet sync script before validation whenever files under `shared/agent
 Install one skill:
 
 ```bash
-npx skills add gaelic-ghost/apple-dev-skills --skill apple-xcode-workflow
+npx skills add gaelic-ghost/apple-dev-skills --skill xcode-app-project-workflow
 ```
 
 Install all active skills:
@@ -88,7 +88,7 @@ npx skills add gaelic-ghost/apple-dev-skills --all
 Common starting points:
 
 - Xcode work:
-  `npx skills add gaelic-ghost/apple-dev-skills --skill apple-xcode-workflow`
+  `npx skills add gaelic-ghost/apple-dev-skills --skill xcode-app-project-workflow`
 - Apple or Swift docs exploration:
   `npx skills add gaelic-ghost/apple-dev-skills --skill explore-apple-swift-docs`
 - New Swift package bootstrap:
@@ -108,14 +108,12 @@ This repo previously experimented with a router layer and later removed it.
 | --- | --- |
 | `apple-skills-router-advise-install` | removed |
 | `apple-skills-router` | removed |
-| `apple-xcode-workflow-execute` | `apple-xcode-workflow` |
+| `apple-xcode-workflow-execute` | `xcode-app-project-workflow` |
 | `apple-dash-docset-manage` | `explore-apple-swift-docs` |
-| `apple-dash-docsets` | deprecated compatibility shim that redirects to `explore-apple-swift-docs` |
-| `apple-swift-package-bootstrap` | deprecated compatibility shim that redirects to `bootstrap-swift-package` |
+| `apple-dash-docsets` | removed in `v4.0.0-rc.1`; use `explore-apple-swift-docs` |
+| `apple-swift-package-bootstrap` | removed in `v4.0.0-rc.1`; use `bootstrap-swift-package` |
 
 The current active skill surface now includes both guidance-sync skills alongside the app and package bootstrap surfaces.
-
-Future rename cleanup for the remaining `apple-*` skills is tracked in [ROADMAP.md](./ROADMAP.md).
 
 ## AGENTS Guidance
 
@@ -133,19 +131,6 @@ Use these snippets for cross-project standards that belong in end-user `AGENTS.m
 - For existing Swift package repositories, prefer `sync-swift-package-guidance` over manual snippet merging when the goal is to align repo guidance.
 - For existing repositories, use the shared snippets for targeted updates or the skill-local copies when reading an installed skill in isolation.
 - For cross-repo AGENTS drift and documentation alignment workflows, use dedicated docs-alignment skills maintained outside this repository.
-
-## Deprecated Skill Note
-
-`apple-dash-docsets` is no longer part of the active skill surface.
-
-- Use `explore-apple-swift-docs` for Apple or Swift docs exploration.
-- The new docs skill still includes Dash compatibility and optional Dash install follow-up.
-- The old skill remains on disk only as a compatibility redirect for older references.
-
-`apple-swift-package-agents-sync` is no longer part of the active skill surface.
-
-- New repository scaffolds should use `bootstrap-swift-package`.
-- Existing Swift package repositories should use `sync-swift-package-guidance` when AGENTS maintenance is needed.
 
 ## Repository Layout
 
@@ -174,13 +159,11 @@ Use these snippets for cross-project standards that belong in end-user `AGENTS.m
 │       └── apple-xcode-project-core.md
 └── skills/
     ├── bootstrap-xcode-app-project/
-    ├── apple-dash-docsets/
-    ├── apple-swift-package-bootstrap/
-    ├── apple-xcode-workflow/
     ├── bootstrap-swift-package/
     ├── explore-apple-swift-docs/
     ├── sync-swift-package-guidance/
-    └── sync-xcode-project-guidance/
+    ├── sync-xcode-project-guidance/
+    └── xcode-app-project-workflow/
 ```
 
 The plugin directories are packaging scaffolds. The canonical workflow content still lives under root `skills/` until packaging sync is fully implemented.

@@ -13,4 +13,4 @@
 - Treat `Package.swift` as the source of truth for package structure, targets, products, and dependencies.
 - Prefer `swift package` subcommands for structural package edits before manually editing `Package.swift`.
 - Prefer Swift Testing by default unless an external constraint requires XCTest.
-- Prefer `apple-xcode-workflow` only when package work needs Xcode-managed SDK or toolchain behavior.
+- Prefer `xcode-app-project-workflow` only when package work needs Xcode-managed SDK or toolchain behavior.

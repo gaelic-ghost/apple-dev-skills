@@ -12,7 +12,7 @@ from pathlib import Path
 
 
 REQUIRED_STRINGS = [
-    "apple-xcode-workflow",
+    "xcode-app-project-workflow",
     "sync-xcode-project-guidance",
     "Never edit `.pbxproj` files directly.",
 ]
@@ -152,7 +152,7 @@ def main() -> int:
         "detected_state": detected_state,
         "validation_result": validation_result,
         "actions": actions,
-        "next_step": "Use apple-xcode-workflow for active Xcode collaboration now that repo guidance is aligned.",
+        "next_step": "Use xcode-app-project-workflow for active Xcode collaboration now that repo guidance is aligned.",
     }
     print(json.dumps(payload, indent=2, sort_keys=True))
     return 0

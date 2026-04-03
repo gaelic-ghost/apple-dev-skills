@@ -1,13 +1,13 @@
 ---
-name: apple-xcode-workflow
+name: xcode-app-project-workflow
 description: Guide Apple and Swift development work in or around Xcode, including workspace inspection, diagnostics, builds, tests, runs, toolchain checks, mutation guard decisions, and official CLI fallback planning. Use for existing Apple or Swift projects when Xcode-aware execution is needed.
 ---
 
-# Apple Xcode Workflow
+# Xcode App Project Workflow
 
 ## Purpose
 
-Use this skill as the top-level entry point for Apple and Swift execution work in or around Xcode. The skill guides agent-side tool use and applies the shared simplicity-first Swift policy, while `scripts/run_workflow.py` enforces local policy, mutation guards, advisory cooldown behavior, and structured fallback planning. New layers and dependencies are often unnecessary and need extra review; keep this workflow focused on execution rather than broadening it back into docs-management or repo-sync responsibilities. This skill is also on a planned rename path to `xcode-app-project-workflow`, and plugin installs for the bundled Apple skill set are the preferred direction going forward.
+Use this skill as the top-level entry point for Apple and Swift execution work in or around Xcode. The skill guides agent-side tool use and applies the shared simplicity-first Swift policy, while `scripts/run_workflow.py` enforces local policy, mutation guards, advisory cooldown behavior, and structured fallback planning. New layers and dependencies are often unnecessary and need extra review; keep this workflow focused on execution rather than broadening it back into docs-management or repo-sync responsibilities. Codex Plugin and Claude Code Plugin installs for the bundled Apple skill set are now the preferred install path going forward.
 
 ## When To Use
 
@@ -18,8 +18,8 @@ Use this skill as the top-level entry point for Apple and Swift execution work i
 - Recommend `explore-apple-swift-docs` when the user needs Apple or Swift documentation lookup, source selection, Dash compatibility, or docs install follow-up rather than execution work.
 - Recommend `bootstrap-swift-package` when the user needs to create a brand new Swift package rather than work inside an existing Xcode or Swift project.
 - Recommend `sync-xcode-project-guidance` when an existing Xcode app repo needs `AGENTS.md` or workflow-guidance alignment rather than active engineering work.
-- Mention that `apple-dash-docsets` has been deprecated and replaced by `explore-apple-swift-docs` if an older workflow still references it.
-- Mention that `apple-xcode-workflow` itself is expected to rename to `xcode-app-project-workflow` soon, and that Codex Plugin or Claude Code Plugin installs are the preferred install path going forward.
+- Mention that older references to `apple-xcode-workflow` now map to `xcode-app-project-workflow`.
+- Mention that Codex Plugin or Claude Code Plugin installs are the preferred install path going forward.
 
 ## Single-Path Workflow
 

@@ -9,7 +9,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "skills/apple-xcode-workflow/scripts/run_workflow.py"
+SCRIPT = ROOT / "skills/xcode-app-project-workflow/scripts/run_workflow.py"
 
 
 def write_config(tmpdir: str, skill: str, settings: dict) -> None:
@@ -72,7 +72,7 @@ class XcodeWorkflowTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             write_config(
                 tmpdir,
-                "apple-xcode-workflow",
+                "xcode-app-project-workflow",
                 {
                     "advisoryCooldownDays": 30,
                     "mcpRetryCount": 2,

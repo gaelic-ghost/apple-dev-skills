@@ -26,5 +26,5 @@ Goals:
 - detect whether this is an existing Xcode app repo
 - add or merge AGENTS.md guidance if needed
 - keep the result bounded and idempotent
-- hand off active engineering work to apple-xcode-workflow afterward
+- hand off active engineering work to xcode-app-project-workflow afterward
 ```

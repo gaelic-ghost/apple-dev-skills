@@ -220,7 +220,7 @@ def main() -> int:
     parsed = parse_output(proc.stdout)
     status = "success" if proc.returncode == 0 else ("blocked" if proc.returncode == 2 else "failed")
     next_step = (
-        "Use apple-xcode-workflow for build, test, or xcodebuild-based package work when Xcode-managed tooling is required."
+        "Use xcode-app-project-workflow for build, test, or xcodebuild-based package work when Xcode-managed tooling is required."
         if status == "success"
         else (
             "Resolve the bootstrap prerequisite or toolchain selection issue and rerun the workflow."

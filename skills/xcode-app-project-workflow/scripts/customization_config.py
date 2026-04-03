@@ -19,7 +19,7 @@ from pathlib import Path
 import yaml
 
 SCHEMA_VERSION = 1
-SKILL_NAME = "apple-xcode-workflow"
+SKILL_NAME = "xcode-app-project-workflow"
 CONFIG_HOME_ENV = "APPLE_DEV_SKILLS_CONFIG_HOME"
 DEFAULT_CONFIG_ROOT = "~/.config/gaelic-ghost/apple-dev-skills"
 ALLOWED_TOP_LEVEL = {"schemaVersion", "isCustomized", "settings"}

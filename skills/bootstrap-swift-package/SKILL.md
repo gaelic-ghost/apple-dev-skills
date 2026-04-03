@@ -16,7 +16,7 @@ Create a new Swift package repository with one top-level entry point and a simpl
 - Use this skill when the user wants to customize the documented bootstrap defaults for future runs.
 - Do not use this skill as the default path for normal Xcode app collaboration work.
 - Do not use this skill as the default path for guidance sync inside an already-existing Swift package repo.
-- Recommend `apple-xcode-workflow` when the user is working in an existing Xcode project or needs Apple-platform execution after bootstrap.
+- Recommend `xcode-app-project-workflow` when the user is working in an existing Xcode project or needs Apple-platform execution after bootstrap.
 - Recommend `sync-swift-package-guidance` when an existing Swift package repo needs `AGENTS.md` or workflow-guidance alignment rather than fresh bootstrap.
 - Recommend `explore-apple-swift-docs` when the user needs Apple or Swift docs exploration, Dash-compatible lookup, or Dash follow-up work.
 
@@ -60,7 +60,7 @@ Create a new Swift package repository with one top-level entry point and a simpl
 8. Hand off package execution guidance cleanly:
    - use `swift build` and `swift test` by default
    - recommend `sync-swift-package-guidance` when a later repo-guidance refresh or merge is needed for the created package repo
-   - recommend `apple-xcode-workflow` for package builds that need Xcode-managed toolchain behavior, such as package builds that depend on Xcode-provided Metal or other Apple-managed build assets
+   - recommend `xcode-app-project-workflow` for package builds that need Xcode-managed toolchain behavior, such as package builds that depend on Xcode-provided Metal or other Apple-managed build assets
 9. Return one JSON execution summary with the created path, normalized options, and validation result.
 
 ## Inputs
@@ -114,10 +114,10 @@ Create a new Swift package repository with one top-level entry point and a simpl
 - Preferred path is always `scripts/bootstrap_swift_package.sh`.
 - Use manual `swift package init` guidance only when the script is unavailable or the user explicitly asks for the manual path.
 - `tool` is an advanced explicit passthrough, not a default branch of the workflow.
-- After a successful scaffold, hand off build, test, or Xcode-managed package execution tasks to `apple-xcode-workflow`.
+- After a successful scaffold, hand off build, test, or Xcode-managed package execution tasks to `xcode-app-project-workflow`.
 - After a successful scaffold, hand off later repo-guidance alignment work to `sync-swift-package-guidance`.
 - For ordinary package work, prefer `swift build` and `swift test`.
-- For package builds that need Xcode-managed SDK or toolchain behavior, use `apple-xcode-workflow` and `xcodebuild` guidance instead of stretching the bootstrap skill into an execution skill.
+- For package builds that need Xcode-managed SDK or toolchain behavior, use `xcode-app-project-workflow` and `xcodebuild` guidance instead of stretching the bootstrap skill into an execution skill.
 - Recommend `explore-apple-swift-docs` directly when the user’s next step is Apple or Swift docs exploration or Dash-compatible docs management.
 - `scripts/run_workflow.py` is the top-level runtime entrypoint and converts the shell script result into the documented JSON contract.
 

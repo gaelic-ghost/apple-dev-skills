@@ -64,7 +64,7 @@ class XcodeGuidanceSyncWorkflowTests(unittest.TestCase):
             self.assertEqual(code, 0)
             self.assertEqual(payload["status"], "success")
             agents_text = Path(tmpdir, "AGENTS.md").read_text(encoding="utf-8")
-            self.assertIn("apple-xcode-workflow", agents_text)
+            self.assertIn("xcode-app-project-workflow", agents_text)
             self.assertIn("sync-xcode-project-guidance", agents_text)
             self.assertIn("Never edit `.pbxproj` files directly.", agents_text)
 

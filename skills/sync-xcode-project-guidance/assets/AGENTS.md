@@ -2,7 +2,7 @@
 
 ## Apple / Xcode Project Workflow
 
-- Use `apple-xcode-workflow` for normal work inside this existing Xcode project.
+- Use `xcode-app-project-workflow` for normal work inside this existing Xcode project.
 - Use `sync-xcode-project-guidance` when the repo guidance for this project drifts and needs to be refreshed or merged forward.
 - Read relevant Apple documentation before proposing or making Xcode, SwiftUI, lifecycle, architecture, or build-configuration changes.
 - Prefer Dash or local Apple docs first, then official Apple docs when local docs are insufficient.

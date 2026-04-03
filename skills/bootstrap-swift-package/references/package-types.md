@@ -44,7 +44,7 @@ Executable package templates may still require follow-up test-target creation ev
 ## Build Path Guidance
 
 - Use `swift build` and `swift test` by default for ordinary Swift package work.
-- Hand off to `apple-xcode-workflow` when the package build needs Xcode-managed SDK or toolchain behavior, such as builds that depend on Xcode-only components or Apple toolchain paths that are more reliable through `xcodebuild`.
+- Hand off to `xcode-app-project-workflow` when the package build needs Xcode-managed SDK or toolchain behavior, such as builds that depend on Xcode-only components or Apple toolchain paths that are more reliable through `xcodebuild`.
 - In those cases, confirm package scheme visibility first with `xcodebuild -list -json`, then use package-oriented `xcodebuild` commands such as:
   - `xcodebuild -scheme <PackageName> -destination 'generic/platform=macOS' build`
   - `xcodebuild -scheme <PackageName> -destination 'platform=macOS' test`
