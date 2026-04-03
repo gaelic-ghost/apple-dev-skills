@@ -29,7 +29,8 @@ struct SpeakSwiftlyServerE2ETests {
             executableURL: serverExecutableURL,
             dependencyProductsURL: dependencyProductsURL,
             profileRootURL: sandbox.profileRootURL,
-            port: port
+            port: port,
+            silentPlayback: true
         )
 
         try server.start()
@@ -131,8 +132,115 @@ struct SpeakSwiftlyServerE2ETests {
         }
     }
 
+    @Test func liveServerRunsForegroundPlaybackEndToEndWithRealPlaybackPath() async throws {
+        guard Self.isE2EEnabled, Self.isRealPlaybackE2EEnabled else { return }
+
+        let sandbox = try ServerE2ESandbox()
+        defer { sandbox.cleanup() }
+
+        let dependencyProductsURL = try Self.speakSwiftlyProductsURL()
+        let serverExecutableURL = try Self.serverExecutableURL()
+        try Self.stageMetallibForServerBinary(
+            from: dependencyProductsURL,
+            serverExecutableURL: serverExecutableURL
+        )
+
+        let port = 59_500 + Int.random(in: 0..<400)
+        let client = E2EHTTPClient(baseURL: URL(string: "http://127.0.0.1:\(port)")!)
+        let server = try ServerProcess(
+            executableURL: serverExecutableURL,
+            dependencyProductsURL: dependencyProductsURL,
+            profileRootURL: sandbox.profileRootURL,
+            port: port,
+            silentPlayback: false,
+            playbackTrace: Self.isPlaybackTraceEnabled
+        )
+
+        try server.start()
+        defer { server.stop() }
+
+        do {
+            try await waitUntilWorkerReady(using: client, timeout: .seconds(180), server: server)
+
+            let engineReadyLog = try await server.waitForStderrLine(timeout: .seconds(60)) { line in
+                line.contains(#""event":"playback_engine_ready""#)
+                    && line.contains(#""process_phys_footprint_bytes""#)
+                    && line.contains(#""mlx_active_memory_bytes""#)
+            }
+            #expect(engineReadyLog.contains(#""event":"playback_engine_ready""#))
+
+            let createResponse = try await client.request(
+                path: "/profiles",
+                method: "POST",
+                jsonBody: [
+                    "profile_name": Self.profileName,
+                    "text": Self.profileText,
+                    "voice_description": Self.voiceDescription,
+                ]
+            )
+            #expect(createResponse.statusCode == 202)
+
+            let createJobID = try decode(E2EJobCreatedResponse.self, from: createResponse.data).jobID
+            let createSnapshot = try await waitForTerminalJob(
+                id: createJobID,
+                using: client,
+                timeout: .seconds(240),
+                server: server
+            )
+            #expect(createSnapshot.terminalEvent?.ok == true)
+
+            let foregroundSpeakResponse = try await client.request(
+                path: "/speak",
+                method: "POST",
+                jsonBody: [
+                    "text": Self.playbackText,
+                    "profile_name": Self.profileName,
+                ]
+            )
+            #expect(foregroundSpeakResponse.statusCode == 202)
+
+            let foregroundSpeakJobID = try decode(E2EJobCreatedResponse.self, from: foregroundSpeakResponse.data).jobID
+
+            let playbackStartedLog = try await server.waitForStderrLine(timeout: .seconds(240)) { line in
+                line.contains(#""event":"playback_started""#)
+                    && line.contains(#""request_id":"\#(foregroundSpeakJobID)""#)
+                    && line.contains(#""text_complexity_class""#)
+            }
+            #expect(playbackStartedLog.contains(#""event":"playback_started""#))
+
+            let playbackFinishedLog = try await server.waitForStderrLine(timeout: .seconds(240)) { line in
+                line.contains(#""event":"playback_finished""#)
+                    && line.contains(#""request_id":"\#(foregroundSpeakJobID)""#)
+                    && line.contains(#""time_to_first_chunk_ms""#)
+                    && line.contains(#""played_back_callback_count""#)
+            }
+            #expect(playbackFinishedLog.contains(#""event":"playback_finished""#))
+
+            let foregroundSpeakSnapshot = try await waitForTerminalJob(
+                id: foregroundSpeakJobID,
+                using: client,
+                timeout: .seconds(240),
+                server: server
+            )
+            #expect(foregroundSpeakSnapshot.status == "completed")
+            #expect(foregroundSpeakSnapshot.terminalEvent?.ok == true)
+            #expect(foregroundSpeakSnapshot.history.filter { $0.ok == true }.count == 1)
+        } catch {
+            Issue.record("Live server log output before failure:\n\(server.combinedOutput)")
+            throw error
+        }
+    }
+
     private static var isE2EEnabled: Bool {
         ProcessInfo.processInfo.environment["SPEAKSWIFTLYSERVER_E2E"] == "1"
+    }
+
+    private static var isRealPlaybackE2EEnabled: Bool {
+        ProcessInfo.processInfo.environment["SPEAKSWIFTLYSERVER_E2E_REAL_PLAYBACK"] == "1"
+    }
+
+    private static var isPlaybackTraceEnabled: Bool {
+        ProcessInfo.processInfo.environment["SPEAKSWIFTLY_PLAYBACK_TRACE"] == "1"
     }
 
     private static func speakSwiftlyProductsURL() throws -> URL {
@@ -208,7 +316,6 @@ private struct ServerE2ESandbox {
 
 private final class ServerProcess: @unchecked Sendable {
     private let process = Process()
-    private let outputRecorder = SynchronizedLogBuffer()
     private let stdoutPipe = Pipe()
     private let stderrPipe = Pipe()
     private var stdoutTask: Task<Void, Never>?
@@ -218,7 +325,9 @@ private final class ServerProcess: @unchecked Sendable {
         executableURL: URL,
         dependencyProductsURL: URL,
         profileRootURL: URL,
-        port: Int
+        port: Int,
+        silentPlayback: Bool,
+        playbackTrace: Bool = false
     ) throws {
         process.executableURL = executableURL
         process.currentDirectoryURL = executableURL.deletingLastPathComponent()
@@ -228,14 +337,21 @@ private final class ServerProcess: @unchecked Sendable {
         var environment = ProcessInfo.processInfo.environment
         environment["APP_PORT"] = String(port)
         environment["SPEAKSWIFTLY_PROFILE_ROOT"] = profileRootURL.path
-        environment["SPEAKSWIFTLY_SILENT_PLAYBACK"] = "1"
+        if silentPlayback {
+            environment["SPEAKSWIFTLY_SILENT_PLAYBACK"] = "1"
+        } else {
+            environment.removeValue(forKey: "SPEAKSWIFTLY_SILENT_PLAYBACK")
+        }
+        if playbackTrace {
+            environment["SPEAKSWIFTLY_PLAYBACK_TRACE"] = "1"
+        }
         environment["DYLD_FRAMEWORK_PATH"] = dependencyProductsURL.path
         process.environment = environment
     }
 
     func start() throws {
-        stdoutTask = captureLines(from: stdoutPipe.fileHandleForReading)
-        stderrTask = captureLines(from: stderrPipe.fileHandleForReading)
+        stdoutTask = captureLines(from: stdoutPipe.fileHandleForReading, recordingInto: stdoutRecorder)
+        stderrTask = captureLines(from: stderrPipe.fileHandleForReading, recordingInto: stderrRecorder)
         try process.run()
     }
 
@@ -253,24 +369,45 @@ private final class ServerProcess: @unchecked Sendable {
     }
 
     var combinedOutput: String {
-        outputRecorder.contents
+        stdoutRecorder.contents + (stdoutRecorder.isEmpty || stderrRecorder.isEmpty ? "" : "\n") + stderrRecorder.contents
     }
 
-    private func captureLines(from handle: FileHandle) -> Task<Void, Never> {
+    private func captureLines(
+        from handle: FileHandle,
+        recordingInto recorder: SynchronizedLogBuffer
+    ) -> Task<Void, Never> {
         Task {
             do {
                 for try await line in handle.bytes.lines {
-                    outputRecorder.append(line)
+                    recorder.append(line)
                 }
             } catch is CancellationError {
                 return
             } catch {
-                outputRecorder.append(
+                recorder.append(
                     "Server process log capture stopped after an unexpected stream error: \(error.localizedDescription)"
                 )
             }
         }
     }
+
+    func waitForStderrLine(
+        timeout: Duration,
+        matching predicate: @escaping @Sendable (String) -> Bool
+    ) async throws -> String {
+        try await e2eWaitUntil(timeout: timeout, pollInterval: .milliseconds(100)) {
+            for line in self.stderrRecorder.snapshot where predicate(line) {
+                return line
+            }
+            guard self.isStillRunning else {
+                throw E2EHTTPError("The live SpeakSwiftlyServer process exited before the expected stderr playback log was observed.\n\(self.combinedOutput)")
+            }
+            return nil
+        }
+    }
+
+    private let stdoutRecorder = SynchronizedLogBuffer()
+    private let stderrRecorder = SynchronizedLogBuffer()
 
     private final class SynchronizedLogBuffer: @unchecked Sendable {
         private let lock = NSLock()
@@ -285,6 +422,18 @@ private final class ServerProcess: @unchecked Sendable {
         var contents: String {
             lock.withLock {
                 lines.joined(separator: "\n")
+            }
+        }
+
+        var snapshot: [String] {
+            lock.withLock {
+                lines
+            }
+        }
+
+        var isEmpty: Bool {
+            lock.withLock {
+                lines.isEmpty
             }
         }
     }

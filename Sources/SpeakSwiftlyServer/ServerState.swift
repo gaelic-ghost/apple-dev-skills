@@ -53,9 +53,9 @@ actor ServerState {
     private var hasRequestedStartupProfileRefresh = false
 
     static func live(configuration: ServerConfiguration) async -> ServerState {
-        let runtime = await SpeakSwiftly.makeLiveRuntime()
+        let runtime = await WorkerRuntime.live()
         let state = ServerState(configuration: configuration, runtime: runtime) {
-            await SpeakSwiftly.makeLiveRuntime()
+            await WorkerRuntime.live()
         }
         await state.start()
         return state

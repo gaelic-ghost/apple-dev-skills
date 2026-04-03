@@ -41,6 +41,7 @@
 - [x] Add route tests for health, readiness, profile, and job endpoints.
 - [x] Add SSE tests for initial worker status replay, progress history, and keep-alive behavior.
 - [x] Add end-to-end verification against a real `SpeakSwiftly` runtime.
+- [x] Add an opt-in end-to-end verification path that exercises real playback instead of silent playback.
 - [ ] Add failure-path tests for worker startup failure before the runtime ever becomes ready.
 - [ ] Add failure-path tests for runtime degradation while background jobs are still in flight.
 

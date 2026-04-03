@@ -88,6 +88,14 @@ The current automated suite covers configuration parsing, foreground and backgro
 SPEAKSWIFTLYSERVER_E2E=1 swift test --filter SpeakSwiftlyServerE2ETests
 ```
 
+There is also a second opt-in live pass that exercises the actual playback path instead of the silent playback controller. It still drives the full localhost HTTP surface, but it additionally waits for the runtime's structured `playback_engine_ready`, `playback_started`, and `playback_finished` log events:
+
+```bash
+SPEAKSWIFTLYSERVER_E2E=1 SPEAKSWIFTLYSERVER_E2E_REAL_PLAYBACK=1 swift test --filter SpeakSwiftlyServerE2ETests
+```
+
+If you want the underlying playback trace logs too, add `SPEAKSWIFTLY_PLAYBACK_TRACE=1`.
+
 That live path expects the sibling [`SpeakSwiftly`](https://github.com/gaelic-ghost/SpeakSwiftly) checkout to have already been built with Xcode at least once so `../SpeakSwiftly/.derived/Build/Products/Debug/mlx-swift_Cmlx.bundle/Contents/Resources/default.metallib` exists for the server process.
 
 The remaining test gaps are the startup-failure path before the worker ever becomes ready and runtime degradation while background jobs are still in flight. Those are tracked in [`ROADMAP.md`](/Users/galew/Workspace/SpeakSwiftlyServer/ROADMAP.md), alongside the last response-payload parity checks against `../speak-to-user-server`.
