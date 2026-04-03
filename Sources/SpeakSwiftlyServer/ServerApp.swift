@@ -50,6 +50,16 @@ func makeApplication(
         let jobID = try await state.submitSpeak(
             text: payload.text,
             profileName: payload.profileName,
+            background: false
+        )
+        return try buildAcceptedJobResponse(request: request, configuration: configuration, jobID: jobID)
+    }
+
+    router.post("speak/background") { request, context -> Response in
+        let payload = try await request.decode(as: SpeakRequestPayload.self, context: context)
+        let jobID = try await state.submitSpeak(
+            text: payload.text,
+            profileName: payload.profileName,
             background: true
         )
         return try buildAcceptedJobResponse(request: request, configuration: configuration, jobID: jobID)

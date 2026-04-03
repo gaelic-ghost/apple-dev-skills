@@ -10,7 +10,7 @@ struct SpeakSwiftlyServerE2ETests {
     Hello from the live SpeakSwiftlyServer end-to-end path. This request exercises the real localhost HTTP surface, the direct SpeakSwiftlyCore runtime, profile reconciliation, background queueing, and terminal job capture without falling back to the mock runtime.
     """
 
-    @Test func liveServerRunsCreateProfileAndBackgroundSpeakEndToEnd() async throws {
+    @Test func liveServerRunsCreateProfileAndForegroundAndBackgroundSpeakEndToEnd() async throws {
         guard Self.isE2EEnabled else { return }
 
         let sandbox = try ServerE2ESandbox()
@@ -64,7 +64,7 @@ struct SpeakSwiftlyServerE2ETests {
             let profiles = try decode(E2EProfileListResponse.self, from: profilesResponse.data).profiles
             #expect(profiles.contains { $0.profileName == Self.profileName })
 
-            let speakResponse = try await client.request(
+            let foregroundSpeakResponse = try await client.request(
                 path: "/speak",
                 method: "POST",
                 jsonBody: [
@@ -72,23 +72,59 @@ struct SpeakSwiftlyServerE2ETests {
                     "profile_name": Self.profileName,
                 ]
             )
-            #expect(speakResponse.statusCode == 202)
+            #expect(foregroundSpeakResponse.statusCode == 202)
 
-            let speakJobID = try decode(E2EJobCreatedResponse.self, from: speakResponse.data).jobID
-            let speakSnapshot = try await waitForTerminalJob(
-                id: speakJobID,
+            let foregroundSpeakJobID = try decode(E2EJobCreatedResponse.self, from: foregroundSpeakResponse.data).jobID
+            let foregroundSpeakSnapshot = try await waitForTerminalJob(
+                id: foregroundSpeakJobID,
                 using: client,
                 timeout: .seconds(240),
                 server: server
             )
-            #expect(speakSnapshot.status == "completed")
-            #expect(speakSnapshot.terminalEvent?.ok == true)
+            #expect(foregroundSpeakSnapshot.status == "completed")
+            #expect(foregroundSpeakSnapshot.terminalEvent?.ok == true)
+            #expect(foregroundSpeakSnapshot.history.filter { $0.ok == true }.count == 1)
 
-            let eventsResponse = try await client.request(path: "/jobs/\(speakJobID)/events", method: "GET")
-            #expect(eventsResponse.statusCode == 200)
-            #expect(eventsResponse.text.contains("event: worker_status"))
-            #expect(eventsResponse.text.contains(#""event":"started""#))
-            #expect(eventsResponse.text.contains(#""ok":true"#))
+            let foregroundEventsResponse = try await client.request(
+                path: "/jobs/\(foregroundSpeakJobID)/events",
+                method: "GET"
+            )
+            #expect(foregroundEventsResponse.statusCode == 200)
+            #expect(foregroundEventsResponse.text.contains("event: worker_status"))
+            #expect(foregroundEventsResponse.text.contains(#""event":"started""#))
+            #expect(foregroundEventsResponse.text.contains(#""ok":true"#))
+            #expect(!foregroundEventsResponse.text.contains(#""event":"queued""#))
+
+            let backgroundSpeakResponse = try await client.request(
+                path: "/speak/background",
+                method: "POST",
+                jsonBody: [
+                    "text": Self.playbackText,
+                    "profile_name": Self.profileName,
+                ]
+            )
+            #expect(backgroundSpeakResponse.statusCode == 202)
+
+            let backgroundSpeakJobID = try decode(E2EJobCreatedResponse.self, from: backgroundSpeakResponse.data).jobID
+            let backgroundSpeakSnapshot = try await waitForTerminalJob(
+                id: backgroundSpeakJobID,
+                using: client,
+                timeout: .seconds(240),
+                server: server
+            )
+            #expect(backgroundSpeakSnapshot.status == "completed")
+            #expect(backgroundSpeakSnapshot.terminalEvent?.ok == true)
+            #expect(backgroundSpeakSnapshot.history.filter { $0.ok == true }.count == 2)
+
+            let backgroundEventsResponse = try await client.request(
+                path: "/jobs/\(backgroundSpeakJobID)/events",
+                method: "GET"
+            )
+            #expect(backgroundEventsResponse.statusCode == 200)
+            #expect(backgroundEventsResponse.text.contains("event: worker_status"))
+            #expect(backgroundEventsResponse.text.contains(#""event":"started""#))
+            #expect(backgroundEventsResponse.text.contains(#""ok":true"#))
+            #expect(backgroundEventsResponse.text.contains(#""id":"\#(backgroundSpeakJobID)","ok":true"#))
         } catch {
             Issue.record("Live server log output before failure:\n\(server.combinedOutput)")
             throw error
@@ -409,12 +445,18 @@ private struct E2EProfileSnapshot: Decodable, Sendable {
 
 private struct E2EJobSnapshot: Decodable, Sendable {
     let status: String
+    let history: [E2EHistoryEvent]
     let terminalEvent: E2ESuccessEvent?
 
     enum CodingKeys: String, CodingKey {
         case status
+        case history
         case terminalEvent = "terminal_event"
     }
+}
+
+private struct E2EHistoryEvent: Decodable, Sendable {
+    let ok: Bool?
 }
 
 private struct E2ESuccessEvent: Decodable, Sendable {

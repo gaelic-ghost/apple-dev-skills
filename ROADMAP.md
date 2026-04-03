@@ -20,6 +20,7 @@
 - [x] Implement `POST /profiles`.
 - [x] Implement `DELETE /profiles/{profile_name}`.
 - [x] Implement `POST /speak`.
+- [x] Implement `POST /speak/background`.
 - [x] Implement `GET /jobs/{job_id}`.
 - [x] Implement `GET /jobs/{job_id}/events`.
 - [x] Implement SSE heartbeats and replay behavior compatible with the existing Python server contract.

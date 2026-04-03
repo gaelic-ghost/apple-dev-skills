@@ -54,10 +54,13 @@ The current HTTP surface is:
 - `POST /profiles`
 - `DELETE /profiles/{profile_name}`
 - `POST /speak`
+- `POST /speak/background`
 - `GET /jobs/{job_id}`
 - `GET /jobs/{job_id}/events`
 
-`POST /speak`, `POST /profiles`, and `DELETE /profiles/{profile_name}` return job metadata immediately. Progress, worker status changes, acknowledgements, and terminal results are exposed through `GET /jobs/{job_id}/events` as SSE.
+`POST /speak`, `POST /speak/background`, `POST /profiles`, and `DELETE /profiles/{profile_name}` all return job metadata immediately. `POST /speak` uses the direct `speak_live` runtime path, while `POST /speak/background` uses the queued `speak_live_background` path and records the extra acknowledgement event before terminal completion. Progress, worker status changes, acknowledgements, and terminal results are exposed through `GET /jobs/{job_id}/events` as SSE.
+
+The route surface now matches the Python sibling at the endpoint level. The remaining parity work is narrower: re-checking response payload details and deciding whether any server-local translation code should disappear now that `SpeakSwiftlyCore` is more expressive.
 
 ## Development
 
@@ -79,7 +82,7 @@ swift build
 swift test
 ```
 
-The current automated suite covers configuration parsing, background job completion and pruning, SSE replay and heartbeat behavior, route-level health, profile, and job lifecycle responses against a controlled typed runtime, plus an opt-in live end-to-end path against a real `SpeakSwiftlyCore` runtime:
+The current automated suite covers configuration parsing, foreground and background job completion semantics, in-memory retention and pruning, SSE replay and heartbeat behavior, route-level health, profile, and job lifecycle responses against a controlled typed runtime, plus an opt-in live end-to-end path against a real `SpeakSwiftlyCore` runtime:
 
 ```bash
 SPEAKSWIFTLYSERVER_E2E=1 swift test --filter SpeakSwiftlyServerE2ETests
@@ -87,7 +90,7 @@ SPEAKSWIFTLYSERVER_E2E=1 swift test --filter SpeakSwiftlyServerE2ETests
 
 That live path expects the sibling [`SpeakSwiftly`](https://github.com/gaelic-ghost/SpeakSwiftly) checkout to have already been built with Xcode at least once so `../SpeakSwiftly/.derived/Build/Products/Debug/mlx-swift_Cmlx.bundle/Contents/Resources/default.metallib` exists for the server process.
 
-The remaining test gaps are the startup-failure path before the worker ever becomes ready and runtime degradation while background jobs are still in flight. Those are tracked in [`ROADMAP.md`](/Users/galew/Workspace/SpeakSwiftlyServer/ROADMAP.md).
+The remaining test gaps are the startup-failure path before the worker ever becomes ready and runtime degradation while background jobs are still in flight. Those are tracked in [`ROADMAP.md`](/Users/galew/Workspace/SpeakSwiftlyServer/ROADMAP.md), alongside the last response-payload parity checks against `../speak-to-user-server`.
 
 ## Roadmap
 

@@ -62,6 +62,24 @@ actor MockRuntime: ServerRuntimeProtocol {
                 }
             )
 
+        case .speakLive:
+            var heldContinuation: AsyncThrowingStream<WorkerRequestStreamEvent, Error>.Continuation?
+            let speakBehavior = self.speakBehavior
+            let events = AsyncThrowingStream<WorkerRequestStreamEvent, Error> { continuation in
+                continuation.yield(.started(.init(id: request.id, op: request.opName)))
+                if speakBehavior == .completeImmediately {
+                    continuation.yield(.progress(.init(id: request.id, stage: .startingPlayback)))
+                    continuation.yield(.completed(.init(id: request.id)))
+                    continuation.finish()
+                } else {
+                    heldContinuation = continuation
+                }
+            }
+            if let heldContinuation {
+                heldContinuations[request.id] = heldContinuation
+            }
+            return RuntimeRequestHandle(id: request.id, request: request, events: events)
+
         case .speakLiveBackground:
             var heldContinuation: AsyncThrowingStream<WorkerRequestStreamEvent, Error>.Continuation?
             let speakBehavior = self.speakBehavior
@@ -114,17 +132,6 @@ actor MockRuntime: ServerRuntimeProtocol {
                 }
             )
 
-        case .speakLive:
-            return RuntimeRequestHandle(
-                id: request.id,
-                request: request,
-                events: AsyncThrowingStream<WorkerRequestStreamEvent, Error> { continuation in
-                    continuation.finish(throwing: WorkerError(
-                        code: .invalidRequest,
-                        message: "MockRuntime only supports background playback in these tests."
-                    ))
-                }
-            )
         }
     }
 
@@ -294,18 +301,43 @@ actor MockRuntime: ServerRuntimeProtocol {
             body: byteBuffer(#"{"text":"Route test","profile_name":"default"}"#)
         )
         let speakJSON = try jsonObject(from: speakResponse.body)
-        let jobID = try #require(speakJSON["job_id"] as? String)
+        let speakJobID = try #require(speakJSON["job_id"] as? String)
         #expect(speakResponse.status == .accepted)
-        #expect((speakJSON["job_url"] as? String)?.contains(jobID) == true)
-        #expect((speakJSON["events_url"] as? String)?.contains(jobID) == true)
+        #expect((speakJSON["job_url"] as? String)?.contains(speakJobID) == true)
+        #expect((speakJSON["events_url"] as? String)?.contains(speakJobID) == true)
         #expect((speakJSON["job_url"] as? String)?.hasPrefix("http://") == true)
 
-        _ = try await waitForJobSnapshot(jobID, on: state)
-        let jobResponse = try await client.execute(uri: "/jobs/\(jobID)", method: .get)
-        let jobJSON = try jsonObject(from: jobResponse.body)
-        #expect(jobResponse.status == .ok)
-        #expect(jobJSON["job_id"] as? String == jobID)
-        #expect(jobJSON["status"] as? String == "completed")
+        let backgroundResponse = try await client.execute(
+            uri: "/speak/background",
+            method: .post,
+            headers: [.contentType: "application/json"],
+            body: byteBuffer(#"{"text":"Background route test","profile_name":"default"}"#)
+        )
+        let backgroundJSON = try jsonObject(from: backgroundResponse.body)
+        let backgroundJobID = try #require(backgroundJSON["job_id"] as? String)
+        #expect(backgroundResponse.status == .accepted)
+        #expect((backgroundJSON["job_url"] as? String)?.contains(backgroundJobID) == true)
+        #expect((backgroundJSON["events_url"] as? String)?.contains(backgroundJobID) == true)
+
+        _ = try await waitForJobSnapshot(speakJobID, on: state)
+        _ = try await waitForJobSnapshot(backgroundJobID, on: state)
+
+        let foregroundJobResponse = try await client.execute(uri: "/jobs/\(speakJobID)", method: .get)
+        let foregroundJobJSON = try jsonObject(from: foregroundJobResponse.body)
+        #expect(foregroundJobResponse.status == .ok)
+        #expect(foregroundJobJSON["job_id"] as? String == speakJobID)
+        #expect(foregroundJobJSON["status"] as? String == "completed")
+        let foregroundHistory = try #require(foregroundJobJSON["history"] as? [[String: Any]])
+        #expect(foregroundHistory.contains { $0["event"] as? String == "started" })
+        #expect(foregroundHistory.filter { $0["ok"] as? Bool == true }.count == 1)
+
+        let backgroundJobResponse = try await client.execute(uri: "/jobs/\(backgroundJobID)", method: .get)
+        let backgroundJobJSON = try jsonObject(from: backgroundJobResponse.body)
+        #expect(backgroundJobResponse.status == .ok)
+        #expect(backgroundJobJSON["job_id"] as? String == backgroundJobID)
+        #expect(backgroundJobJSON["status"] as? String == "completed")
+        let backgroundHistory = try #require(backgroundJobJSON["history"] as? [[String: Any]])
+        #expect(backgroundHistory.filter { $0["ok"] as? Bool == true }.count == 2)
     }
 
     await state.shutdown()
