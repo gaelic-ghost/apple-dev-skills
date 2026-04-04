@@ -59,6 +59,9 @@ Applicability guidance:
 - For Codex work, prefer starting with a local skill when iterating on one workflow in one repository. Escalate to plugin packaging only when the workflow should be distributed across teams, published through a marketplace, or shipped together with app integrations or MCP configuration.
 - For Codex work in this repository, keep root `skills/` as the canonical workflow-authoring surface and treat `plugins/apple-dev-skills/` as the plugin packaging root.
 - For local Codex plugin smoke tests or consumer-repo installs, treat `plugins/apple-dev-skills/` as the packaged plugin root and prefer the official marketplace-based plugin install flow documented in the Codex plugin docs. Gale-local helpers may be used as optional convenience shortcuts, but they are not the canonical repository contract.
+- Keep repo-local Codex marketplace wiring under `.agents/plugins/marketplace.json` and Git-backed Claude marketplace sharing under repo-root `.claude-plugin/marketplace.json`.
+- Track canonical plugin source trees and shared marketplace catalogs in git.
+- Do not track consumer-side install copies, caches, or machine-local runtime state in this repository.
 - Follow canonical Codex and Claude project-level discovery guidance on macOS and Linux through POSIX symlink mirrors instead of duplicate skill trees:
   - `.agents/skills -> ../skills`
   - `.claude/skills -> ../skills`
@@ -154,6 +157,7 @@ Some alternatives for user customization/config include using their Agent's memo
 ## Repo-local Passive Standards
 
 - Prefer `uv run` for Python command execution in examples and scripts.
+- Keep maintainer-side Python tooling available as uv-managed tools when optional repo checks need it, including guidance for `uv tool install ruff` and `uv tool install mypy`.
 - Keep skill instructions deterministic, concise, and safety-forward.
 - Fully implement every genuinely useful and applicable skill capability, metadata surface, resource type, and validation path. Do not skip helpful skill features for convenience just because they are optional; omit a feature only when it is truly inapplicable, empty, misleading, or harmful for that specific skill.
 - Implement all applicable YAML fields in the Frontmatter.

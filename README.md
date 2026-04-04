@@ -48,8 +48,10 @@ Current plugin scaffolding lives under:
 - `.agents/skills`
 - `.claude/skills`
 - `.agents/plugins/marketplace.json`
+- `.claude-plugin/marketplace.json`
 
 For local Codex plugin development, treat `plugins/apple-dev-skills/` as the installable plugin root and use the official marketplace-based plugin install flow documented by Codex.
+For local Claude development, point `claude --plugin-dir /absolute/path/to/plugins/apple-dev-skills` at the tracked plugin source root.
 
 Maintainer guidance for those adjacent surfaces now exists in [AGENTS.md](./AGENTS.md):
 
@@ -57,6 +59,8 @@ Maintainer guidance for those adjacent surfaces now exists in [AGENTS.md](./AGEN
 - Codex plugin docs currently document `skills/`, `.app.json`, `.mcp.json`, and `assets/` as the packaged component surfaces.
 - Claude Code plugins are a broader distribution layer that may bundle skills, commands, hooks, `bin/`, MCP or LSP config, and plugin-scoped subagents.
 - Codex and Claude subagents are delegation/runtime workers, not replacements for repo guidance or top-level skills.
+- Track canonical plugin source trees and shared marketplace catalogs in git.
+- Keep consumer-side install copies, caches, and machine-local runtime state out of git.
 
 The plugin package in this repo is intentionally conservative:
 
@@ -64,21 +68,35 @@ The plugin package in this repo is intentionally conservative:
 - Claude-only extras layered on top under `plugins/apple-dev-skills/hooks/` and `plugins/apple-dev-skills/bin/`
 - no essential workflow behavior should depend on Claude-only extras
 
+## Install Surfaces
+
+Repo-local Codex packaging and personal Codex installs are different surfaces and the docs should keep them separate:
+
+- repo-local packaged plugin root: `plugins/apple-dev-skills/`
+- repo-local Codex marketplace: `.agents/plugins/marketplace.json`
+- personal Codex install root: `~/.codex/plugins/apple-dev-skills`
+- personal Codex marketplace: `~/.agents/plugins/marketplace.json`
+
+The repo also tracks a repo-root Claude marketplace catalog at `.claude-plugin/marketplace.json` for Git-backed sharing, while direct local Claude development should still use `claude --plugin-dir`.
+
+Local Codex install lifecycle work such as install, update, uninstall, verify, repair, enable, disable, and promote belongs to the maintainer workflow in `install-plugin-to-socket`, not to the bootstrap or sync skills in this repository.
+
+After changing a repo-local marketplace entry, fully restart Codex, inspect `~/.codex/log/codex-tui.log` if the plugin does not appear, and remember that `/plugins` ordering may not be intuitive.
+
 ## Maintainer Python Tooling
 
 This repository standardizes maintainer-side Python tooling around `uv`.
 
 ```bash
 uv sync --dev
-bash .github/scripts/sync_shared_snippets.sh
-uv run python .github/scripts/validate_skill_creator_contract.py
-bash .github/scripts/validate_repo_docs.sh
-uv run pytest
+uv tool install ruff
+uv tool install mypy
+uv run --group dev pytest
 ```
 
 Use the executable skill entrypoints directly, for example `skills/xcode-app-project-workflow/scripts/run_workflow.py`.
-Use `uv run pytest` for the repo's test suite and other repo-root validation commands.
-Run the snippet sync script before validation whenever files under `shared/agents-snippets/` change.
+Use targeted `uv run --group dev pytest tests/...` runs while iterating and a full `uv run --group dev pytest` pass before finalizing repo-wide maintenance.
+Keep `ruff` and `mypy` available as maintainer-side `uv` tools even when a given repo pass only needs the test suite.
 
 ## Install
 
@@ -121,6 +139,12 @@ Repo-scoped marketplace shape:
 Keep `source.path` relative to the marketplace root, restart Codex after marketplace changes, and verify the plugin appears in `/plugins`.
 
 If Gale is using a local helper such as `install-plugin-to-socket`, treat that as an optional machine-local maintainer shortcut rather than part of the repository's portable install contract.
+
+### Claude Marketplace Development
+
+For direct local Claude work, load the tracked plugin root with `claude --plugin-dir /absolute/path/to/plugins/apple-dev-skills`.
+
+If the repository is being shared as a Claude marketplace, use the repo-root catalog at `.claude-plugin/marketplace.json` and keep plugin paths relative to that marketplace root.
 
 Install one skill:
 
@@ -194,6 +218,8 @@ Use these snippets for cross-project standards that belong in end-user `AGENTS.m
 │       └── marketplace.json
 ├── .claude/
 │   └── skills -> ../skills
+├── .claude-plugin/
+│   └── marketplace.json
 ├── README.md
 ├── ROADMAP.md
 ├── docs/
@@ -225,6 +251,13 @@ Use these snippets for cross-project standards that belong in end-user `AGENTS.m
 The canonical workflow content still lives under root `skills/`. The discovery mirrors are local POSIX symlinks for macOS and Linux development, including WSL 2 when Windows is involved.
 
 Maintainers: authoritative skill-authoring resources live in `AGENTS.md`.
+
+## Maintainer References
+
+- Agent Skills Standard: <https://agentskills.io/home>
+- OpenAI Codex Skills: <https://developers.openai.com/codex/skills>
+- OpenAI Codex AGENTS.md configuration: <https://developers.openai.com/codex/guides/agents-md/>
+- Claude Code Plugins: <https://code.claude.com/docs/en/plugins>
 
 ## License
 
