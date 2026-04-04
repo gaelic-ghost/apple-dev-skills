@@ -143,6 +143,8 @@ The embedded MCP surface now also supports resource subscriptions for those URIs
 
 Transport lifecycle snapshots are now intentionally tied to the shared Hummingbird process rather than static config alone. `listening` means the shared HTTP host has actually reached Hummingbird's `onServerRunning` boundary, so HTTP and MCP surface status now describe real network availability instead of only configuration intent.
 
+The current HTTP SSE route remains intentionally job-specific. The shared host event surface exists alongside it, but the server has not yet tried to force the per-job SSE stream into the same abstraction before the adjacent `SpeakSwiftly` API layer settles further.
+
 ## Development
 
 The executable entrypoint lives in [`Sources/SpeakSwiftlyServer/SpeakSwiftlyServer.swift`](/Users/galew/Workspace/SpeakSwiftlyServer/Sources/SpeakSwiftlyServer/SpeakSwiftlyServer.swift). The shared host process stays intentionally small:

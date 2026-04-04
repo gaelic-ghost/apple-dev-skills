@@ -96,3 +96,12 @@ These events should complement the existing `HostStateSnapshot`, not replace it.
 ## Status
 
 Phase 5 is now landed for the initial host-events and selective live-update slice. The shared host reports transport `listening` only after the Hummingbird process is actually serving traffic, `ServerHost` now exposes a typed host event surface alongside stable host snapshots, and the embedded MCP surface supports selective live resource notifications for `speak://status`, `speak://profiles`, and `speak://runtime`.
+
+The following items remain deliberately deferred rather than accidentally unfinished:
+
+- converging the existing job-specific HTTP SSE route onto the newer host event surface
+- migrating playback-job MCP resources until the shared host naturally earns those concepts
+- copying the old standalone MCP prompt catalog over for parity alone
+- defining live config reloading policy or in-place config mutation
+
+The most likely next implementation step is selective HTTP SSE convergence once the adjacent `SpeakSwiftly` API layer settles enough that the shared host event model can be widened confidently without fighting churn in the runtime-facing package.
