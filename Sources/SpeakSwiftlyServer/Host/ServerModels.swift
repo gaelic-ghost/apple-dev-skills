@@ -1,16 +1,29 @@
 import Foundation
 import Hummingbird
 import SpeakSwiftlyCore
+import TextForSpeechCore
 
 // MARK: - Request Models
 
 struct SpeakRequestPayload: Decodable {
     let text: String
     let profileName: String
+    let cwd: String?
+    let repoRoot: String?
 
     enum CodingKeys: String, CodingKey {
         case text
         case profileName = "profile_name"
+        case cwd
+        case repoRoot = "repo_root"
+    }
+
+    var normalizationContext: SpeechNormalizationContext? {
+        let context = SpeechNormalizationContext(cwd: cwd, repoRoot: repoRoot)
+        guard context.cwd != nil || context.repoRoot != nil else {
+            return nil
+        }
+        return context
     }
 }
 
@@ -38,6 +51,10 @@ struct JobCreatedResponse: ResponseEncodable, Sendable {
         case jobURL = "job_url"
         case eventsURL = "events_url"
     }
+}
+
+struct JobListResponse: ResponseEncodable, Sendable {
+    let jobs: [JobSnapshot]
 }
 
 // MARK: - Profile Models
@@ -253,6 +270,8 @@ struct StatusSnapshot: ResponseEncodable, Sendable {
     }
 }
 
+// MARK: - Job Event Models
+
 struct ServerWorkerStatusEvent: Encodable, Sendable, Equatable {
     let event = "worker_status"
     let stage: String
@@ -402,6 +421,8 @@ struct JobSnapshot: ResponseEncodable, Sendable {
         case history
     }
 }
+
+// MARK: - Helpers
 
 enum TimestampFormatter {
     static func string(from date: Date) -> String {

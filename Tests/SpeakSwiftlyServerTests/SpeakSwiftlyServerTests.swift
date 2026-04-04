@@ -6,7 +6,10 @@ import MCP
 import NIOCore
 import SpeakSwiftlyCore
 import Testing
+import TextForSpeechCore
 @testable import SpeakSwiftlyServer
+
+// MARK: - Mock Runtime
 
 @available(macOS 14, *)
 actor MockRuntime: ServerRuntimeProtocol {
@@ -14,6 +17,12 @@ actor MockRuntime: ServerRuntimeProtocol {
         let id: String
         let operationName: String
         let profileName: String?
+    }
+
+    struct QueuedSpeechInvocation: Sendable, Equatable {
+        let text: String
+        let profileName: String
+        let normalizationContext: SpeechNormalizationContext?
     }
 
     struct QueuedRequestState: Sendable {
@@ -38,7 +47,10 @@ actor MockRuntime: ServerRuntimeProtocol {
     private var activeRequest: MockRequest?
     private var activeContinuation: AsyncThrowingStream<SpeakSwiftly.RequestEvent, Error>.Continuation?
     private var queuedRequests = [QueuedRequestState]()
+    private var queuedSpeechInvocations = [QueuedSpeechInvocation]()
     private var playbackState: SpeakSwiftly.PlaybackState = .idle
+
+    // MARK: - Lifecycle
 
     init(
         profiles: [SpeakSwiftly.ProfileSummary] = [sampleProfile()],
@@ -70,8 +82,23 @@ actor MockRuntime: ServerRuntimeProtocol {
         }
     }
 
-    func queueSpeechHandle(text: String, profileName: String, as jobType: SpeakSwiftly.Job, id: String) async -> RuntimeRequestHandle {
+    // MARK: - Runtime Protocol
+
+    func queueSpeechHandle(
+        text: String,
+        profileName: String,
+        normalizationContext: SpeechNormalizationContext?,
+        as jobType: SpeakSwiftly.Job,
+        id: String
+    ) async -> RuntimeRequestHandle {
         let request = MockRequest(id: id, operationName: speechOperationName(for: jobType), profileName: profileName)
+        queuedSpeechInvocations.append(
+            .init(
+                text: text,
+                profileName: profileName,
+                normalizationContext: normalizationContext
+            )
+        )
         var requestContinuation: AsyncThrowingStream<SpeakSwiftly.RequestEvent, Error>.Continuation?
         let events = AsyncThrowingStream<SpeakSwiftly.RequestEvent, Error> { continuation in
             requestContinuation = continuation
@@ -244,6 +271,8 @@ actor MockRuntime: ServerRuntimeProtocol {
         }
     }
 
+    // MARK: - Test Control
+
     func publishStatus(_ stage: SpeakSwiftly.StatusStage) {
         statusContinuation?.yield(.init(stage: stage))
     }
@@ -255,9 +284,9 @@ actor MockRuntime: ServerRuntimeProtocol {
                 .init(id: id, stage: .playbackFinished)
             )
         )
-        continuation.yield(
-            SpeakSwiftly.RequestEvent.completed(
-                .init(id: id)
+            continuation.yield(
+                SpeakSwiftly.RequestEvent.completed(
+                    .init(id: id)
             )
         )
         continuation.finish()
@@ -266,6 +295,12 @@ actor MockRuntime: ServerRuntimeProtocol {
         activeRequest = nil
         startNextQueuedRequestIfNeeded()
     }
+
+    func latestQueuedSpeechInvocation() -> QueuedSpeechInvocation? {
+        queuedSpeechInvocations.last
+    }
+
+    // MARK: - Internal Helpers
 
     private func startActiveRequest(
         _ request: MockRequest,
@@ -372,14 +407,20 @@ actor MockRuntime: ServerRuntimeProtocol {
     }
 }
 
+// MARK: - Host and Route Tests
+
 @Test func configurationLoadsDefaultsAndRejectsInvalidValues() async throws {
     let defaults = try await AppConfig.load(environment: [:])
     #expect(defaults.server.host == "127.0.0.1")
     #expect(defaults.server.port == 7337)
+    #expect(defaults.http.host == "127.0.0.1")
+    #expect(defaults.http.port == 7337)
+    #expect(defaults.http.sseHeartbeatSeconds == 10)
     #expect(defaults.server.sseHeartbeatSeconds == 10)
     #expect(defaults.server.completedJobTTLSeconds == 900)
 
     let appConfig = try await AppConfig.load(environment: [
+        "APP_PORT": "7550",
         "APP_HTTP_ENABLED": "false",
         "APP_HTTP_HOST": "0.0.0.0",
         "APP_HTTP_PORT": "7444",
@@ -389,6 +430,7 @@ actor MockRuntime: ServerRuntimeProtocol {
         "APP_MCP_SERVER_NAME": "speak-swiftly-agent",
         "APP_MCP_TITLE": "SpeakSwiftly Server MCP",
     ])
+    #expect(appConfig.server.port == 7550)
     #expect(appConfig.http.enabled == false)
     #expect(appConfig.http.host == "0.0.0.0")
     #expect(appConfig.http.port == 7444)
@@ -439,6 +481,18 @@ actor MockRuntime: ServerRuntimeProtocol {
     #expect(yamlConfig.mcp.path == "/assistant/mcp")
     #expect(yamlConfig.mcp.serverName == "yaml-mcp")
     #expect(yamlConfig.mcp.title == "YAML MCP")
+
+    let inheritedTransportConfig = try await AppConfig.load(environment: [
+        "APP_HOST": "0.0.0.0",
+        "APP_PORT": "7999",
+        "APP_SSE_HEARTBEAT_SECONDS": "3.25",
+    ])
+    #expect(inheritedTransportConfig.server.host == "0.0.0.0")
+    #expect(inheritedTransportConfig.server.port == 7999)
+    #expect(inheritedTransportConfig.server.sseHeartbeatSeconds == 3.25)
+    #expect(inheritedTransportConfig.http.host == "0.0.0.0")
+    #expect(inheritedTransportConfig.http.port == 7999)
+    #expect(inheritedTransportConfig.http.sseHeartbeatSeconds == 3.25)
 
     do {
         _ = try await AppConfig.load(environment: ["APP_PORT": "zero"])
@@ -883,7 +937,7 @@ actor MockRuntime: ServerRuntimeProtocol {
             uri: "/speak",
             method: .post,
             headers: [.contentType: "application/json"],
-            body: byteBuffer(#"{"text":"Route test","profile_name":"default"}"#)
+            body: byteBuffer(#"{"text":"Route test","profile_name":"default","cwd":"./Sources","repo_root":"../SpeakSwiftlyServer"}"#)
         )
         let speakJSON = try jsonObject(from: speakResponse.body)
         let speakJobID = try #require(speakJSON["job_id"] as? String)
@@ -891,8 +945,19 @@ actor MockRuntime: ServerRuntimeProtocol {
         #expect((speakJSON["job_url"] as? String)?.contains(speakJobID) == true)
         #expect((speakJSON["events_url"] as? String)?.contains(speakJobID) == true)
         #expect((speakJSON["job_url"] as? String)?.hasPrefix("http://") == true)
+        let queuedSpeechInvocation = try #require(await runtime.latestQueuedSpeechInvocation())
+        #expect(
+            queuedSpeechInvocation.normalizationContext
+                == SpeechNormalizationContext(cwd: "./Sources", repoRoot: "../SpeakSwiftlyServer")
+        )
 
         _ = try await waitForJobSnapshot(speakJobID, on: host)
+
+        let jobsResponse = try await client.execute(uri: "/jobs", method: .get)
+        let jobsJSON = try jsonObject(from: jobsResponse.body)
+        let jobs = try #require(jobsJSON["jobs"] as? [[String: Any]])
+        #expect(jobsResponse.status == .ok)
+        #expect(jobs.contains { $0["job_id"] as? String == speakJobID })
 
         let foregroundJobResponse = try await client.execute(uri: "/jobs/\(speakJobID)", method: .get)
         let foregroundJobJSON = try jsonObject(from: foregroundJobResponse.body)
@@ -906,6 +971,8 @@ actor MockRuntime: ServerRuntimeProtocol {
 
     await host.shutdown()
 }
+
+// MARK: - MCP Tests
 
 @available(macOS 14, *)
 @Test func embeddedMCPRoutesListToolsAndReadSharedHostResources() async throws {
@@ -928,7 +995,6 @@ actor MockRuntime: ServerRuntimeProtocol {
     await host.start()
     await runtime.publishStatus(.residentModelReady)
     try await waitUntilReady(host)
-    let jobID = try await host.submitSpeak(text: "Inspect MCP resources", profileName: "default")
     await host.markTransportStarting(name: "http")
     await host.markTransportStarting(name: "mcp")
 
@@ -970,6 +1036,32 @@ actor MockRuntime: ServerRuntimeProtocol {
     let tools = try #require(listToolsResult["tools"] as? [[String: Any]])
     #expect(tools.contains { $0["name"] as? String == "queue_speech_live" })
     #expect(tools.contains { $0["name"] as? String == "status" })
+
+    let queueSpeechToolEnvelope = try await mcpEnvelope(
+        from: await mcpSurface.handle(
+            mcpPOSTRequest(
+                body: mcpCallToolRequestJSON(
+                    name: "queue_speech_live",
+                    arguments: [
+                        "text": "Inspect MCP resources",
+                        "profile_name": "default",
+                        "cwd": "./Tests",
+                        "repo_root": "../SpeakSwiftlyServer",
+                    ]
+                ),
+                sessionID: initializeSessionID
+            )
+        )
+    )
+    let queueSpeechToolPayload = try mcpToolPayload(from: queueSpeechToolEnvelope)
+    let jobID = try #require(queueSpeechToolPayload["job_id"] as? String)
+    #expect(queueSpeechToolPayload["status_resource_uri"] as? String == "speak://status")
+    #expect(queueSpeechToolPayload["job_resource_uri"] as? String == "speak://jobs/\(jobID)")
+    let queuedSpeechInvocation = try #require(await runtime.latestQueuedSpeechInvocation())
+    #expect(
+        queuedSpeechInvocation.normalizationContext
+            == SpeechNormalizationContext(cwd: "./Tests", repoRoot: "../SpeakSwiftlyServer")
+    )
 
     let listResourcesEnvelope = try await mcpEnvelope(
         from: await mcpSurface.handle(
@@ -1767,6 +1859,8 @@ private func mcpGETRequest(sessionID: String) -> MCP.HTTPRequest {
     )
 }
 
+// MARK: - MCP Test Helpers
+
 private func mcpSessionID(from response: MCP.HTTPResponse) -> String? {
     response.headers.first { $0.key.caseInsensitiveCompare("Mcp-Session-Id") == .orderedSame }?.value
 }
@@ -1800,7 +1894,19 @@ private func mcpListPromptsRequestJSON() -> String {
 }
 
 private func mcpStatusToolRequestJSON() -> String {
-    #"{"jsonrpc":"2.0","id":"status-1","method":"tools/call","params":{"name":"status","arguments":{}}}"#
+    mcpCallToolRequestJSON(name: "status", arguments: [:], id: "status-1")
+}
+
+private func mcpCallToolRequestJSON(
+    name: String,
+    arguments: [String: String],
+    id: String = "tool-1"
+) -> String {
+    let sortedArguments = arguments
+        .sorted { $0.key < $1.key }
+        .map { key, value in #""\#(key)":"\#(value)""# }
+        .joined(separator: ",")
+    return #"{"jsonrpc":"2.0","id":"\#(id)","method":"tools/call","params":{"name":"\#(name)","arguments":{\#(sortedArguments)}}}"#
 }
 
 private func mcpReadResourceRequestJSON(uri: String) -> String {

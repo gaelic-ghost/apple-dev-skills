@@ -1,6 +1,8 @@
 import Foundation
 import Testing
 
+// MARK: - End-to-End Tests
+
 @Suite(.serialized)
 struct SpeakSwiftlyServerE2ETests {
     private static let profileName = "e2e-voice"
@@ -9,6 +11,8 @@ struct SpeakSwiftlyServerE2ETests {
     private static let playbackText = """
     Hello from the live SpeakSwiftlyServer end-to-end path. This request exercises the real localhost HTTP surface, the direct SpeakSwiftlyCore runtime, profile reconciliation, queued live speech submission, and terminal job capture without falling back to the mock runtime.
     """
+
+    // MARK: - Tests
 
     @Test func liveServerRunsCreateProfileAndQueuedSpeechEndToEnd() async throws {
         guard Self.isE2EEnabled else { return }
@@ -213,6 +217,8 @@ struct SpeakSwiftlyServerE2ETests {
         ProcessInfo.processInfo.environment["SPEAKSWIFTLY_PLAYBACK_TRACE"] == "1"
     }
 
+    // MARK: - Build Artifacts
+
     private static func speakSwiftlyProductsURL() throws -> URL {
         let serverRootURL = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()
@@ -267,6 +273,8 @@ struct SpeakSwiftlyServerE2ETests {
     }
 }
 
+// MARK: - End-to-End Helpers
+
 private struct ServerE2ESandbox {
     let rootURL: URL
     let profileRootURL: URL
@@ -283,6 +291,8 @@ private struct ServerE2ESandbox {
         try? FileManager.default.removeItem(at: rootURL)
     }
 }
+
+// MARK: - Live Server Process
 
 private final class ServerProcess: @unchecked Sendable {
     private let process = Process()

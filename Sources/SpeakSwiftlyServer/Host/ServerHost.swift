@@ -2,6 +2,7 @@ import AsyncAlgorithms
 import Foundation
 import Hummingbird
 import SpeakSwiftlyCore
+import TextForSpeechCore
 
 // MARK: - Server Host
 
@@ -421,10 +422,20 @@ actor ServerHost {
 
     // MARK: - Job Submission
 
-    func submitSpeak(text: String, profileName: String) async throws -> String {
+    func submitSpeak(
+        text: String,
+        profileName: String,
+        normalizationContext: SpeechNormalizationContext? = nil
+    ) async throws -> String {
         try ensureWorkerReady()
         let requestID = UUID().uuidString
-        let handle = await runtime.queueSpeechHandle(text: text, profileName: profileName, as: .live, id: requestID)
+        let handle = await runtime.queueSpeechHandle(
+            text: text,
+            profileName: profileName,
+            normalizationContext: normalizationContext,
+            as: .live,
+            id: requestID
+        )
         return await enqueuePublicJob(handle)
     }
 

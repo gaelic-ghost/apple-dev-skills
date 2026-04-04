@@ -1,4 +1,5 @@
 import Configuration
+import Configuration
 import Foundation
 
 // MARK: - HTTP Config
@@ -23,16 +24,33 @@ struct HTTPConfig: Sendable {
         self.sseHeartbeatSeconds = sseHeartbeatSeconds
     }
 
-    init(config: ConfigReader) throws {
+    init(
+        config: ConfigReader,
+        fallbackHost: String,
+        fallbackPort: Int,
+        fallbackSSEHeartbeatSeconds: Double
+    ) throws {
         do {
             self.enabled = try config.requiredBool(forKey: "enabled")
-            self.host = try config.requiredString(forKey: "host")
+            self.host = try Self.requiredString(
+                config,
+                key: "host",
+                fallback: fallbackHost
+            )
             self.port = try Self.requirePositive(
-                try config.requiredInt(forKey: "port"),
+                try Self.requiredInt(
+                    config,
+                    key: "port",
+                    fallback: fallbackPort
+                ),
                 key: "APP_HTTP_PORT"
             )
             self.sseHeartbeatSeconds = try Self.requirePositive(
-                try config.requiredDouble(forKey: "sseHeartbeatSeconds"),
+                try Self.requiredDouble(
+                    config,
+                    key: "sseHeartbeatSeconds",
+                    fallback: fallbackSSEHeartbeatSeconds
+                ),
                 key: "APP_HTTP_SSE_HEARTBEAT_SECONDS"
             )
         } catch {
@@ -41,6 +59,49 @@ struct HTTPConfig: Sendable {
     }
 
     // MARK: - Validation
+
+    private static func requiredString(
+        _ config: ConfigReader,
+        key: ConfigKey,
+        fallback: String
+    ) throws -> String {
+        do {
+            return try config.requiredString(forKey: key)
+        } catch {
+            guard isMissingRequiredConfigValue(error) else { throw error }
+            return fallback
+        }
+    }
+
+    private static func requiredInt(
+        _ config: ConfigReader,
+        key: ConfigKey,
+        fallback: Int
+    ) throws -> Int {
+        do {
+            return try config.requiredInt(forKey: key)
+        } catch {
+            guard isMissingRequiredConfigValue(error) else { throw error }
+            return fallback
+        }
+    }
+
+    private static func requiredDouble(
+        _ config: ConfigReader,
+        key: ConfigKey,
+        fallback: Double
+    ) throws -> Double {
+        do {
+            return try config.requiredDouble(forKey: key)
+        } catch {
+            guard isMissingRequiredConfigValue(error) else { throw error }
+            return fallback
+        }
+    }
+
+    private static func isMissingRequiredConfigValue(_ error: any Error) -> Bool {
+        String(describing: error).contains("Missing required config value for key:")
+    }
 
     private static func requirePositive(_ value: Int, key: String) throws -> Int {
         guard value > 0 else {

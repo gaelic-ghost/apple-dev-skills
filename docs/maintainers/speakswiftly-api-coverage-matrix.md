@@ -23,7 +23,6 @@ Current baseline checked against sibling tag `v0.9.0`.
 What is not exposed one-to-one today:
 
 - the library-only `accept(line:)` request-decoding entrypoint
-- the optional `SpeechNormalizationContext` parameter on `speak`
 - the raw library event and status stream types as first-class client contracts
 - some library detail enums and payload types in their native shape
 
@@ -37,7 +36,7 @@ That means the server is best understood as a transport-oriented adapter over th
 | `SpeakSwiftly.Runtime.start()` | Indirect | No direct route | No direct tool | Starts during process boot. Correctly host-local for this server architecture. |
 | `SpeakSwiftly.Runtime.shutdown()` | Indirect | No direct route | No direct tool | Runs during process shutdown. Correctly host-local. |
 | `SpeakSwiftly.Runtime.statusEvents()` | Adapted | `GET /healthz`, `GET /readyz`, `GET /status`, `GET /jobs/{job_id}/events` | `status` tool, `speak://status`, `speak://runtime`, subscriptions | Exposed as derived host snapshots and worker-status events rather than raw stream subscription. |
-| `SpeakSwiftly.Runtime.speak(text:with:as:context:id:)` | Partial | `POST /speak` | `queue_speech_live` | `job` is fixed to `.live`, which matches current public enum cases. Optional normalization context is not exposed. |
+| `SpeakSwiftly.Runtime.speak(text:with:as:context:id:)` | Full for current public job cases | `POST /speak` | `queue_speech_live` | `job` is fixed to `.live`, which matches current public enum cases. Normalization context is exposed through `cwd` and `repo_root`. |
 | `SpeakSwiftly.Runtime.createProfile(named:from:voice:outputPath:id:)` | Full | `POST /profiles` | `create_profile` | Full control-plane exposure. |
 | `SpeakSwiftly.Runtime.profiles(id:)` | Full | `GET /profiles` | `list_profiles`, `speak://profiles` | Exposed as cached host view rather than raw request handle. Appropriate. |
 | `SpeakSwiftly.Runtime.removeProfile(named:id:)` | Full | `DELETE /profiles/{profile_name}` | `remove_profile` | Full control-plane exposure. |
@@ -77,40 +76,20 @@ These items should stay server-internal or transport-adapted unless the product 
 
 ## Concrete Gaps
 
-### 1. Speech normalization context is missing from network clients
-
-The library supports an optional `SpeechNormalizationContext` on `speak`, populated from `cwd` and `repoRoot`. The server currently drops that capability and only accepts:
-
-- `text`
-- `profile_name`
-
-This is the most concrete public-surface gap today.
-
-### 2. HTTP has no retained job listing route
+### 1. HTTP had no retained job listing route
 
 `ServerHost` already exposes `jobSnapshots()`, and MCP already exposes:
 
 - `speak://jobs`
 - `speak://jobs/{job_id}`
 
-But HTTP only exposes:
+This gap is now closed by `GET /jobs`, so HTTP and MCP both have a retained-job discovery path.
 
-- `GET /jobs/{job_id}`
-- `GET /jobs/{job_id}/events`
+### 2. MCP accepted-job results had pointed to status, not direct job detail
 
-For app or operator clients, a `GET /jobs` route would be a natural complement and would reduce asymmetry with MCP.
+This gap is now closed. Accepted-job MCP results return both `status_resource_uri` and `job_resource_uri`.
 
-### 3. MCP accepted-job results point to status, not direct job detail
-
-Current accepted-job MCP results return:
-
-- `job_id`
-- `status_resource_uri`
-- a human message
-
-That is usable, but not ideal. A direct `job_resource_uri` for `speak://jobs/{job_id}` would be a better fit for follow-up navigation by MCP clients.
-
-### 4. MCP tool naming still follows worker-op vocabulary
+### 3. MCP tool naming still follows worker-op vocabulary
 
 Names such as `queue_speech_live`, `list_queue_generation`, and `playback_state` are perfectly valid, but they still read like protocol operation names. That makes sense historically because they line up with the worker op names, but it is slightly less ergonomic for higher-level clients than a more product-shaped vocabulary.
 
@@ -136,8 +115,6 @@ Why it works well:
 
 Main weaknesses:
 
-- no `GET /jobs`
-- no normalization-context input on speech requests
 - explicitly localhost and trust-boundary-local, not a general remote API
 - no explicit API versioning yet
 
@@ -165,10 +142,10 @@ Main weaknesses:
 
 ## Recommended Next Moves
 
-If the goal is “complete enough for clients,” the most valuable next steps are:
+The three highest-value client-surface follow-ups from the previous review are now landed:
 
-1. Add optional speech normalization context to both `POST /speak` and `queue_speech_live`.
-2. Add `GET /jobs` on HTTP so HTTP and MCP have comparable job-discovery capabilities.
-3. Add `job_resource_uri` to MCP accepted-job results for direct job follow-up.
+1. `POST /speak` and `queue_speech_live` both accept normalization context through `cwd` and `repo_root`.
+2. HTTP now exposes `GET /jobs`.
+3. Accepted-job MCP results now include `job_resource_uri`.
 
-If the goal is “full public API parity,” then after the three items above, the remaining differences are mostly intentional transport adaptations rather than missing runtime capabilities.
+At this point, the remaining differences are mostly intentional transport adaptations rather than missing runtime capabilities.

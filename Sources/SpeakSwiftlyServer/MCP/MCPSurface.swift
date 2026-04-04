@@ -3,6 +3,7 @@ import Hummingbird
 import HTTPTypes
 import MCP
 import NIOCore
+import TextForSpeechCore
 
 // MARK: - MCP Surface
 
@@ -111,13 +112,13 @@ struct MCPSurface {
             case "queue_speech_live":
                 let jobID = try await host.submitSpeak(
                     text: requiredString("text", in: arguments),
-                    profileName: requiredString("profile_name", in: arguments)
+                    profileName: requiredString("profile_name", in: arguments),
+                    normalizationContext: normalizationContext(in: arguments)
                 )
                 return try toolResult(
-                    MCPAcceptedJobResult(
+                    acceptedJobResult(
                         jobID: jobID,
-                        statusResourceURI: "speak://status",
-                        message: "SpeakSwiftlyServer accepted the speech request. Read speak://status or the status tool to monitor generation, playback, and transport state."
+                        message: "SpeakSwiftlyServer accepted the speech request. Read the returned job resource for request progress or read speak://status to monitor generation, playback, and transport state."
                     )
                 )
 
@@ -129,10 +130,9 @@ struct MCPSurface {
                     outputPath: optionalString("output_path", in: arguments)
                 )
                 return try toolResult(
-                    MCPAcceptedJobResult(
+                    acceptedJobResult(
                         jobID: jobID,
-                        statusResourceURI: "speak://status",
-                        message: "SpeakSwiftlyServer accepted the profile-creation request. Read speak://status or the status tool to monitor worker state and the refreshed profile cache."
+                        message: "SpeakSwiftlyServer accepted the profile-creation request. Read the returned job resource for request progress or read speak://status to monitor worker state and the refreshed profile cache."
                     )
                 )
 
@@ -144,10 +144,9 @@ struct MCPSurface {
                     profileName: requiredString("profile_name", in: arguments)
                 )
                 return try toolResult(
-                    MCPAcceptedJobResult(
+                    acceptedJobResult(
                         jobID: jobID,
-                        statusResourceURI: "speak://status",
-                        message: "SpeakSwiftlyServer accepted the profile-removal request. Read speak://status or the status tool to monitor worker state and the refreshed profile cache."
+                        message: "SpeakSwiftlyServer accepted the profile-removal request. Read the returned job resource for request progress or read speak://status to monitor worker state and the refreshed profile cache."
                     )
                 )
 
@@ -528,6 +527,26 @@ private func optionalString(_ key: String, in arguments: [String: Value]) -> Str
         return nil
     }
     return value
+}
+
+private func normalizationContext(in arguments: [String: Value]) -> SpeechNormalizationContext? {
+    let context = SpeechNormalizationContext(
+        cwd: optionalString("cwd", in: arguments),
+        repoRoot: optionalString("repo_root", in: arguments)
+    )
+    guard context.cwd != nil || context.repoRoot != nil else {
+        return nil
+    }
+    return context
+}
+
+private func acceptedJobResult(jobID: String, message: String) -> MCPAcceptedJobResult {
+    .init(
+        jobID: jobID,
+        jobResourceURI: "speak://jobs/\(jobID)",
+        statusResourceURI: "speak://status",
+        message: message
+    )
 }
 
 private func requiredPromptString(_ key: String, in arguments: [String: String]) throws -> String {

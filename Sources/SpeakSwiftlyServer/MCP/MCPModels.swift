@@ -5,11 +5,13 @@ import MCP
 
 struct MCPAcceptedJobResult: Codable, Sendable {
     let jobID: String
+    let jobResourceURI: String
     let statusResourceURI: String
     let message: String
 
     enum CodingKeys: String, CodingKey {
         case jobID = "job_id"
+        case jobResourceURI = "job_resource_uri"
         case statusResourceURI = "status_resource_uri"
         case message
     }
@@ -26,6 +28,8 @@ enum MCPToolCatalog {
                 "properties": [
                     "text": ["type": "string"],
                     "profile_name": ["type": "string"],
+                    "cwd": ["type": "string"],
+                    "repo_root": ["type": "string"],
                 ],
             ]
         ),

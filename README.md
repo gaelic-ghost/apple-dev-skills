@@ -131,6 +131,7 @@ The current HTTP surface is:
 - `GET /readyz`
 - `GET /status`
 - `GET /profiles`
+- `GET /jobs`
 - `GET /queue/generation`
 - `GET /queue/playback`
 - `GET /playback`
@@ -144,7 +145,7 @@ The current HTTP surface is:
 - `GET /jobs/{job_id}`
 - `GET /jobs/{job_id}/events`
 
-`POST /speak`, `POST /profiles`, and `DELETE /profiles/{profile_name}` all return job metadata immediately. `POST /speak` now mirrors the current public `SpeakSwiftly.Runtime.speak(... as: .live)` path directly, which means every speech request records the initial acknowledgement event before it starts and eventually reaches terminal completion. Progress, worker status changes, acknowledgements, and terminal results are exposed through `GET /jobs/{job_id}/events` as SSE.
+`POST /speak`, `POST /profiles`, and `DELETE /profiles/{profile_name}` all return job metadata immediately. `POST /speak` now mirrors the current public `SpeakSwiftly.Runtime.speak(... as: .live)` path directly, which means every speech request records the initial acknowledgement event before it starts and eventually reaches terminal completion. `POST /speak` also accepts optional `cwd` and `repo_root` fields so clients can pass `SpeakSwiftly` normalization context through to the runtime when path-aware speech normalization matters. Progress, worker status changes, acknowledgements, and terminal results are exposed through `GET /jobs/{job_id}/events` as SSE, and retained job state is discoverable through `GET /jobs`.
 
 The queue and playback control routes are immediate control operations rather than long-running jobs. `GET /queue/generation` and `GET /queue/playback` expose the generation and playback queues separately so the HTTP layer matches the runtime's split control surface. `GET /playback`, `POST /playback/pause`, and `POST /playback/resume` expose the current playback state and let clients control it directly. `DELETE /queue` clears queued work and returns the number of cancelled queued requests. `DELETE /queue/{request_id}` cancels one active or queued request and returns the cancelled request ID.
 
@@ -175,6 +176,8 @@ The first embedded MCP resources are:
 - `speak://runtime`
 
 Those MCP tools and resources are intentionally thin adapters over the same `ServerHost` snapshots and mutations used by the HTTP API and the app-facing `ServerState`.
+
+Accepted-job MCP tool results now return both `status_resource_uri` and a direct `job_resource_uri` so MCP clients can jump straight to one request's retained job detail.
 
 The embedded MCP surface also now carries a small prompt catalog migrated from the standalone package where those prompts still map cleanly onto the shared host model:
 

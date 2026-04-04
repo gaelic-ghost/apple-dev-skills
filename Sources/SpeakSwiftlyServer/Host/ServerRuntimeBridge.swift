@@ -1,5 +1,6 @@
 import Foundation
 import SpeakSwiftlyCore
+import TextForSpeechCore
 
 // MARK: - Runtime Bridge
 
@@ -37,7 +38,13 @@ protocol ServerRuntimeProtocol: Actor {
     func start()
     func shutdown() async
     func statusEvents() -> AsyncStream<SpeakSwiftly.StatusEvent>
-    func queueSpeechHandle(text: String, profileName: String, as jobType: SpeakSwiftly.Job, id: String) async -> RuntimeRequestHandle
+    func queueSpeechHandle(
+        text: String,
+        profileName: String,
+        normalizationContext: SpeechNormalizationContext?,
+        as jobType: SpeakSwiftly.Job,
+        id: String
+    ) async -> RuntimeRequestHandle
     func createProfileHandle(
         profileName: String,
         text: String,
@@ -56,8 +63,22 @@ protocol ServerRuntimeProtocol: Actor {
 // MARK: - Runtime Adapter
 
 extension SpeakSwiftly.Runtime: ServerRuntimeProtocol {
-    func queueSpeechHandle(text: String, profileName: String, as jobType: SpeakSwiftly.Job, id: String) async -> RuntimeRequestHandle {
-        RuntimeRequestHandle(await speak(text: text, with: profileName, as: jobType, id: id))
+    func queueSpeechHandle(
+        text: String,
+        profileName: String,
+        normalizationContext: SpeechNormalizationContext?,
+        as jobType: SpeakSwiftly.Job,
+        id: String
+    ) async -> RuntimeRequestHandle {
+        RuntimeRequestHandle(
+            await speak(
+                text: text,
+                with: profileName,
+                as: jobType,
+                context: normalizationContext,
+                id: id
+            )
+        )
     }
 
     func createProfileHandle(

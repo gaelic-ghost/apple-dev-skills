@@ -55,6 +55,10 @@ private func registerHTTPRoutes(
         .init(profiles: await host.cachedProfiles())
     }
 
+    router.get("jobs") { _, _ -> JobListResponse in
+        .init(jobs: await host.jobSnapshots())
+    }
+
     router.get("queue/generation") { _, _ -> QueueSnapshotResponse in
         try await host.queueSnapshot(queueType: .generation)
     }
@@ -105,7 +109,8 @@ private func registerHTTPRoutes(
         let payload = try await request.decode(as: SpeakRequestPayload.self, context: context)
         let jobID = try await host.submitSpeak(
             text: payload.text,
-            profileName: payload.profileName
+            profileName: payload.profileName,
+            normalizationContext: payload.normalizationContext
         )
         return try buildAcceptedJobResponse(request: request, configuration: configuration, jobID: jobID)
     }

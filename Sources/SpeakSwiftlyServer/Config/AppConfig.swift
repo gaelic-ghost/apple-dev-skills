@@ -17,8 +17,14 @@ struct AppConfig: Sendable {
     }
 
     init(config: ConfigReader) throws {
-        self.server = try ServerConfiguration(config: config)
-        self.http = try HTTPConfig(config: config.scoped(to: "http"))
+        let server = try ServerConfiguration(config: config)
+        self.server = server
+        self.http = try HTTPConfig(
+            config: config.scoped(to: "http"),
+            fallbackHost: server.host,
+            fallbackPort: server.port,
+            fallbackSSEHeartbeatSeconds: server.sseHeartbeatSeconds
+        )
         self.mcp = try MCPConfig(config: config.scoped(to: "mcp"))
     }
 

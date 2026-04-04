@@ -30,6 +30,7 @@ let package = Package(
                 .product(name: "Hummingbird", package: "hummingbird"),
                 .product(name: "MCP", package: "swift-sdk"),
                 .product(name: "SpeakSwiftlyCore", package: "SpeakSwiftly"),
+                .product(name: "TextForSpeech", package: "SpeakSwiftly"),
             ]
         ),
         .testTarget(
@@ -39,6 +40,7 @@ let package = Package(
                 .product(name: "Hummingbird", package: "hummingbird"),
                 .product(name: "HummingbirdTesting", package: "hummingbird"),
                 .product(name: "MCP", package: "swift-sdk"),
+                .product(name: "TextForSpeech", package: "SpeakSwiftly"),
             ]
         ),
     ],
