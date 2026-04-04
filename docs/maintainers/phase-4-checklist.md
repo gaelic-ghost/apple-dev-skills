@@ -31,7 +31,7 @@ Phase 4 should not yet cover:
 
 This phase unlocks:
 
-- one app-managed localhost process that can expose both HTTP and MCP without duplicate `WorkerRuntime` instances
+- one app-managed localhost process that can expose both HTTP and MCP without duplicate `SpeakSwiftly.Runtime` owners
 - agent-facing MCP access to the same queue, playback, profile, and status state already used by the app and HTTP API
 - a cleaner migration path away from the standalone `SpeakSwiftlyMCP` executable
 

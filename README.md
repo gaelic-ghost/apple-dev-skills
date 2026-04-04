@@ -1,10 +1,10 @@
 # SpeakSwiftlyServer
 
-Swift executable package for a shared localhost host process that exposes `SpeakSwiftlyCore` through an app-friendly HTTP API and an optional MCP surface.
+Swift executable package for a shared localhost host process that exposes the public `SpeakSwiftlyCore` library surface through an app-friendly HTTP API and an optional MCP surface.
 
 ## Overview
 
-This repository is the Swift-native sibling to `../speak-to-user-server`. It uses [Hummingbird](https://github.com/hummingbird-project/hummingbird) to host one localhost macOS process with in-memory job tracking and server-sent events, while delegating speech, profile management, and worker lifecycle to the typed `SpeakSwiftlyCore` runtime. That shared process can now mount both the HTTP API and an MCP surface without creating duplicate `WorkerRuntime` instances.
+This repository is the Swift-native sibling to `../speak-to-user-server`. It uses [Hummingbird](https://github.com/hummingbird-project/hummingbird) to host one localhost macOS process with in-memory job tracking and server-sent events, while delegating speech, profile management, and worker lifecycle to the typed `SpeakSwiftlyCore` runtime. That shared process can now mount both the HTTP API and an MCP surface without creating duplicate `SpeakSwiftly.Runtime` owners.
 
 ### Deployment Targets
 
@@ -21,7 +21,28 @@ Linux support is a medium-term consideration rather than a current promise. If m
 
 The target is a thin Swift service that a forthcoming macOS app can install and manage as a LaunchAgent without needing a separate Python runtime. Early development aimed to stay close to the existing Python server contract, but the current service now follows the newer `SpeakSwiftlyCore` control model directly where the runtime surface has evolved.
 
-That means this package intentionally stays narrow: Hummingbird for HTTP, `SpeakSwiftlyCore` for speech and profile operations, and a small amount of server state to translate typed worker events into job snapshots and SSE replay.
+That means this package intentionally stays narrow: Hummingbird for HTTP, `SpeakSwiftlyCore` for speech and profile operations, and a small amount of server state to translate typed runtime events into job snapshots and SSE replay.
+
+### Current SpeakSwiftly Alignment
+
+The sibling [`SpeakSwiftly`](https://github.com/gaelic-ghost/SpeakSwiftly) checkout currently resolves to tag `v0.9.0`, and this server is aligned to that public library surface rather than an older private worker boundary.
+
+Today the server talks directly to:
+
+- `SpeakSwiftly.live()`
+- `SpeakSwiftly.Runtime.statusEvents()`
+- `SpeakSwiftly.Runtime.speak(text:with:as:id:)`
+- `SpeakSwiftly.Runtime.createProfile(named:from:voice:outputPath:id:)`
+- `SpeakSwiftly.Runtime.profiles(id:)`
+- `SpeakSwiftly.Runtime.removeProfile(named:id:)`
+- `SpeakSwiftly.Runtime.queue(_:id:)`
+- `SpeakSwiftly.Runtime.playback(_:id:)`
+- `SpeakSwiftly.Runtime.clearQueue(id:)`
+- `SpeakSwiftly.Runtime.cancelRequest(_:requestID:)`
+
+The server also consumes the public summary and event types that those calls vend, including `SpeakSwiftly.RequestHandle`, `SpeakSwiftly.RequestEvent`, `SpeakSwiftly.StatusEvent`, `SpeakSwiftly.ProfileSummary`, `SpeakSwiftly.ActiveRequest`, `SpeakSwiftly.QueuedRequest`, and `SpeakSwiftly.PlaybackStateSnapshot`.
+
+That alignment means the remaining translation layer is now intentionally transport-local: snake_case HTTP and MCP payload shaping, retained job snapshots, and SSE framing. The server is not reaching through the library boundary to construct raw worker protocol messages or private runtime state directly.
 
 That narrowness also informs platform policy. The package should prefer maintainable Apple-platform architecture for the current macOS and near-future iOS use cases over speculative cross-platform compromises.
 
@@ -123,11 +144,11 @@ The current HTTP surface is:
 - `GET /jobs/{job_id}`
 - `GET /jobs/{job_id}/events`
 
-`POST /speak`, `POST /profiles`, and `DELETE /profiles/{profile_name}` all return job metadata immediately. `POST /speak` now mirrors `SpeakSwiftlyCore v0.8.0` directly by queueing a live speech job through `queue_speech_live`, which means every speech request records the initial acknowledgement event before it starts and eventually reaches terminal completion. Progress, worker status changes, acknowledgements, and terminal results are exposed through `GET /jobs/{job_id}/events` as SSE.
+`POST /speak`, `POST /profiles`, and `DELETE /profiles/{profile_name}` all return job metadata immediately. `POST /speak` now mirrors the current public `SpeakSwiftly.Runtime.speak(... as: .live)` path directly, which means every speech request records the initial acknowledgement event before it starts and eventually reaches terminal completion. Progress, worker status changes, acknowledgements, and terminal results are exposed through `GET /jobs/{job_id}/events` as SSE.
 
 The queue and playback control routes are immediate control operations rather than long-running jobs. `GET /queue/generation` and `GET /queue/playback` expose the generation and playback queues separately so the HTTP layer matches the runtime's split control surface. `GET /playback`, `POST /playback/pause`, and `POST /playback/resume` expose the current playback state and let clients control it directly. `DELETE /queue` clears queued work and returns the number of cancelled queued requests. `DELETE /queue/{request_id}` cancels one active or queued request and returns the cancelled request ID.
 
-The route surface now mirrors the current `SpeakSwiftlyCore` control model directly instead of preserving the older foreground/background split. The remaining alignment work is narrower: re-checking any app-facing payload details that still matter outside this repository and deciding whether any server-local translation code should disappear now that `SpeakSwiftlyCore` is more expressive.
+The route surface now mirrors the current `SpeakSwiftlyCore` control model directly instead of preserving the older foreground/background split. The remaining alignment work is narrower: re-checking any app-facing payload details that still matter outside this repository and deciding whether any server-local transport shaping should disappear now that the public library surface is more expressive.
 
 The current MCP surface is optional and mounts on the same host and port at `APP_MCP_PATH` when `APP_MCP_ENABLED=true`. The first embedded MCP pass exposes these tools:
 
@@ -179,10 +200,10 @@ The executable entrypoint lives in [`Sources/SpeakSwiftlyServer/SpeakSwiftlyServ
 - [`ServerState.swift`](/Users/galew/Workspace/SpeakSwiftlyServer/Sources/SpeakSwiftlyServer/Host/ServerState.swift) is the `@Observable` SwiftUI-facing projection of host state.
 - [`HostStateModels.swift`](/Users/galew/Workspace/SpeakSwiftlyServer/Sources/SpeakSwiftlyServer/Host/HostStateModels.swift) defines the shared host-native snapshots used by app UI, HTTP, and MCP consumers.
 - [`HostEvents.swift`](/Users/galew/Workspace/SpeakSwiftlyServer/Sources/SpeakSwiftlyServer/Host/HostEvents.swift) defines the typed host event surface used by non-UI consumers that need live change notifications without depending on SwiftUI observation.
-- [`ServerRuntimeBridge.swift`](/Users/galew/Workspace/SpeakSwiftlyServer/Sources/SpeakSwiftlyServer/Host/ServerRuntimeBridge.swift) keeps the runtime boundary thin around `SpeakSwiftlyCore`.
+- [`ServerRuntimeBridge.swift`](/Users/galew/Workspace/SpeakSwiftlyServer/Sources/SpeakSwiftlyServer/Host/ServerRuntimeBridge.swift) keeps the runtime boundary thin around the public `SpeakSwiftly.Runtime` actor.
 - [`ServerModels.swift`](/Users/galew/Workspace/SpeakSwiftlyServer/Sources/SpeakSwiftlyServer/Host/ServerModels.swift) defines request and response payloads.
 
-The design is deliberately direct. Adding extra wrappers, managers, or intermediate layers here would be easy, but it would also be the kind of unnecessary complexity that makes a small localhost service harder to reason about, so the server is kept close to the typed runtime API on purpose. As of `SpeakSwiftly v0.8.1`, that also means the service talks to the public `SpeakSwiftly.Runtime` surface instead of reaching through the library boundary to construct raw worker requests itself.
+The design is deliberately direct. Adding extra wrappers, managers, or intermediate layers here would be easy, but it would also be the kind of unnecessary complexity that makes a small localhost service harder to reason about, so the server is kept close to the typed runtime API on purpose. As of sibling `SpeakSwiftly v0.9.0`, that means the service talks to the public `SpeakSwiftly.Runtime` surface and its public event and summary types instead of reaching through the library boundary to construct raw worker requests itself.
 
 ## Verification
 

@@ -4,7 +4,7 @@
 
 `SpeakSwiftlyServer` is now the single runtime-owning host for both the app-facing HTTP API and the first embedded MCP surface.
 
-The goal is to remove the current split where separate hosts can each create their own in-process `SpeakSwiftlyCore` runtime. After consolidation, one process will own one `WorkerRuntime`, one playback controller, one queue view, one readiness state, and one profile cache.
+The goal is to remove the current split where separate hosts can each create their own in-process `SpeakSwiftlyCore` runtime. After consolidation, one process will own one `SpeakSwiftly.Runtime`, one playback controller, one queue view, one readiness state, and one profile cache.
 
 ## Target Architecture
 
@@ -24,7 +24,7 @@ The target architecture has three layers:
 The server now distinguishes backend ownership from UI-facing observation:
 
 - `ServerHost`
-  This is the authoritative backend actor. It owns `WorkerRuntime`, request submission, queue and playback control, profile refresh, job storage, and host snapshots.
+  This is the authoritative backend actor. It owns `SpeakSwiftly.Runtime`, request submission, queue and playback control, profile refresh, job storage, and host snapshots.
 
 - `ServerState`
   This is an `@Observable final class` intended for app and operator UI use. It mirrors safe snapshots published by `ServerHost` and should never own backend orchestration logic.

@@ -56,9 +56,10 @@
 - [x] Split `../SpeakSwiftly` so it vends a reusable library product alongside its executable product.
 - [x] Switch this package from subprocess-style integration to direct `SpeakSwiftly` package import when that library product exists.
 - [x] Collapse temporary integration-only scaffolding that became unnecessary after direct import.
-- [x] Align the runtime bridge with the public `SpeakSwiftly v0.8.1` helper surface instead of constructing raw worker requests across the library boundary.
+- [x] Align the runtime bridge with the public `SpeakSwiftly` library surface instead of constructing raw worker requests across the library boundary.
 - [ ] Re-verify that adjacent consumers still agree with the current public HTTP API surface.
-- [ ] Remove any remaining server-local translation code that `SpeakSwiftlyCore` can now express directly without making the server harder to reason about.
+- [ ] Remove any remaining server-local transport translation that `SpeakSwiftlyCore` can now express directly without making the server harder to reason about.
+- [x] Re-check the host bridge and docs against the sibling `SpeakSwiftly v0.9.0` public library surface.
 
 ## Milestone 6: App And LaunchAgent Handoff
 
