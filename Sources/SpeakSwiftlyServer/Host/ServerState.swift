@@ -6,19 +6,9 @@ import Observation
 @Observable
 @MainActor
 final class ServerState {
-    var health = HealthSnapshot(
-        status: "ok",
+    var overview = HostOverviewSnapshot(
         service: "speak-swiftly-server",
         environment: "development",
-        serverMode: "degraded",
-        workerMode: "starting",
-        workerStage: "starting",
-        workerReady: false,
-        startupError: nil
-    )
-
-    var readiness = ReadinessSnapshot(
-        status: "not_ready",
         serverMode: "degraded",
         workerMode: "starting",
         workerStage: "starting",
@@ -30,21 +20,28 @@ final class ServerState {
         lastProfileRefreshAt: nil
     )
 
-    var status = StatusSnapshot(
-        service: "speak-swiftly-server",
-        environment: "development",
-        serverMode: "degraded",
-        workerMode: "starting",
-        workerStage: "starting",
-        profileCacheState: "uninitialized",
-        profileCacheWarning: nil,
-        workerFailureSummary: nil,
-        cachedProfiles: [],
-        lastProfileRefreshAt: nil,
-        host: "127.0.0.1",
-        port: 7337
+    var generationQueue = QueueStatusSnapshot(
+        queueType: "generation",
+        activeCount: 0,
+        queuedCount: 0,
+        activeRequest: nil
     )
 
+    var playbackQueue = QueueStatusSnapshot(
+        queueType: "playback",
+        activeCount: 0,
+        queuedCount: 0,
+        activeRequest: nil
+    )
+
+    var playback = PlaybackStatusSnapshot(
+        state: "idle",
+        activeRequest: nil
+    )
+
+    var currentGenerationJob: CurrentGenerationJobSnapshot?
+    var transports = [TransportStatusSnapshot]()
+    var recentErrors = [RecentErrorSnapshot]()
     var jobsByID: [String: JobSnapshot] = [:]
 
     init() {}

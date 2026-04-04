@@ -384,7 +384,6 @@ actor MockRuntime: ServerRuntimeProtocol {
     let host = ServerHost(
         configuration: testConfiguration(completedJobTTLSeconds: 0.05, jobPruneIntervalSeconds: 0.02),
         runtime: runtime,
-        makeRuntime: { runtime },
         state: state
     )
 
@@ -413,7 +412,6 @@ actor MockRuntime: ServerRuntimeProtocol {
     let host = ServerHost(
         configuration: testConfiguration(completedJobTTLSeconds: 60, completedJobMaxCount: 2),
         runtime: runtime,
-        makeRuntime: { runtime },
         state: state
     )
 
@@ -445,7 +443,6 @@ actor MockRuntime: ServerRuntimeProtocol {
     let host = ServerHost(
         configuration: testConfiguration(sseHeartbeatSeconds: 0.02),
         runtime: runtime,
-        makeRuntime: { runtime },
         state: state
     )
 
@@ -488,14 +485,20 @@ actor MockRuntime: ServerRuntimeProtocol {
 }
 
 @available(macOS 14, *)
-@Test func routesExposeHealthProfilesAndQueuedSpeechJobLifecycle() async throws {
-    let runtime = MockRuntime()
+@Test func hostPublishesSharedStateForUiAndServerConsumers() async throws {
+    let runtime = MockRuntime(speakBehavior: .holdOpen)
     let configuration = testConfiguration()
     let state = await MainActor.run { ServerState() }
     let host = ServerHost(
         configuration: configuration,
+        httpConfig: testHTTPConfig(configuration),
+        mcpConfig: .init(
+            enabled: true,
+            path: "/mcp",
+            serverName: "speak-to-user-mcp",
+            title: "SpeakSwiftlyMCP"
+        ),
         runtime: runtime,
-        makeRuntime: { runtime },
         state: state
     )
 
@@ -503,7 +506,53 @@ actor MockRuntime: ServerRuntimeProtocol {
     await runtime.publishStatus(.residentModelReady)
     try await waitUntilReady(host)
 
-    let app = makeApplication(configuration: configuration, host: host)
+    let updates = await host.stateUpdates()
+    let jobID = try await host.submitSpeak(text: "Observe me", profileName: "default")
+    var iterator = updates.makeAsyncIterator()
+    let deadline = ContinuousClock.now + .seconds(1)
+    var publishedState: HostStateSnapshot?
+    while ContinuousClock.now < deadline {
+        guard let snapshot = await iterator.next() else { break }
+        if snapshot.currentGenerationJob?.jobID == jobID,
+           snapshot.generationQueue.activeCount == 1
+        {
+            publishedState = snapshot
+            break
+        }
+    }
+    let liveState = try #require(publishedState)
+
+    #expect(liveState.playback.state == "playing")
+    #expect(liveState.transports.contains { $0.name == "http" && $0.advertisedAddress == "http://127.0.0.1:7337" })
+    #expect(liveState.transports.contains { $0.name == "mcp" && $0.advertisedAddress == "http://127.0.0.1:7337/mcp" })
+
+    let uiOverview = await MainActor.run { state.overview }
+    let uiCurrentJob = await MainActor.run { state.currentGenerationJob }
+    let uiPlayback = await MainActor.run { state.playback }
+    #expect(uiOverview.workerReady == true)
+    #expect(uiCurrentJob?.jobID == jobID)
+    #expect(uiPlayback.state == "playing")
+
+    await runtime.finishHeldSpeak(id: jobID)
+    await host.shutdown()
+}
+
+@available(macOS 14, *)
+@Test func routesExposeHealthProfilesAndQueuedSpeechJobLifecycle() async throws {
+    let runtime = MockRuntime()
+    let configuration = testConfiguration()
+    let state = await MainActor.run { ServerState() }
+    let host = ServerHost(
+        configuration: configuration,
+        runtime: runtime,
+        state: state
+    )
+
+    await host.start()
+    await runtime.publishStatus(.residentModelReady)
+    try await waitUntilReady(host)
+
+    let app = assembleHBApp(configuration: testHTTPConfig(configuration), host: host)
     try await app.test(.router) { client in
         let healthResponse = try await client.execute(uri: "/healthz", method: .get)
         let healthJSON = try jsonObject(from: healthResponse.body)
@@ -553,7 +602,6 @@ actor MockRuntime: ServerRuntimeProtocol {
     let host = ServerHost(
         configuration: configuration,
         runtime: runtime,
-        makeRuntime: { runtime },
         state: state
     )
 
@@ -561,7 +609,7 @@ actor MockRuntime: ServerRuntimeProtocol {
     await runtime.publishStatus(.residentModelReady)
     try await waitUntilReady(host)
 
-    let app = makeApplication(configuration: configuration, host: host)
+    let app = assembleHBApp(configuration: testHTTPConfig(configuration), host: host)
     try await app.test(.router) { client in
         let activeResponse = try await client.execute(
             uri: "/speak",
@@ -668,13 +716,12 @@ actor MockRuntime: ServerRuntimeProtocol {
     let host = ServerHost(
         configuration: configuration,
         runtime: runtime,
-        makeRuntime: { runtime },
         state: state
     )
 
     await host.start()
 
-    let app = makeApplication(configuration: configuration, host: host)
+    let app = assembleHBApp(configuration: testHTTPConfig(configuration), host: host)
     try await app.test(.router) { client in
         let readyResponse = try await client.execute(uri: "/readyz", method: .get)
         let readyJSON = try jsonObject(from: readyResponse.body)
@@ -716,14 +763,13 @@ actor MockRuntime: ServerRuntimeProtocol {
     let host = ServerHost(
         configuration: configuration,
         runtime: runtime,
-        makeRuntime: { runtime },
         state: state
     )
 
     await host.start()
     await runtime.publishStatus(.residentModelFailed)
 
-    let app = makeApplication(configuration: configuration, host: host)
+    let app = assembleHBApp(configuration: testHTTPConfig(configuration), host: host)
     try await app.test(.router) { client in
         let readyResponse = try await client.execute(uri: "/readyz", method: .get)
         let readyJSON = try jsonObject(from: readyResponse.body)
@@ -761,7 +807,6 @@ actor MockRuntime: ServerRuntimeProtocol {
     let host = ServerHost(
         configuration: testConfiguration(),
         runtime: runtime,
-        makeRuntime: { runtime },
         state: state
     )
 
@@ -828,7 +873,6 @@ actor MockRuntime: ServerRuntimeProtocol {
     let host = ServerHost(
         configuration: testConfiguration(),
         runtime: runtime,
-        makeRuntime: { runtime },
         state: state
     )
 
@@ -874,6 +918,15 @@ private func testConfiguration(
         completedJobTTLSeconds: completedJobTTLSeconds,
         completedJobMaxCount: completedJobMaxCount,
         jobPruneIntervalSeconds: jobPruneIntervalSeconds
+    )
+}
+
+private func testHTTPConfig(_ configuration: ServerConfiguration) -> HTTPConfig {
+    .init(
+        enabled: true,
+        host: configuration.host,
+        port: configuration.port,
+        sseHeartbeatSeconds: configuration.sseHeartbeatSeconds
     )
 }
 

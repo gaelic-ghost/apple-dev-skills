@@ -4,8 +4,8 @@ import SpeakSwiftlyCore
 
 // MARK: - HTTP Surface
 
-func makeApplication(
-    configuration: ServerConfiguration,
+func assembleHBApp(
+    configuration: HTTPConfig,
     host: ServerHost
 ) -> Application<Router<BasicRequestContext>.Responder> {
     let router = Router()
@@ -108,7 +108,7 @@ func makeApplication(
 
 private func buildAcceptedJobResponse(
     request: Request,
-    configuration: ServerConfiguration,
+    configuration: HTTPConfig,
     jobID: String
 ) throws -> Response {
     try encodeJSONResponse(
@@ -121,7 +121,7 @@ private func buildAcceptedJobResponse(
     )
 }
 
-private func absoluteURL(for request: Request, configuration: ServerConfiguration, path: String) -> String {
+private func absoluteURL(for request: Request, configuration: HTTPConfig, path: String) -> String {
     let scheme = request.head.scheme ?? "http"
     let authority = request.head.authority ?? "\(configuration.host):\(configuration.port)"
     return "\(scheme)://\(authority)\(path)"

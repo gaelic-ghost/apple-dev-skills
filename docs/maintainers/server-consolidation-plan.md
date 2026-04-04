@@ -61,7 +61,10 @@ Phase 3 will adopt [`apple/swift-configuration`](https://github.com/apple/swift-
 ### Phase 2
 
 - Clean up the host API so all shared backend mutations and snapshots flow through `ServerHost`.
+- Introduce host-native state snapshots for app UI, HTTP, and future MCP consumers.
 - Keep transport-specific shaping out of the host.
+- Keep server-side update flow off `MainActor`.
+- Use `ServerState` as a SwiftUI-facing projection, not as the server's primary stream or event bus.
 
 ### Phase 3
 

@@ -81,6 +81,12 @@ struct ActiveRequestSnapshot: Codable, Sendable, Equatable {
         self.op = summary.op
         self.profileName = summary.profileName
     }
+
+    init(id: String, op: String, profileName: String?) {
+        self.id = id
+        self.op = op
+        self.profileName = profileName
+    }
 }
 
 struct QueuedRequestSnapshot: Codable, Sendable, Equatable {
@@ -212,6 +218,12 @@ struct StatusSnapshot: ResponseEncodable, Sendable {
     let lastProfileRefreshAt: String?
     let host: String
     let port: Int
+    let generationQueue: QueueStatusSnapshot
+    let playbackQueue: QueueStatusSnapshot
+    let playback: PlaybackStatusSnapshot
+    let currentGenerationJob: CurrentGenerationJobSnapshot?
+    let transports: [TransportStatusSnapshot]
+    let recentErrors: [RecentErrorSnapshot]
 
     enum CodingKeys: String, CodingKey {
         case service
@@ -226,6 +238,12 @@ struct StatusSnapshot: ResponseEncodable, Sendable {
         case lastProfileRefreshAt = "last_profile_refresh_at"
         case host
         case port
+        case generationQueue = "generation_queue"
+        case playbackQueue = "playback_queue"
+        case playback
+        case currentGenerationJob = "current_generation_job"
+        case transports
+        case recentErrors = "recent_errors"
     }
 }
 
@@ -361,6 +379,7 @@ struct JobSnapshot: ResponseEncodable, Sendable {
     let jobID: String
     let op: String
     let submittedAt: String
+    let startedAt: String?
     let status: String
     let latestEvent: ServerJobEvent?
     let terminalEvent: ServerJobEvent?
@@ -370,6 +389,7 @@ struct JobSnapshot: ResponseEncodable, Sendable {
         case jobID = "job_id"
         case op
         case submittedAt = "submitted_at"
+        case startedAt = "started_at"
         case status
         case latestEvent = "latest_event"
         case terminalEvent = "terminal_event"

@@ -9,11 +9,14 @@ actor ServerHost {
         .milliseconds(50),
         .milliseconds(100),
     ]
+    private static let recentErrorLimit = 8
 
     struct JobRecord: Sendable {
         let jobID: String
         let op: String
-        let submittedAt: String
+        let profileName: String?
+        let submittedAt: Date
+        var startedAt: Date?
         var terminalAt: Date?
         var latestEvent: ServerJobEvent?
         var terminalEvent: ServerJobEvent?
@@ -25,7 +28,8 @@ actor ServerHost {
             .init(
                 jobID: jobID,
                 op: op,
-                submittedAt: submittedAt,
+                submittedAt: TimestampFormatter.string(from: submittedAt),
+                startedAt: startedAt.map(TimestampFormatter.string(from:)),
                 status: terminalEvent == nil ? "running" : "completed",
                 latestEvent: latestEvent,
                 terminalEvent: terminalEvent,
@@ -35,14 +39,16 @@ actor ServerHost {
     }
 
     private let configuration: ServerConfiguration
+    private let httpConfig: HTTPConfig
+    private let mcpConfig: MCPConfig
     private let runtime: any ServerRuntimeProtocol
-    private let makeRuntime: @Sendable () async -> any ServerRuntimeProtocol
     private let state: ServerState
     private let encoder = JSONEncoder()
     private let byteBufferAllocator = ByteBufferAllocator()
 
     private var statusTask: Task<Void, Never>?
     private var pruneTask: Task<Void, Never>?
+    private var liveStateSubscribers = [UUID: AsyncStream<HostStateSnapshot>.Continuation]()
     private var workerMode = "starting"
     private var workerStage = "starting"
     private var startupError: String?
@@ -50,27 +56,48 @@ actor ServerHost {
     private var profileCacheState = "uninitialized"
     private var profileCacheWarning: String?
     private var lastProfileRefreshAt: Date?
+    private var generationQueueStatus = QueueStatusSnapshot(queueType: "generation", activeCount: 0, queuedCount: 0, activeRequest: nil)
+    private var playbackQueueStatus = QueueStatusSnapshot(queueType: "playback", activeCount: 0, queuedCount: 0, activeRequest: nil)
+    private var playbackStatus = PlaybackStatusSnapshot(state: PlaybackState.idle.rawValue, activeRequest: nil)
+    private var recentErrors = [RecentErrorSnapshot]()
+    private var latestPublishedState: HostStateSnapshot?
     private var jobs = [String: JobRecord]()
     private var hasRequestedStartupProfileRefresh = false
 
-    static func live(configuration: ServerConfiguration, state: ServerState) async -> ServerHost {
+    static func live(appConfig: AppConfig, state: ServerState) async -> ServerHost {
         let runtime = await WorkerRuntime.live()
-        let host = ServerHost(configuration: configuration, runtime: runtime, makeRuntime: {
-            await WorkerRuntime.live()
-        }, state: state)
+        let host = ServerHost(
+            configuration: appConfig.server,
+            httpConfig: appConfig.http,
+            mcpConfig: appConfig.mcp,
+            runtime: runtime,
+            state: state
+        )
         await host.start()
         return host
     }
 
     init(
         configuration: ServerConfiguration,
+        httpConfig: HTTPConfig? = nil,
+        mcpConfig: MCPConfig? = nil,
         runtime: any ServerRuntimeProtocol,
-        makeRuntime: @escaping @Sendable () async -> any ServerRuntimeProtocol,
         state: ServerState
     ) {
         self.configuration = configuration
+        self.httpConfig = httpConfig ?? .init(
+            enabled: true,
+            host: configuration.host,
+            port: configuration.port,
+            sseHeartbeatSeconds: configuration.sseHeartbeatSeconds
+        )
+        self.mcpConfig = mcpConfig ?? .init(
+            enabled: false,
+            path: "/mcp",
+            serverName: "speak-to-user-mcp",
+            title: "SpeakSwiftlyMCP"
+        )
         self.runtime = runtime
-        self.makeRuntime = makeRuntime
         self.state = state
         self.encoder.outputFormatting = [.sortedKeys]
     }
@@ -106,54 +133,107 @@ actor ServerHost {
             finishSubscribers(for: jobID)
         }
         await publishState()
+        finishLiveStateSubscribers()
     }
 
-    func healthSnapshot() -> HealthSnapshot {
-        .init(
-            status: "ok",
+    func stateUpdates() -> AsyncStream<HostStateSnapshot> {
+        AsyncStream { continuation in
+            let subscriberID = UUID()
+            if let latestPublishedState {
+                continuation.yield(latestPublishedState)
+            }
+            liveStateSubscribers[subscriberID] = continuation
+            continuation.onTermination = { _ in
+                Task {
+                    await self.removeLiveStateSubscriber(subscriberID)
+                }
+            }
+        }
+    }
+
+    func hostStateSnapshot() -> HostStateSnapshot {
+        let overview = HostOverviewSnapshot(
             service: configuration.name,
             environment: configuration.environment,
             serverMode: serverMode,
             workerMode: workerMode,
             workerStage: workerStage,
             workerReady: workerMode == "ready",
-            startupError: startupError
+            startupError: startupError,
+            profileCacheState: profileCacheState,
+            profileCacheWarning: profileCacheWarning,
+            profileCount: profileCache.count,
+            lastProfileRefreshAt: lastProfileRefreshAt.map(TimestampFormatter.string(from:))
+        )
+
+        return .init(
+            overview: overview,
+            generationQueue: generationQueueStatus,
+            playbackQueue: playbackQueueStatus,
+            playback: playbackStatus,
+            currentGenerationJob: currentGenerationJobSnapshot(),
+            transports: transportSnapshots(),
+            recentErrors: recentErrors
+        )
+    }
+
+    func healthSnapshot() -> HealthSnapshot {
+        let overview = hostStateSnapshot().overview
+        return .init(
+            status: "ok",
+            service: overview.service,
+            environment: overview.environment,
+            serverMode: overview.serverMode,
+            workerMode: overview.workerMode,
+            workerStage: overview.workerStage,
+            workerReady: overview.workerReady,
+            startupError: overview.startupError
         )
     }
 
     func readinessSnapshot() -> (Bool, ReadinessSnapshot) {
-        let ready = workerMode == "ready"
+        let hostState = hostStateSnapshot()
+        let overview = hostState.overview
+        let ready = overview.workerReady
         return (
             ready,
             .init(
                 status: ready ? "ready" : "not_ready",
-                serverMode: serverMode,
-                workerMode: workerMode,
-                workerStage: workerStage,
+                serverMode: overview.serverMode,
+                workerMode: overview.workerMode,
+                workerStage: overview.workerStage,
                 workerReady: ready,
-                startupError: startupError,
-                profileCacheState: profileCacheState,
-                profileCacheWarning: profileCacheWarning,
-                profileCount: profileCache.count,
-                lastProfileRefreshAt: lastProfileRefreshAt.map(TimestampFormatter.string(from:))
+                startupError: overview.startupError,
+                profileCacheState: overview.profileCacheState,
+                profileCacheWarning: overview.profileCacheWarning,
+                profileCount: overview.profileCount,
+                lastProfileRefreshAt: overview.lastProfileRefreshAt
             )
         )
     }
 
     func statusSnapshot() -> StatusSnapshot {
-        .init(
-            service: configuration.name,
-            environment: configuration.environment,
-            serverMode: serverMode,
-            workerMode: workerMode,
-            workerStage: workerStage,
-            profileCacheState: profileCacheState,
-            profileCacheWarning: profileCacheWarning,
-            workerFailureSummary: startupError,
+        let hostState = hostStateSnapshot()
+        let overview = hostState.overview
+        return .init(
+            service: overview.service,
+            environment: overview.environment,
+            serverMode: overview.serverMode,
+            workerMode: overview.workerMode,
+            workerStage: overview.workerStage,
+            profileCacheState: overview.profileCacheState,
+            profileCacheWarning: overview.profileCacheWarning,
+            workerFailureSummary: overview.startupError,
             cachedProfiles: profileCache,
-            lastProfileRefreshAt: lastProfileRefreshAt.map(TimestampFormatter.string(from:)),
-            host: configuration.host,
-            port: configuration.port
+            lastProfileRefreshAt: overview.lastProfileRefreshAt,
+            host: httpConfig.host,
+            port: httpConfig.port,
+            generationQueue: hostState.generationQueue,
+            playbackQueue: hostState.playbackQueue,
+            playback: hostState.playback,
+            currentGenerationJob: hostState.currentGenerationJob,
+            transports: hostState.transports,
+            recentErrors: hostState.recentErrors
         )
     }
 
@@ -339,7 +419,8 @@ actor ServerHost {
         jobs[handle.id] = JobRecord(
             jobID: handle.id,
             op: handle.operationName,
-            submittedAt: TimestampFormatter.string(from: Date())
+            profileName: handle.profileName,
+            submittedAt: Date()
         )
 
         Task {
@@ -426,6 +507,11 @@ actor ServerHost {
         } catch {
             self.profileCacheState = "stale"
             self.profileCacheWarning = "SpeakSwiftly reported a successful profile mutation, but the server could not confirm the refreshed profile list afterward. The cached profile list may be stale. Likely cause: \(error.localizedDescription)"
+            recordRecentError(
+                source: "profile_cache",
+                code: "profile_refresh_mismatch",
+                message: self.profileCacheWarning ?? "SpeakSwiftly could not reconcile the refreshed profile cache after a successful mutation."
+            )
             let failure = ServerFailureEvent(
                 id: requestID,
                 code: "profile_refresh_mismatch",
@@ -539,6 +625,11 @@ actor ServerHost {
             self.workerMode = "failed"
             self.workerStage = status.stage.rawValue
             self.startupError = "SpeakSwiftly reported resident model startup failure."
+            recordRecentError(
+                source: "worker",
+                code: "resident_model_failed",
+                message: self.startupError ?? "SpeakSwiftly reported resident model startup failure."
+            )
         }
 
         let event = currentWorkerStatusEvent()
@@ -551,6 +642,9 @@ actor ServerHost {
     private func record(_ event: ServerJobEvent, for jobID: String, terminal: Bool) async {
         guard var job = jobs[jobID] else { return }
         job.latestEvent = event
+        if job.startedAt == nil, case .started = event {
+            job.startedAt = Date()
+        }
         job.history.append(event)
         if terminal {
             job.terminalEvent = event
@@ -563,6 +657,13 @@ actor ServerHost {
         }
 
         if terminal {
+            if case .failed(let failure) = event {
+                recordRecentError(
+                    source: "job:\(job.op)",
+                    code: failure.code,
+                    message: failure.message
+                )
+            }
             finishSubscribers(for: jobID)
             pruneCompletedJobs()
         }
@@ -592,6 +693,10 @@ actor ServerHost {
         jobs[jobID] = job
     }
 
+    private func removeLiveStateSubscriber(_ subscriberID: UUID) {
+        liveStateSubscribers.removeValue(forKey: subscriberID)
+    }
+
     private func emitHeartbeat(jobID: String, subscriberID: UUID) {
         guard let continuation = jobs[jobID]?.subscribers[subscriberID] else { return }
         continuation.yield(encodeHeartbeatBuffer())
@@ -610,6 +715,13 @@ actor ServerHost {
         jobs[jobID] = job
     }
 
+    private func finishLiveStateSubscribers() {
+        for continuation in liveStateSubscribers.values {
+            continuation.finish()
+        }
+        liveStateSubscribers.removeAll()
+    }
+
     private func pruneCompletedJobs() {
         let now = Date()
         let expiredIDs = jobs.compactMap { jobID, job -> String? in
@@ -624,7 +736,14 @@ actor ServerHost {
 
         let completed = jobs.values
             .filter { $0.terminalAt != nil }
-            .sorted { ($0.terminalAt ?? .distantPast) < ($1.terminalAt ?? .distantPast) }
+            .sorted { lhs, rhs in
+                let lhsTerminalAt = lhs.terminalAt ?? .distantPast
+                let rhsTerminalAt = rhs.terminalAt ?? .distantPast
+                if lhsTerminalAt == rhsTerminalAt {
+                    return lhs.submittedAt < rhs.submittedAt
+                }
+                return lhsTerminalAt < rhsTerminalAt
+            }
         let overflow = completed.count - configuration.completedJobMaxCount
         guard overflow > 0 else { return }
         for job in completed.prefix(overflow) {
@@ -634,16 +753,241 @@ actor ServerHost {
     }
 
     private func publishState() async {
-        let health = healthSnapshot()
-        let readiness = readinessSnapshot().1
-        let status = statusSnapshot()
+        await refreshRuntimeDerivedState()
+
+        let hostState = hostStateSnapshot()
         let jobsByID = Dictionary(uniqueKeysWithValues: jobs.map { ($0.key, $0.value.snapshot) })
+        latestPublishedState = hostState
+
+        for continuation in liveStateSubscribers.values {
+            continuation.yield(hostState)
+        }
 
         await MainActor.run {
-            state.health = health
-            state.readiness = readiness
-            state.status = status
+            state.overview = hostState.overview
+            state.generationQueue = hostState.generationQueue
+            state.playbackQueue = hostState.playbackQueue
+            state.playback = hostState.playback
+            state.currentGenerationJob = hostState.currentGenerationJob
+            state.transports = hostState.transports
+            state.recentErrors = hostState.recentErrors
             state.jobsByID = jobsByID
+        }
+    }
+
+    private func refreshRuntimeDerivedState() async {
+        guard workerMode == "ready" else {
+            generationQueueStatus = deriveGenerationQueueStatusFallback()
+            playbackQueueStatus = derivePlaybackQueueStatusFallback()
+            playbackStatus = derivePlaybackStatusFallback()
+            return
+        }
+
+        do {
+            generationQueueStatus = try await fetchQueueStatus(.generation)
+        } catch {
+            recordRecentError(
+                source: "queue:generation",
+                code: "queue_snapshot_failed",
+                message: "SpeakSwiftlyServer could not refresh the generation queue snapshot. Likely cause: \(error.localizedDescription)"
+            )
+            generationQueueStatus = deriveGenerationQueueStatusFallback()
+        }
+
+        do {
+            playbackQueueStatus = try await fetchQueueStatus(.playback)
+        } catch {
+            recordRecentError(
+                source: "queue:playback",
+                code: "queue_snapshot_failed",
+                message: "SpeakSwiftlyServer could not refresh the playback queue snapshot. Likely cause: \(error.localizedDescription)"
+            )
+            playbackQueueStatus = derivePlaybackQueueStatusFallback()
+        }
+
+        do {
+            playbackStatus = try await fetchPlaybackStatus()
+        } catch {
+            recordRecentError(
+                source: "playback",
+                code: "playback_state_failed",
+                message: "SpeakSwiftlyServer could not refresh the playback state snapshot. Likely cause: \(error.localizedDescription)"
+            )
+            playbackStatus = derivePlaybackStatusFallback()
+        }
+    }
+
+    private func fetchQueueStatus(_ queueType: WorkerQueueType) async throws -> QueueStatusSnapshot {
+        let requestID = UUID().uuidString
+        let handle = await runtime.listQueueHandle(queueType, id: requestID)
+        let success = try await awaitImmediateSuccess(
+            handle: handle,
+            missingTerminalMessage: "SpeakSwiftly finished the queue snapshot request without yielding a terminal success payload.",
+            unexpectedFailureMessagePrefix: "SpeakSwiftly failed while refreshing a queue snapshot."
+        )
+
+        let queueName = queueTypeName(queueType)
+        return .init(
+            queueType: queueName,
+            activeCount: success.activeRequest == nil ? 0 : 1,
+            queuedCount: success.queue?.count ?? 0,
+            activeRequest: success.activeRequest.map(ActiveRequestSnapshot.init(summary:))
+        )
+    }
+
+    private func fetchPlaybackStatus() async throws -> PlaybackStatusSnapshot {
+        let requestID = UUID().uuidString
+        let handle = await runtime.playbackHandle(.state, id: requestID)
+        let success = try await awaitImmediateSuccess(
+            handle: handle,
+            missingTerminalMessage: "SpeakSwiftly finished the playback state request without yielding a terminal success payload.",
+            unexpectedFailureMessagePrefix: "SpeakSwiftly failed while refreshing playback state."
+        )
+        guard let playbackState = success.playbackState else {
+            throw WorkerError(
+                code: .internalError,
+                message: "SpeakSwiftly accepted the playback state request, but it did not return a playback state payload."
+            )
+        }
+
+        return .init(
+            state: playbackState.state.rawValue,
+            activeRequest: playbackState.activeRequest.map(ActiveRequestSnapshot.init(summary:))
+        )
+    }
+
+    private func currentGenerationJobSnapshot() -> CurrentGenerationJobSnapshot? {
+        guard let job = currentGenerationJobRecord() else { return nil }
+        return .init(
+            jobID: job.jobID,
+            op: job.op,
+            profileName: job.profileName,
+            submittedAt: TimestampFormatter.string(from: job.submittedAt),
+            startedAt: job.startedAt.map(TimestampFormatter.string(from:)),
+            latestStage: latestStage(for: job.latestEvent),
+            elapsedGenerationSeconds: job.startedAt.map { max(0, Date().timeIntervalSince($0)) }
+        )
+    }
+
+    private func currentGenerationJobRecord() -> JobRecord? {
+        jobs.values
+            .filter { $0.op == "queue_speech_live" && $0.terminalEvent == nil }
+            .sorted { lhs, rhs in
+                generationPriority(for: lhs) > generationPriority(for: rhs)
+                    || (
+                        generationPriority(for: lhs) == generationPriority(for: rhs)
+                        && lhs.submittedAt < rhs.submittedAt
+                    )
+            }
+            .first
+    }
+
+    private func generationPriority(for job: JobRecord) -> Int {
+        switch job.latestEvent {
+        case .progress, .started:
+            3
+        case .acknowledged:
+            2
+        case .queued:
+            1
+        default:
+            0
+        }
+    }
+
+    private func latestStage(for event: ServerJobEvent?) -> String? {
+        switch event {
+        case .progress(let event):
+            event.stage
+        case .started(let event):
+            event.op
+        case .queued(let event):
+            event.reason
+        default:
+            nil
+        }
+    }
+
+    private func deriveGenerationQueueStatusFallback() -> QueueStatusSnapshot {
+        let activeJob = currentGenerationJobRecord()
+        let queuedCount = jobs.values.filter {
+            guard $0.op == "queue_speech_live", $0.terminalEvent == nil else {
+                return false
+            }
+            if case .queued = $0.latestEvent {
+                return true
+            }
+            return false
+        }.count
+
+        return .init(
+            queueType: "generation",
+            activeCount: activeJob == nil ? 0 : 1,
+            queuedCount: queuedCount,
+            activeRequest: activeJob.map {
+                .init(id: $0.jobID, op: $0.op, profileName: $0.profileName)
+            }
+        )
+    }
+
+    private func derivePlaybackQueueStatusFallback() -> QueueStatusSnapshot {
+        .init(
+            queueType: "playback",
+            activeCount: playbackStatus.state == PlaybackState.idle.rawValue ? 0 : 1,
+            queuedCount: 0,
+            activeRequest: playbackStatus.activeRequest
+        )
+    }
+
+    private func derivePlaybackStatusFallback() -> PlaybackStatusSnapshot {
+        if let activeRequest = currentGenerationJobRecord().map({
+            ActiveRequestSnapshot(id: $0.jobID, op: $0.op, profileName: $0.profileName)
+        }) {
+            return .init(state: PlaybackState.playing.rawValue, activeRequest: activeRequest)
+        }
+        return .init(state: PlaybackState.idle.rawValue, activeRequest: nil)
+    }
+
+    private func transportSnapshots() -> [TransportStatusSnapshot] {
+        [
+            .init(
+                name: "http",
+                enabled: httpConfig.enabled,
+                state: httpConfig.enabled ? "configured" : "disabled",
+                host: httpConfig.enabled ? httpConfig.host : nil,
+                port: httpConfig.enabled ? httpConfig.port : nil,
+                path: nil,
+                advertisedAddress: httpConfig.enabled ? "http://\(httpConfig.host):\(httpConfig.port)" : nil
+            ),
+            .init(
+                name: "mcp",
+                enabled: mcpConfig.enabled,
+                state: mcpConfig.enabled ? "configured" : "disabled",
+                host: mcpConfig.enabled ? httpConfig.host : nil,
+                port: mcpConfig.enabled ? httpConfig.port : nil,
+                path: mcpConfig.enabled ? mcpConfig.path : nil,
+                advertisedAddress: mcpConfig.enabled ? "http://\(httpConfig.host):\(httpConfig.port)\(mcpConfig.path)" : nil
+            ),
+        ]
+    }
+
+    private func recordRecentError(source: String, code: String, message: String) {
+        if let last = recentErrors.last,
+           last.source == source,
+           last.code == code,
+           last.message == message
+        {
+            return
+        }
+        let snapshot = RecentErrorSnapshot(
+            occurredAt: TimestampFormatter.string(from: Date()),
+            source: source,
+            code: code,
+            message: message
+        )
+        recentErrors.append(snapshot)
+        if recentErrors.count > Self.recentErrorLimit {
+            recentErrors.removeFirst(recentErrors.count - Self.recentErrorLimit)
         }
     }
 
