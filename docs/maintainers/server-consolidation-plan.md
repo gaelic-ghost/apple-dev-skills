@@ -78,6 +78,8 @@ Phase 3 will adopt [`apple/swift-configuration`](https://github.com/apple/swift-
 
 - Add the MCP surface to the same Hummingbird application.
 - Route MCP through `ServerHost` instead of creating a second runtime-owning host.
+- Keep the first integrated MCP scope focused on host-backed tools and resources that already map cleanly onto current server snapshots.
+- Make transport-state reporting runtime-aware so app UI and MCP see actual adapter lifecycle instead of only config intent.
 
 ### Phase 5
 
