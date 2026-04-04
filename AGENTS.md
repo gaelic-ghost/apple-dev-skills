@@ -58,6 +58,7 @@ Applicability guidance:
 - For Codex, treat skills as the primary authoring format and plugins as the installable distribution unit that can bundle skills, apps, and MCP servers.
 - For Codex work, prefer starting with a local skill when iterating on one workflow in one repository. Escalate to plugin packaging only when the workflow should be distributed across teams, published through a marketplace, or shipped together with app integrations or MCP configuration.
 - For Codex work in this repository, keep root `skills/` as the canonical workflow-authoring surface and treat `plugins/apple-dev-skills/` as the plugin packaging root.
+- For local Codex plugin smoke tests or consumer-repo installs, treat `plugins/apple-dev-skills/` as the packaged plugin root and prefer the official marketplace-based plugin install flow documented in the Codex plugin docs. Gale-local helpers may be used as optional convenience shortcuts, but they are not the canonical repository contract.
 - Follow canonical Codex and Claude project-level discovery guidance on macOS and Linux through POSIX symlink mirrors instead of duplicate skill trees:
   - `.agents/skills -> ../skills`
   - `.claude/skills -> ../skills`

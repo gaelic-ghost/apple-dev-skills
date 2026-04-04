@@ -62,6 +62,7 @@ flowchart TD
   - plugin-scoped subagents or other Claude-specific integration files
 - Shared workflow behavior should remain skill-scoped so both ecosystems can use the same deterministic scripts and references.
 - Claude-only extras should remain optional convenience layers rather than canonical workflow requirements.
+- For local Codex plugin verification, the supported maintainer path is to install `plugins/apple-dev-skills/` through the official marketplace-based plugin flow. Gale-local helpers may exist as convenience shortcuts, but they are not the canonical repository contract.
 - Subagents in either ecosystem are runtime delegation helpers with separate context and tool policy. They are not the canonical authoring format for the repo's Apple workflows.
 - Repo docs should keep the layers explicit:
   - `AGENTS.md` for durable policy
@@ -78,7 +79,7 @@ flowchart TD
 - User-visible response:
   - The user sees direct progress inside one of the six top-level skills, or a direct recommendation to switch to another skill.
 - Interaction style:
-  - The repo-level UX is currently a bundle of six parallel top-level skills, with plugin packaging layered around them and rename cleanup still pending.
+  - The repo-level UX is a bundle of six parallel top-level skills, with plugin packaging layered around them as the install surface.
 
 ## `xcode-app-project-workflow`
 

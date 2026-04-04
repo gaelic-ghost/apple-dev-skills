@@ -29,7 +29,7 @@
 - [x] Milestone 14: Plugin-First Packaging Foundation
 - [x] Milestone 15: Xcode App Bootstrap and Guidance Sync Skills
 - [x] Milestone 16: Apple and Swift Docs Skill Extraction
-- [ ] Milestone 17: Existing Skill Rename and Install-Surface Cleanup
+- [x] Milestone 17: Existing Skill Rename and Install-Surface Cleanup
 - [ ] Milestone 18: Claude Code Plugin Extras
 
 ## Milestone 1: Initial Apple Skill Bundle
@@ -243,19 +243,19 @@ Exit criteria:
 
 Scope:
 
-- [ ] Establish the repository's plugin-first install shape while keeping root `skills/` as the workflow-authoring source of truth.
+- [x] Establish the repository's plugin-first install shape while keeping root `skills/` as the workflow-authoring source of truth.
 
 Tickets:
 
-- [ ] Add a repo-local Codex plugin scaffold with `.codex-plugin/plugin.json` and a local marketplace entry.
-- [ ] Add a repo-local Claude Code plugin scaffold with `.claude-plugin/plugin.json`.
-- [ ] Document the supported common-denominator plugin structure shared by Codex and Claude.
-- [ ] Document which plugin surfaces are Codex-only, Claude-only, or shared.
-- [ ] Keep plugin packaging metadata and assets in sync with the canonical root skills as that packaging layer grows.
+- [x] Add a repo-local Codex plugin scaffold with `.codex-plugin/plugin.json` and a local marketplace entry.
+- [x] Add a repo-local Claude Code plugin scaffold with `.claude-plugin/plugin.json`.
+- [x] Document the supported common-denominator plugin structure shared by Codex and Claude.
+- [x] Document which plugin surfaces are Codex-only, Claude-only, or shared.
+- [x] Keep plugin packaging metadata and assets in sync with the canonical root skills as that packaging layer grows.
 
 Exit criteria:
 
-- [ ] The repository contains a documented plugin scaffold for both ecosystems, and maintainers can point to one canonical packaging plan without implying unsupported Codex plugin behavior.
+- [x] The repository contains a documented plugin scaffold for both ecosystems, and maintainers can point to one canonical packaging plan without implying unsupported Codex plugin behavior.
 
 ## Milestone 15: Xcode App Bootstrap and Guidance Sync Skills
 
@@ -303,6 +303,7 @@ Tickets:
 - [x] Audit the current skill names for the plugin-first install model and Codex/Claude search surfaces.
 - [x] Rename any retained `apple-*` skills whose names no longer carry useful disambiguation once the plugin name already provides Apple scope.
 - [x] Update README, roadmap, marketplace entries, plugin manifests, and install examples to the new names.
+- [x] Document the concrete local Codex plugin install flow for `plugins/apple-dev-skills/`, keeping the official marketplace-based path canonical and any Gale-local helpers optional.
 - [x] Preserve migration notes for any renamed skill IDs so maintainers can map old references cleanly.
 
 Exit criteria:

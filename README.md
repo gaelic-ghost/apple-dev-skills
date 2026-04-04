@@ -47,6 +47,8 @@ Current plugin scaffolding lives under:
 - `.claude/skills`
 - `.agents/plugins/marketplace.json`
 
+For local Codex plugin development, treat `plugins/apple-dev-skills/` as the installable plugin root and use the official marketplace-based plugin install flow documented by Codex.
+
 Maintainer guidance for those adjacent surfaces now exists in [AGENTS.md](./AGENTS.md):
 
 - Codex plugins are the installable distribution layer that can bundle skills, apps, and MCP servers.
@@ -79,6 +81,44 @@ Run the snippet sync script before validation whenever files under `shared/agent
 ## Install
 
 Standalone skill installation is handled through the Vercel `skills` CLI against root `skills/`. Plugin packaging and local marketplace wiring target `plugins/apple-dev-skills/`. For local project discovery on macOS and Linux, this repo also exposes `.agents/skills` and `.claude/skills` as symlink mirrors into root `skills/`.
+
+### Local Plugin Development Install
+
+Use the packaged plugin root at `plugins/apple-dev-skills/` when smoke-testing Codex plugin wiring. The canonical local author flow is still the official Codex marketplace path:
+
+1. Point a repo or personal marketplace entry at `./plugins/apple-dev-skills`.
+2. Set `policy.installation` to `AVAILABLE`.
+3. Restart Codex.
+4. Open `/plugins` in Codex and install the plugin from that marketplace.
+
+Repo-scoped marketplace shape:
+
+```json
+{
+  "name": "gaelic-ghost-apple-dev-skills",
+  "interface": {
+    "displayName": "Gale's Apple Plugins"
+  },
+  "plugins": [
+    {
+      "name": "apple-dev-skills",
+      "source": {
+        "source": "local",
+        "path": "./plugins/apple-dev-skills"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}
+```
+
+Keep `source.path` relative to the marketplace root, restart Codex after marketplace changes, and verify the plugin appears in `/plugins`.
+
+If Gale is using a local helper such as `install-plugin-to-socket`, treat that as an optional machine-local maintainer shortcut rather than part of the repository's portable install contract.
 
 Install one skill:
 

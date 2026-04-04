@@ -16,6 +16,7 @@ Use the highest-confidence artifact first and only fall back when the higher lay
    - `.codex-plugin/plugin.json`
    - `.claude-plugin/plugin.json`
    - plugin-only packaging directories such as `hooks/`, `bin/`, and `assets/`
+   - documented local install flow for `plugins/apple-dev-skills/`
 4. Repository validation rules in `.github/scripts/validate_repo_docs.sh`
 5. Root maintainer and discoverability docs
    - `README.md`
@@ -38,6 +39,7 @@ Deprecated compatibility skills that remain on disk do not count as part of the 
    - root `skills/` still define the canonical workflow behavior
    - Codex plugin metadata does not claim unsupported plugin capabilities
    - Claude-only extras remain optional and clearly separated
+   - local install guidance still points at `plugins/apple-dev-skills/` and keeps the official marketplace-based plugin install path canonical
 4. Run `bash .github/scripts/validate_repo_docs.sh` and treat failures as documentation-contract drift unless code assets prove otherwise.
 5. Run `uv run pytest` and treat failures as runtime drift.
 6. Reconcile root docs to the tested, shipped state instead of preserving stale historical wording.
@@ -52,6 +54,7 @@ Deprecated compatibility skills that remain on disk do not count as part of the 
 - Historical notes may mention retired or deprecated skills only in migration context.
 - Maintainer docs must not imply that repo-root files are required when the canonical files live under `docs/maintainers/`.
 - Plugin docs must keep the Codex common denominator and Claude-only extras explicit.
+- Local install docs must name the packaged plugin root and the supported automated wiring path.
 
 ## Current Canonical Maintainer Docs
 
@@ -66,4 +69,5 @@ A maintainer audit report should summarize:
 - validation health
 - test health
 - roadmap credibility or staleness
+- local plugin install guidance health
 - remaining follow-up items
