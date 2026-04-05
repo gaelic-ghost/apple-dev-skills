@@ -1,4 +1,4 @@
-import SpeakSwiftlyServer
+import SpeakSwiftlyServerCore
 
 // MARK: - Main
 

@@ -307,7 +307,7 @@ The current HTTP SSE route remains intentionally job-specific at the route bound
 
 ## Development
 
-The shared runtime entrypoint now lives in [`Sources/SpeakSwiftlyServer/SpeakSwiftlyServer.swift`](https://github.com/gaelic-ghost/SpeakSwiftlyServer/blob/main/Sources/SpeakSwiftlyServer/SpeakSwiftlyServer.swift), with thin executable wrappers in [`Sources/SpeakSwiftlyServerExecutable/main.swift`](https://github.com/gaelic-ghost/SpeakSwiftlyServer/blob/main/Sources/SpeakSwiftlyServerExecutable/main.swift) and [`Sources/SpeakSwiftlyServerCli/main.swift`](https://github.com/gaelic-ghost/SpeakSwiftlyServer/blob/main/Sources/SpeakSwiftlyServerCli/main.swift). The shared host process stays intentionally small:
+The shared runtime entrypoint now lives in [`Sources/SpeakSwiftlyServer/SpeakSwiftlyServer.swift`](https://github.com/gaelic-ghost/SpeakSwiftlyServer/blob/main/Sources/SpeakSwiftlyServer/SpeakSwiftlyServer.swift) inside the `SpeakSwiftlyServerCore` module, with thin executable wrappers in [`Sources/SpeakSwiftlyServerExecutable/main.swift`](https://github.com/gaelic-ghost/SpeakSwiftlyServer/blob/main/Sources/SpeakSwiftlyServerExecutable/main.swift) for the `SpeakSwiftlyServer` executable target and [`Sources/SpeakSwiftlyServerCli/main.swift`](https://github.com/gaelic-ghost/SpeakSwiftlyServer/blob/main/Sources/SpeakSwiftlyServerCli/main.swift) for the CLI. The shared host process stays intentionally small:
 
 - [`HTTPSurface.swift`](https://github.com/gaelic-ghost/SpeakSwiftlyServer/blob/main/Sources/SpeakSwiftlyServer/HTTP/HTTPSurface.swift) assembles and conditionally mounts the HTTP surface on the shared Hummingbird server.
 - [`MCPSurface.swift`](https://github.com/gaelic-ghost/SpeakSwiftlyServer/blob/main/Sources/SpeakSwiftlyServer/MCP/MCPSurface.swift) mounts the embedded MCP transport on that same shared process and registers tools and resources against `ServerHost`.
@@ -329,8 +329,8 @@ The repo-maintenance toolkit is now the maintainer-facing wrapper around that re
 
 ## Repository Layout
 
-- `Sources/SpeakSwiftlyServer/` contains the reusable library target with the HTTP, MCP, host, config, and LaunchAgent support code.
-- `Sources/SpeakSwiftlyServerExecutable/` contains the thin server executable wrapper.
+- `Sources/SpeakSwiftlyServer/` contains the reusable `SpeakSwiftlyServerCore` library target with the HTTP, MCP, host, config, and LaunchAgent support code.
+- `Sources/SpeakSwiftlyServerExecutable/` contains the thin `SpeakSwiftlyServer` executable wrapper.
 - `Sources/SpeakSwiftlyServerCli/` contains the thin operator CLI wrapper.
 - `Tests/` contains the package test suite, including the opt-in end-to-end coverage paths and the dedicated CLI tests.
 - `docs/` holds repo-local supporting documentation.

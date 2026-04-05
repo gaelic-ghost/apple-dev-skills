@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import SpeakSwiftlyServer
+@testable import SpeakSwiftlyServerCore
 
 // MARK: - CLI Tests
 

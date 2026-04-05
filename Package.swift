@@ -11,11 +11,11 @@ let package = Package(
     products: [
         .library(
             name: "SpeakSwiftlyServerCore",
-            targets: ["SpeakSwiftlyServer"]
+            targets: ["SpeakSwiftlyServerCore"]
         ),
         .executable(
             name: "SpeakSwiftlyServer",
-            targets: ["SpeakSwiftlyServerExecutable"]
+            targets: ["SpeakSwiftlyServer"]
         ),
         .executable(
             name: "SpeakSwiftlyServerCli",
@@ -38,7 +38,7 @@ let package = Package(
         // Targets are the basic building blocks of a package, defining a module or a test suite.
         // Targets can depend on other targets in this package and products from dependencies.
         .target(
-            name: "SpeakSwiftlyServer",
+            name: "SpeakSwiftlyServerCore",
             dependencies: [
                 .product(name: "AsyncAlgorithms", package: "swift-async-algorithms"),
                 .product(name: "Configuration", package: "swift-configuration"),
@@ -46,24 +46,26 @@ let package = Package(
                 .product(name: "MCP", package: "swift-sdk"),
                 .product(name: "SpeakSwiftlyCore", package: "SpeakSwiftly"),
                 .product(name: "TextForSpeech", package: "TextForSpeech"),
-            ]
+            ],
+            path: "Sources/SpeakSwiftlyServer"
         ),
         .executableTarget(
-            name: "SpeakSwiftlyServerExecutable",
+            name: "SpeakSwiftlyServer",
             dependencies: [
-                "SpeakSwiftlyServer",
-            ]
+                "SpeakSwiftlyServerCore",
+            ],
+            path: "Sources/SpeakSwiftlyServerExecutable"
         ),
         .executableTarget(
             name: "SpeakSwiftlyServerCli",
             dependencies: [
-                "SpeakSwiftlyServer",
+                "SpeakSwiftlyServerCore",
             ]
         ),
         .testTarget(
             name: "SpeakSwiftlyServerTests",
             dependencies: [
-                "SpeakSwiftlyServer",
+                "SpeakSwiftlyServerCore",
                 .product(name: "Hummingbird", package: "hummingbird"),
                 .product(name: "HummingbirdTesting", package: "hummingbird"),
                 .product(name: "MCP", package: "swift-sdk"),
@@ -73,7 +75,7 @@ let package = Package(
         .testTarget(
             name: "SpeakSwiftlyServerCliTests",
             dependencies: [
-                "SpeakSwiftlyServer",
+                "SpeakSwiftlyServerCore",
             ]
         ),
     ],

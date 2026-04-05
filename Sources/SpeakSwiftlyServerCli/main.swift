@@ -1,5 +1,5 @@
 import Darwin
-import SpeakSwiftlyServer
+import SpeakSwiftlyServerCore
 
 // MARK: - Main
 
