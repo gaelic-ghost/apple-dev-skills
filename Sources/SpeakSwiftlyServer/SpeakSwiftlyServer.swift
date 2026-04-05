@@ -1,11 +1,10 @@
 import Foundation
 import Hummingbird
 
-// MARK: - Entry Point
+// MARK: - Server Runtime Entrypoint
 
-@main
-enum SpeakSwiftlyServer {
-    static func main() async throws {
+public enum ServerRuntimeEntrypoint {
+    public static func run() async throws {
         let configStore = try await ConfigStore()
         let config = try configStore.loadAppConfig()
         let state = await MainActor.run { ServerState() }

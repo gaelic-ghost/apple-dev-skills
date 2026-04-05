@@ -80,7 +80,7 @@ That narrowness also informs platform policy. The package should prefer maintain
 
 This package currently depends on a sibling local [`SpeakSwiftly`](https://github.com/gaelic-ghost/SpeakSwiftly) checkout via `.package(path: "../SpeakSwiftly")` in [`Package.swift`](https://github.com/gaelic-ghost/SpeakSwiftlyServer/blob/main/Package.swift). Local builds and tests expect that checkout to exist at exactly `../SpeakSwiftly` relative to this repository root.
 
-Build the package with SwiftPM once that sibling checkout is present:
+Build both executables with SwiftPM once that sibling checkout is present:
 
 ```bash
 swift build
@@ -101,6 +101,36 @@ swift run SpeakSwiftlyServer
 ```
 
 The shared server binds to `127.0.0.1:7337` by default.
+
+The package now also ships a separate operator-facing CLI product:
+
+```bash
+swift run SpeakSwiftlyServerCli help
+```
+
+That CLI currently owns LaunchAgent support so the standalone server binary can stay focused on one foreground service process while the CLI grows into the install, inspection, and maintenance surface around it.
+
+To render the current per-user LaunchAgent property list without installing it:
+
+```bash
+swift run SpeakSwiftlyServerCli launch-agent print-plist
+```
+
+To install or refresh the current user's LaunchAgent with a config file:
+
+```bash
+swift run SpeakSwiftlyServerCli launch-agent install \
+  --config-file ./server.yaml
+```
+
+That command writes a user-owned property list into `~/Library/LaunchAgents`, points `ProgramArguments` at the `SpeakSwiftlyServer` executable rather than the CLI, and uses `launchctl bootstrap` / `bootout` against the current `gui/<uid>` domain. If your server binary lives somewhere other than the sibling executable next to `SpeakSwiftlyServerCli`, pass `--server-executable-path /absolute/path/to/SpeakSwiftlyServer`.
+
+To inspect or remove the installed LaunchAgent:
+
+```bash
+swift run SpeakSwiftlyServerCli launch-agent status
+swift run SpeakSwiftlyServerCli launch-agent uninstall
+```
 
 ## Configuration
 
@@ -277,7 +307,7 @@ The current HTTP SSE route remains intentionally job-specific at the route bound
 
 ## Development
 
-The executable entrypoint lives in [`Sources/SpeakSwiftlyServer/SpeakSwiftlyServer.swift`](https://github.com/gaelic-ghost/SpeakSwiftlyServer/blob/main/Sources/SpeakSwiftlyServer/SpeakSwiftlyServer.swift). The shared host process stays intentionally small:
+The shared runtime entrypoint now lives in [`Sources/SpeakSwiftlyServer/SpeakSwiftlyServer.swift`](https://github.com/gaelic-ghost/SpeakSwiftlyServer/blob/main/Sources/SpeakSwiftlyServer/SpeakSwiftlyServer.swift), with thin executable wrappers in [`Sources/SpeakSwiftlyServerExecutable/main.swift`](https://github.com/gaelic-ghost/SpeakSwiftlyServer/blob/main/Sources/SpeakSwiftlyServerExecutable/main.swift) and [`Sources/SpeakSwiftlyServerCli/main.swift`](https://github.com/gaelic-ghost/SpeakSwiftlyServer/blob/main/Sources/SpeakSwiftlyServerCli/main.swift). The shared host process stays intentionally small:
 
 - [`HTTPSurface.swift`](https://github.com/gaelic-ghost/SpeakSwiftlyServer/blob/main/Sources/SpeakSwiftlyServer/HTTP/HTTPSurface.swift) assembles and conditionally mounts the HTTP surface on the shared Hummingbird server.
 - [`MCPSurface.swift`](https://github.com/gaelic-ghost/SpeakSwiftlyServer/blob/main/Sources/SpeakSwiftlyServer/MCP/MCPSurface.swift) mounts the embedded MCP transport on that same shared process and registers tools and resources against `ServerHost`.
@@ -291,14 +321,18 @@ The executable entrypoint lives in [`Sources/SpeakSwiftlyServer/SpeakSwiftlyServ
 
 The design is deliberately direct. Adding extra wrappers, managers, or intermediate layers here would be easy, but it would also be the kind of unnecessary complexity that makes a small localhost service harder to reason about, so the server is kept close to the typed runtime API on purpose. That means the service talks to the public `SpeakSwiftly.Runtime` surface, its public text normalizer, and its public event and summary types instead of reaching through the library boundary to construct raw worker requests itself.
 
+The separate CLI target is the one intentional widening of that model. It earns its keep because it unlocks LaunchAgent installation, status inspection, and future operator workflows without turning the server binary itself into a mixed control-and-serve tool.
+
 For repository maintenance, treat this standalone repository as the source of truth for package development, tags, and releases. When the `speak-to-user` monorepo adopts a new server version, prefer bumping that submodule pointer to a tagged `SpeakSwiftlyServer` release rather than a floating branch tip.
 
 The repo-maintenance toolkit is now the maintainer-facing wrapper around that release flow. Use `scripts/repo-maintenance/validate-all.sh` for local validation, `scripts/repo-maintenance/sync-shared.sh` for deterministic repo-local sync hooks, and `scripts/repo-maintenance/release.sh` for the tagged release path after verification passes.
 
 ## Repository Layout
 
-- `Sources/` contains the executable target and the HTTP, MCP, and host layers that share one runtime owner.
-- `Tests/` contains the package test suite, including the opt-in end-to-end coverage paths.
+- `Sources/SpeakSwiftlyServer/` contains the reusable library target with the HTTP, MCP, host, config, and LaunchAgent support code.
+- `Sources/SpeakSwiftlyServerExecutable/` contains the thin server executable wrapper.
+- `Sources/SpeakSwiftlyServerCli/` contains the thin operator CLI wrapper.
+- `Tests/` contains the package test suite, including the opt-in end-to-end coverage paths and the dedicated CLI tests.
 - `docs/` holds repo-local supporting documentation.
 - `plugins/apple-dev-skills/` is the in-development plugin copy that this repository publishes through the local marketplace file.
 - `.agents/plugins/marketplace.json` points local Codex discovery at the in-repo plugin source during development.
@@ -316,6 +350,13 @@ The package-level verification path that toolkit wraps is still:
 ```bash
 swift build
 swift test
+```
+
+If you want to check the split executable surfaces explicitly, these are the direct smoke-test commands:
+
+```bash
+swift run SpeakSwiftlyServerCli help
+swift run SpeakSwiftlyServerCli launch-agent print-plist
 ```
 
 The current automated suite covers configuration parsing, queued live speech job completion semantics, generation and playback queue inspection, playback control routes, queue cancellation routes, startup failure before readiness, runtime degradation while active and queued speech jobs are in flight, in-memory retention and pruning, SSE replay and heartbeat behavior, route-level health, profile, clone, text-profile, and job lifecycle responses against a controlled typed runtime, the embedded MCP tool, prompt, and resource surface, the shared host snapshot stream and typed host event stream, plus an opt-in live end-to-end suite against a real `SpeakSwiftly` runtime:

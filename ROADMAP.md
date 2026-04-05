@@ -69,7 +69,7 @@
 ## Milestone 6: App And LaunchAgent Handoff
 
 - [ ] Document the server configuration contract the forthcoming macOS app will need.
-- [ ] Add any server-side hooks needed for LaunchAgent-friendly lifecycle management.
+- [x] Add any server-side hooks needed for LaunchAgent-friendly lifecycle management.
 - [ ] Decide how logs, profile roots, and cache paths should be configured for app-managed installs.
 - [x] Prepare an initial tagged release once the service is meaningfully usable.
 

@@ -8,6 +8,20 @@ let package = Package(
     platforms: [
         .macOS("15.0"),
     ],
+    products: [
+        .library(
+            name: "SpeakSwiftlyServerCore",
+            targets: ["SpeakSwiftlyServer"]
+        ),
+        .executable(
+            name: "SpeakSwiftlyServer",
+            targets: ["SpeakSwiftlyServerExecutable"]
+        ),
+        .executable(
+            name: "SpeakSwiftlyServerCli",
+            targets: ["SpeakSwiftlyServerCli"]
+        ),
+    ],
     dependencies: [
         .package(url: "https://github.com/hummingbird-project/hummingbird.git", from: "2.0.0"),
         .package(path: "../SpeakSwiftly"),
@@ -23,7 +37,7 @@ let package = Package(
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
         // Targets can depend on other targets in this package and products from dependencies.
-        .executableTarget(
+        .target(
             name: "SpeakSwiftlyServer",
             dependencies: [
                 .product(name: "AsyncAlgorithms", package: "swift-async-algorithms"),
@@ -34,6 +48,18 @@ let package = Package(
                 .product(name: "TextForSpeech", package: "TextForSpeech"),
             ]
         ),
+        .executableTarget(
+            name: "SpeakSwiftlyServerExecutable",
+            dependencies: [
+                "SpeakSwiftlyServer",
+            ]
+        ),
+        .executableTarget(
+            name: "SpeakSwiftlyServerCli",
+            dependencies: [
+                "SpeakSwiftlyServer",
+            ]
+        ),
         .testTarget(
             name: "SpeakSwiftlyServerTests",
             dependencies: [
@@ -42,6 +68,12 @@ let package = Package(
                 .product(name: "HummingbirdTesting", package: "hummingbird"),
                 .product(name: "MCP", package: "swift-sdk"),
                 .product(name: "TextForSpeech", package: "TextForSpeech"),
+            ]
+        ),
+        .testTarget(
+            name: "SpeakSwiftlyServerCliTests",
+            dependencies: [
+                "SpeakSwiftlyServer",
             ]
         ),
     ],
