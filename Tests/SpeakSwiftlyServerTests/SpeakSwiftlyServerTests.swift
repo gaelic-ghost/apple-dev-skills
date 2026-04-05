@@ -6,7 +6,7 @@ import MCP
 import NIOCore
 import SpeakSwiftlyCore
 import Testing
-import TextForSpeechCore
+import TextForSpeech
 @testable import SpeakSwiftlyServer
 
 // MARK: - Mock Runtime

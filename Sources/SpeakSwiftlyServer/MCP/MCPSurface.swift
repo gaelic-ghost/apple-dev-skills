@@ -3,7 +3,7 @@ import Hummingbird
 import HTTPTypes
 import MCP
 import NIOCore
-import TextForSpeechCore
+import TextForSpeech
 
 // MARK: - MCP Surface
 

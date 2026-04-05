@@ -12,6 +12,15 @@ It is meant to answer three concrete questions:
 
 Current baseline checked against sibling tag `v0.9.1`.
 
+The sibling `SpeakSwiftly` checkout has since moved forward with a repackaged public dependency surface plus new runtime helpers for voice cloning and text-profile management. The next server follow-through pass should intentionally cover three categories of change together instead of treating them like unrelated patches:
+
+1. package and import alignment
+   `SpeakSwiftlyServer` still assumes the sibling package re-exports `TextForSpeech`, but the repackaged sibling manifest now exports `SpeakSwiftlyCore` and the CLI product only
+2. runtime-call alignment
+   the server bridge should adopt the current `speak(..., textProfileName:textContext:id:)` signature directly instead of preserving the older normalization-only call shape
+3. transport-surface expansion
+   the new `createClone(...)` and text-profile helpers should be exposed thoughtfully through both HTTP and MCP
+
 ## Summary
 
 `SpeakSwiftlyServer` exposes almost the entire public runtime control plane:
@@ -148,3 +157,14 @@ The three highest-value client-surface follow-ups from the previous review are n
 3. Accepted-job MCP results now include `job_resource_uri`.
 
 At this point, the remaining differences are mostly intentional transport adaptations rather than missing runtime capabilities.
+
+## Next Follow-Through Slice
+
+The next library-alignment pass should land in this order:
+
+1. fix the package graph and imports so this repository builds against the current sibling `SpeakSwiftly` checkout again
+2. update the runtime bridge, host adapter, and tests for the current `speak` signature and any related public-type drift
+3. add `createClone(...)` as a first-class voice-profile job flow in HTTP and MCP
+4. add a parallel text-profile surface for inspection, active-profile selection, reset, create/remove, and replacement editing
+
+The text-profile work should remain a separate transport concept from stored voice profiles. Voice profiles are long-running worker jobs with retained-job semantics; text profiles are synchronous text-normalization state and replacement editing. Keeping those concepts separate in the transport layer will make the server easier to reason about and keep HTTP and MCP from inheriting a blurry "everything is a profile job" model.

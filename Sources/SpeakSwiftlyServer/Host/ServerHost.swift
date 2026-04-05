@@ -2,7 +2,7 @@ import AsyncAlgorithms
 import Foundation
 import Hummingbird
 import SpeakSwiftlyCore
-import TextForSpeechCore
+import TextForSpeech
 
 // MARK: - Server Host
 

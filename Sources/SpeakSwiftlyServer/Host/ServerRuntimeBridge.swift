@@ -1,6 +1,8 @@
 import Foundation
 import SpeakSwiftlyCore
-import TextForSpeechCore
+import TextForSpeech
+
+typealias SpeechNormalizationContext = TextForSpeech.Context
 
 // MARK: - Runtime Bridge
 
@@ -75,7 +77,7 @@ extension SpeakSwiftly.Runtime: ServerRuntimeProtocol {
                 text: text,
                 with: profileName,
                 as: jobType,
-                context: normalizationContext,
+                textContext: normalizationContext,
                 id: id
             )
         )

@@ -1,7 +1,7 @@
 import Foundation
 import Hummingbird
 import SpeakSwiftlyCore
-import TextForSpeechCore
+import TextForSpeech
 
 // MARK: - Request Models
 
