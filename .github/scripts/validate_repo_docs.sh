@@ -12,7 +12,7 @@ fail() {
 require_contains() {
   local file="$1"
   local needle="$2"
-  grep -Fq "$needle" "$file" || fail "Missing required string in $file: $needle"
+  grep -Fq -- "$needle" "$file" || fail "Missing required string in $file: $needle"
 }
 
 echo "Validating roadmap presence..."
@@ -88,6 +88,19 @@ audit_doc="docs/maintainers/reality-audit.md"
 require_contains "$audit_doc" "## Source-of-Truth Order"
 require_contains "$audit_doc" "## Audit Procedure"
 require_contains "$audit_doc" "## Reporting Shape"
+
+echo "Validating customization consolidation review..."
+customization_review_doc="docs/maintainers/customization-consolidation-review.md"
+require_contains "$customization_review_doc" "## Current State Summary"
+require_contains "$customization_review_doc" "## Decision"
+require_contains "$customization_review_doc" "## Knob Classification"
+require_contains "$customization_review_doc" "## Shared Helper Decision"
+require_contains "$customization_review_doc" "## Follow-Up Plan"
+require_contains "$customization_review_doc" "Milestone 20 concludes that the repo should shrink the customization surface rather than expand it."
+require_contains "$customization_review_doc" "## Sync Skill Simplification Decision"
+require_contains "$customization_review_doc" 'proposed replacement: `writeMode`'
+require_contains "ROADMAP.md" "- [x] Milestone 20: Customization Consolidation Review"
+require_contains "ROADMAP.md" "## Milestone 27: Customization Surface Simplification Implementation"
 
 echo "Validating skill directory layout..."
 active_skill_mds=(
