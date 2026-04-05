@@ -23,6 +23,7 @@ echo "Validating root docs presence..."
 [[ -f AGENTS.md ]] || fail "Missing AGENTS.md at repo root."
 [[ -f docs/maintainers/workflow-atlas.md ]] || fail "Missing docs/maintainers/workflow-atlas.md."
 [[ -f docs/maintainers/reality-audit.md ]] || fail "Missing docs/maintainers/reality-audit.md."
+[[ -f docs/maintainers/customization-consolidation-review.md ]] || fail "Missing docs/maintainers/customization-consolidation-review.md."
 
 echo "Validating local discovery mirrors..."
 [[ -L ".agents/skills" ]] || fail "Expected .agents/skills to be a symlink to ../skills"
@@ -54,6 +55,7 @@ echo "Validating README maintainer pointer..."
 require_contains "README.md" 'Maintainers: authoritative skill-authoring resources live in `AGENTS.md`.'
 require_contains "README.md" 'docs/maintainers/workflow-atlas.md'
 require_contains "README.md" 'docs/maintainers/reality-audit.md'
+require_contains "README.md" 'docs/maintainers/customization-consolidation-review.md'
 require_contains "README.md" '.agents/skills -> ../skills'
 require_contains "README.md" '.claude/skills -> ../skills'
 require_contains "README.md" 'plugins/apple-dev-skills/skills -> ../../skills'
@@ -61,6 +63,7 @@ require_contains "README.md" 'plugins/apple-dev-skills/skills -> ../../skills'
 echo "Validating AGENTS maintainer pointers..."
 require_contains "AGENTS.md" 'docs/maintainers/reality-audit.md'
 require_contains "AGENTS.md" 'docs/maintainers/workflow-atlas.md'
+require_contains "AGENTS.md" 'docs/maintainers/customization-consolidation-review.md'
 require_contains "AGENTS.md" '.agents/skills -> ../skills'
 require_contains "AGENTS.md" '.claude/skills -> ../skills'
 require_contains "AGENTS.md" 'plugins/apple-dev-skills/skills -> ../../skills'

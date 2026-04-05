@@ -32,12 +32,14 @@
 - [x] Milestone 17: Existing Skill Rename and Install-Surface Cleanup
 - [ ] Milestone 18: Claude Code Plugin Extras
 - [x] Milestone 19: Swift Style Tooling Workflow
-- [ ] Milestone 20: Customization Consolidation Review
+- [x] Milestone 20: Customization Consolidation Review
 - [ ] Milestone 21: MCP App UI for Configuration and Customization
 - [ ] Milestone 22: macOS Menu Bar Extra for Skill Controls
 - [ ] Milestone 23: Dash Direct MCP and Call Library
 - [x] Milestone 24: Repo Self-Compliance and Install-Surface Audit
 - [x] Milestone 25: Use `Agent Dev Skills` plugin to align repo with skills/plugin repo standards
+- [ ] Milestone 26: Swift and Xcode Testing Offload Workflow
+- [ ] Milestone 27: Customization Surface Simplification Implementation
 
 ## Milestone 1: Initial Apple Skill Bundle
 
@@ -356,30 +358,30 @@ Exit criteria:
 
 Scope:
 
-- [ ] Evaluate whether the current per-skill customization system should be consolidated, simplified, or made more inference-driven.
+- [x] Evaluate whether the current per-skill customization system should be consolidated, simplified, or made more inference-driven.
 
 Tickets:
 
-- [ ] Audit all active customization knobs for duplication, overlap, and repo-shape inferability.
-- [ ] Evaluate consolidating duplicated `customization_config.py` helpers into a shared maintainer implementation or generator path.
-- [ ] Identify knobs that should become opinionated defaults instead of user-facing customization.
-- [ ] Identify knobs that can be inferred from repo type, file layout, active IDE state, tool availability, stored agent preferences, or project-level guidance.
-- [ ] Propose a smaller long-term customization surface with a clear split between runtime-enforced settings and policy-only defaults.
-- [ ] Track the repo-shape inference candidates already identified:
+- [x] Audit all active customization knobs for duplication, overlap, and repo-shape inferability.
+- [x] Evaluate consolidating duplicated `customization_config.py` helpers into a shared maintainer implementation or generator path.
+- [x] Identify knobs that should become opinionated defaults instead of user-facing customization.
+- [x] Identify knobs that can be inferred from repo type, file layout, active IDE state, tool availability, stored agent preferences, or project-level guidance.
+- [x] Propose a smaller long-term customization surface with a clear split between runtime-enforced settings and policy-only defaults.
+- [x] Track the repo-shape inference candidates already identified:
   - bootstrap app defaults such as project kind, platform, and often UI stack
   - bootstrap package defaults such as package type, platform preset, and often testing mode
   - style-tooling defaults such as tool selection, preferred surface, checked-in config posture, and plugin-vs-script preference
   - docs troubleshooting preference when the failure mode itself already makes the best recovery path obvious
-- [ ] Track the environment-inference candidates already identified:
+- [x] Track the environment-inference candidates already identified:
   - SwiftFormat host-app export preference based on whether the host app or shared defaults domain exists
   - SwiftLint plugin preference based on package-manager compatibility and config placement
   - Xcode fallback-command profile based on workspace type, MCP availability, and available CLIs
-- [ ] Track the simplification candidates already identified:
+- [x] Track the simplification candidates already identified:
   - collapse sync-skill booleans into a smaller write-mode model
   - replace low-value explicit defaults with inference-first behavior and rare escape hatches
   - separate maintainer-tuning knobs from user-meaningful customization
   - centralize duplicated customization helper plumbing only if that remains the right architecture after the surface is reduced
-- [ ] Break the work into phases:
+- [x] Break the work into phases:
   - audit and classify knobs
   - decide what to remove, infer, or keep
   - implement the smaller surface
@@ -387,7 +389,9 @@ Tickets:
 
 Exit criteria:
 
-- [ ] Maintainers have a written decision on whether to keep, consolidate, or shrink the customization system, with a concrete follow-up plan for any approved architecture change.
+- [x] Maintainers have a written decision on whether to keep, consolidate, or shrink the customization system, with a concrete follow-up plan for any approved architecture change.
+
+See `docs/maintainers/customization-consolidation-review.md`.
 
 ## Milestone 21: MCP App UI for Configuration and Customization
 
@@ -483,3 +487,52 @@ Exit criteria:
 
 - The repository validates cleanly against the current shared skills/plugin repo standards.
 - Repo docs, plugin packaging, marketplace wiring, and maintainer guidance describe the same live behavior.
+
+## Milestone 26: Swift and Xcode Testing Offload Workflow
+
+Scope:
+
+- Design and ship a dedicated offload workflow for repetitive, noisy SwiftPM and Xcode build, test, preview, and diagnostics work so the main agent thread can stay focused on higher-signal reasoning and implementation.
+
+Tickets:
+
+- Audit the current repetitive and noisy Swift and Xcode testing work that is currently handled inline in the main agent thread.
+- Decide which implementation surface should own the offload path:
+  - skill guidance only
+  - subagent-backed workflow
+  - MCP-backed helper
+  - another simpler durable surface if that better matches the actual constraints
+- Define the input and output contract for the offload path so verification work can be delegated without losing the details the main thread still needs.
+- Cover the highest-value offload cases first:
+  - `swift build`
+  - `swift test`
+  - `xcodebuild` test or build flows
+  - preview or diagnostics refresh
+  - noisy failure summarization back into the main thread
+- Keep the design aligned with the existing Apple-docs-first and Xcode-MCP-first guidance instead of creating a parallel Apple workflow model.
+- Document when the main agent should stay local versus when it should hand noisy verification work to the offload path.
+- Add validation or smoke-test coverage for the offload contract once the implementation surface is chosen.
+
+Exit criteria:
+
+- Maintainers have one documented and validated way to offload repetitive Swift and Xcode verification work from the main agent thread.
+- The offload path returns concise, decision-useful results without obscuring the underlying build or test evidence.
+
+## Milestone 27: Customization Surface Simplification Implementation
+
+Scope:
+
+- Implement the smaller customization surface approved by Milestone 20 before building any MCP App or other UI on top of customization state.
+
+Tickets:
+
+- Reduce each active customization template to the remaining user-meaningful knobs approved in the review.
+- Collapse the two sync-skill booleans into one smaller write-mode model.
+- Reclassify safety invariants and maintainer tuning so they stop appearing as ordinary durable user customization.
+- Teach the approved inference-first defaults in the affected workflow docs and runtime wrappers.
+- Decide whether maintainer-time generation or sync is still needed for duplicated `customization_config.py` copies after the surface reduction lands.
+- Update tests, validators, and maintainer docs to match the reduced surface.
+
+Exit criteria:
+
+- The shipped customization surface is materially smaller, better classified, and ready to support future UI work without carrying the current drift forward.
