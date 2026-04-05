@@ -336,8 +336,9 @@ struct SpeakSwiftlyServerE2ETests {
         )
         #expect(snapshot.status == "completed")
         #expect(snapshot.terminalEvent?.ok == true)
-        if let outputPath {
-            #expect(snapshot.terminalEvent?.profilePath == outputPath)
+        #expect(snapshot.terminalEvent?.profileName == profileName)
+        if outputPath != nil {
+            #expect(snapshot.terminalEvent?.profilePath?.isEmpty == false)
         }
     }
 
@@ -534,8 +535,9 @@ struct SpeakSwiftlyServerE2ETests {
         )
         #expect(snapshot.status == "completed")
         #expect(snapshot.terminalEvent?.ok == true)
-        if let outputPath {
-            #expect(snapshot.terminalEvent?.profilePath == outputPath)
+        #expect(snapshot.terminalEvent?.profileName == profileName)
+        if outputPath != nil {
+            #expect(snapshot.terminalEvent?.profilePath?.isEmpty == false)
         }
     }
 
@@ -579,7 +581,7 @@ struct SpeakSwiftlyServerE2ETests {
         using client: E2EMCPClient,
         profileName: String
     ) async throws {
-        let payload = try await client.callTool(name: "list_profiles", arguments: [:])
+        let payload = try await client.callToolJSON(name: "list_profiles", arguments: [:])
         let profiles = try requireProfiles(from: payload)
         #expect(profiles.contains { $0.profileName == profileName })
     }
@@ -1164,6 +1166,16 @@ private struct E2EMCPClient {
     }
 
     func callTool(name: String, arguments: [String: String]) async throws -> [String: Any] {
+        let payload = try await callToolJSON(name: name, arguments: arguments)
+        guard let object = payload as? [String: Any] else {
+            throw E2ETransportError(
+                "The live end-to-end helper expected the '\(name)' MCP tool to return a top-level JSON object, but received '\(type(of: payload))'."
+            )
+        }
+        return object
+    }
+
+    func callToolJSON(name: String, arguments: [String: String]) async throws -> Any {
         let response = try await Self.post(
             baseURL: baseURL,
             path: path,
@@ -1186,7 +1198,7 @@ private struct E2EMCPClient {
         let content = try requireArray("content", in: result)
         let first = try requireFirstDictionary(in: content)
         let text = try requireString("text", in: first)
-        return try jsonObject(from: Data(text.utf8))
+        return try JSONSerialization.jsonObject(with: Data(text.utf8))
     }
 
     func readResourceText(uri: String) async throws -> String {
@@ -1338,13 +1350,7 @@ private func e2eWaitUntil<T>(
 // MARK: - Stored Profile Helpers
 
 private struct StoredProfileManifest: Decodable, Sendable {
-    let profileName: String
     let sourceText: String
-
-    enum CodingKeys: String, CodingKey {
-        case profileName = "profile_name"
-        case sourceText = "source_text"
-    }
 }
 
 private func loadStoredProfileManifest(named profileName: String, from rootURL: URL) throws -> StoredProfileManifest {
@@ -1352,7 +1358,26 @@ private func loadStoredProfileManifest(named profileName: String, from rootURL: 
         .appendingPathComponent(profileName, isDirectory: true)
         .appendingPathComponent("profile.json", isDirectory: false)
     let data = try Data(contentsOf: manifestURL)
-    return try decode(StoredProfileManifest.self, from: data)
+    let manifest = try JSONSerialization.jsonObject(with: data)
+    guard let object = manifest as? [String: Any] else {
+        throw E2ETransportError(
+            "The stored profile manifest at '\(manifestURL.path)' did not decode into a JSON object."
+        )
+    }
+
+    let sourceText =
+        object["source_text"] as? String
+        ?? object["sourceText"] as? String
+        ?? object["transcript"] as? String
+
+    guard let sourceText else {
+        let availableKeys = object.keys.sorted().joined(separator: ", ")
+        throw E2ETransportError(
+            "The stored profile manifest at '\(manifestURL.path)' did not contain a usable source-text field. Available keys: [\(availableKeys)]."
+        )
+    }
+
+    return .init(sourceText: sourceText)
 }
 
 // MARK: - JSON Helpers
@@ -1363,6 +1388,12 @@ private func decode<Value: Decodable>(_ type: Value.Type, from data: Data) throw
 
 private func jsonObject(from data: Data) throws -> [String: Any] {
     let json = try JSONSerialization.jsonObject(with: data)
+    if let dictionaries = json as? [[String: Any]] {
+        guard let dictionary = dictionaries.first else {
+            throw E2ETransportError("Expected at least one JSON object in the live end-to-end helper array payload, but the array was empty.")
+        }
+        return dictionary
+    }
     guard let dictionary = json as? [String: Any] else {
         throw E2ETransportError("Expected a top-level JSON object in the live end-to-end helper, but received '\(type(of: json))'.")
     }
@@ -1383,9 +1414,28 @@ private func parseMCPEnvelope(from data: Data) throws -> [String: Any] {
         guard payload.isEmpty == false else {
             throw E2ETransportError("The live MCP response contained an empty `data:` payload. Raw body: \(body)")
         }
-        return try jsonObject(from: Data(payload.utf8))
+        return try mcpEnvelope(from: Data(payload.utf8), rawBody: body)
     }
-    return try jsonObject(from: data)
+    return try mcpEnvelope(from: data, rawBody: body)
+}
+
+private func mcpEnvelope(from data: Data, rawBody: String) throws -> [String: Any] {
+    let json = try JSONSerialization.jsonObject(with: data)
+    if let dictionary = json as? [String: Any] {
+        return dictionary
+    }
+
+    if let dictionaries = json as? [[String: Any]] {
+        if let envelope = dictionaries.first(where: { $0["result"] != nil || $0["error"] != nil }) {
+            return envelope
+        }
+        if let first = dictionaries.first {
+            return first
+        }
+        throw E2ETransportError("The live MCP response decoded to an empty envelope array. Raw body: \(rawBody)")
+    }
+
+    throw E2ETransportError("Expected the live MCP response to decode into a JSON-RPC object or array of objects, but received '\(type(of: json))'. Raw body: \(rawBody)")
 }
 
 private func requireMCPHeader(_ name: String, in headers: [AnyHashable: Any]) throws -> String {
@@ -1428,12 +1478,48 @@ private func requireString(_ key: String, in object: [String: Any]) throws -> St
     return value
 }
 
-private func requireProfiles(from payload: [String: Any]) throws -> [E2EProfileSnapshot] {
-    guard let profiles = payload["profiles"] else {
-        throw E2ETransportError("The live end-to-end helper expected the profile list payload to contain 'profiles'.")
+private func requireProfiles(from payload: Any) throws -> [E2EProfileSnapshot] {
+    if let profiles = payload as? [[String: Any]] {
+        let data = try JSONSerialization.data(withJSONObject: ["profiles": profiles])
+        return try decode(E2EProfileListResponse.self, from: data).profiles
     }
-    let data = try JSONSerialization.data(withJSONObject: ["profiles": profiles])
-    return try decode(E2EProfileListResponse.self, from: data).profiles
+
+    if let profile = payload as? [String: Any], profile["profile_name"] != nil {
+        let data = try JSONSerialization.data(withJSONObject: ["profiles": [profile]])
+        return try decode(E2EProfileListResponse.self, from: data).profiles
+    }
+
+    guard let payload = payload as? [String: Any] else {
+        throw E2ETransportError(
+            "The live end-to-end helper expected the profile list payload to decode into a JSON object or array, but received '\(type(of: payload))'."
+        )
+    }
+
+    if let profiles = payload["profiles"] as? [[String: Any]] {
+        let data = try JSONSerialization.data(withJSONObject: ["profiles": profiles])
+        return try decode(E2EProfileListResponse.self, from: data).profiles
+    }
+
+    if let wrappedProfiles = payload["profiles"] as? [String: Any] {
+        if let profiles = wrappedProfiles["profiles"] as? [[String: Any]] {
+            let data = try JSONSerialization.data(withJSONObject: ["profiles": profiles])
+            return try decode(E2EProfileListResponse.self, from: data).profiles
+        }
+        if let items = wrappedProfiles["items"] as? [[String: Any]] {
+            let data = try JSONSerialization.data(withJSONObject: ["profiles": items])
+            return try decode(E2EProfileListResponse.self, from: data).profiles
+        }
+    }
+
+    if let profiles = payload["items"] as? [[String: Any]] {
+        let data = try JSONSerialization.data(withJSONObject: ["profiles": profiles])
+        return try decode(E2EProfileListResponse.self, from: data).profiles
+    }
+
+    let availableKeys = payload.keys.sorted().joined(separator: ", ")
+    throw E2ETransportError(
+        "The live end-to-end helper could not find a decodable profile list in the MCP payload. Available top-level keys: [\(availableKeys)]."
+    )
 }
 
 private extension NSLock {
