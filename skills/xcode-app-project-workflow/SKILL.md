@@ -96,7 +96,7 @@ Use this skill as the top-level entry point for Apple and Swift execution work i
 
 - Use `references/customization-flow.md`.
 - `scripts/customization_config.py` stores and reports customization state.
-- `scripts/run_workflow.py` loads and enforces the runtime-safe knobs documented in `references/customization-flow.md`.
+- `scripts/run_workflow.py` still reads customization state, but the current workflow uses fixed safety defaults rather than ordinary user-facing customization knobs.
 - MCP tool execution itself remains agent-side and is not performed by the local runtime entrypoint or by the skill as a direct runtime.
 
 ## References

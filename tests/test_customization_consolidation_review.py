@@ -68,20 +68,25 @@ class CustomizationConsolidationReviewTests(unittest.TestCase):
 
         self.assertEqual(template_count, 7)
         self.assertEqual(script_count, 7)
-        self.assertEqual(knob_count, 35)
-        self.assertEqual(runtime_enforced, 30)
-        self.assertEqual(policy_only, 5)
+        self.assertEqual(knob_count, 11)
+        self.assertEqual(runtime_enforced, 10)
+        self.assertEqual(policy_only, 1)
 
         self.assertIn(f"The active skill surface ships `{template_count}` separate `references/customization.template.yaml` files.", text)
         self.assertIn(f"The active skill surface ships `{script_count}` separate `scripts/customization_config.py` entrypoints.", text)
         self.assertIn(f"The current templates expose `{knob_count}` knobs total:", text)
         self.assertIn(f"- `{runtime_enforced}` are documented as `runtime-enforced`", text)
-        self.assertIn(f"- `{policy_only}` are documented as `policy-only`", text)
+        policy_line = (
+            f"- `{policy_only}` is documented as `policy-only`"
+            if policy_only == 1
+            else f"- `{policy_only}` are documented as `policy-only`"
+        )
+        self.assertIn(policy_line, text)
 
     def test_review_doc_records_sync_write_mode_decision(self) -> None:
         text = REVIEW_DOC.read_text(encoding="utf-8")
 
-        self.assertIn("proposed replacement: `writeMode`", text)
+        self.assertIn("implemented replacement: `writeMode`", text)
         for value in (
             "`sync-if-needed`",
             "`create-missing-only`",
@@ -91,11 +96,12 @@ class CustomizationConsolidationReviewTests(unittest.TestCase):
             with self.subTest(value=value):
                 self.assertIn(value, text)
 
-    def test_roadmap_marks_review_done_and_follow_up_present(self) -> None:
+    def test_roadmap_marks_review_and_implementation_done(self) -> None:
         text = ROADMAP.read_text(encoding="utf-8")
 
         self.assertIn("- [x] Milestone 20: Customization Consolidation Review", text)
         self.assertIn("See `docs/maintainers/customization-consolidation-review.md`.", text)
+        self.assertIn("- [x] Milestone 27: Customization Surface Simplification Implementation", text)
         self.assertIn("## Milestone 27: Customization Surface Simplification Implementation", text)
 
 

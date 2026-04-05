@@ -100,44 +100,27 @@ class ExploreAppleSwiftDocsWorkflowTests(unittest.TestCase):
             self.assertEqual(payload["source_used"], "official-web")
             self.assertEqual(payload["path_type"], "fallback")
 
-    def test_explore_search_snippets_can_be_disabled(self) -> None:
-        with tempfile.TemporaryDirectory() as tmpdir:
-            write_config(tmpdir, "explore-apple-swift-docs", {"defaultSearchSnippets": False})
-            env = dict(os.environ)
-            env["APPLE_DEV_SKILLS_CONFIG_HOME"] = tmpdir
-            code, payload = self.run_script("--mode", "explore", "--query", "Swift", "--dry-run", env=env)
-            self.assertEqual(code, 0)
-            self.assertFalse(payload["search_snippets_enabled"])
-            self.assertEqual(sorted(payload["matches"][0].keys()), ["name", "slug", "source"])
+    def test_explore_keeps_snippets_enabled_by_default(self) -> None:
+        code, payload = self.run_script("--mode", "explore", "--query", "Swift", "--dry-run")
+        self.assertEqual(code, 0)
+        self.assertTrue(payload["search_snippets_enabled"])
+        self.assertGreater(len(payload["matches"][0].keys()), 3)
 
-    def test_dash_install_obeys_source_priority(self) -> None:
-        with tempfile.TemporaryDirectory() as tmpdir:
-            write_config(
-                tmpdir,
-                "explore-apple-swift-docs",
-                {"dashInstallSourcePriority": "cheatsheet,built-in,user-contributed"},
-            )
-            env = dict(os.environ)
-            env["APPLE_DEV_SKILLS_CONFIG_HOME"] = tmpdir
-            code, payload = self.run_script(
-                "--mode",
-                "dash-install",
-                "--docset-request",
-                "Swift",
-                "--dry-run",
-                env=env,
-            )
-            self.assertEqual(code, 0)
-            self.assertEqual(payload["selected_match"]["source"], "cheatsheet")
+    def test_dash_install_uses_built_in_priority_by_default(self) -> None:
+        code, payload = self.run_script(
+            "--mode",
+            "dash-install",
+            "--docset-request",
+            "Swift",
+            "--dry-run",
+        )
+        self.assertEqual(code, 0)
+        self.assertEqual(payload["selected_match"]["source"], "built_in")
 
     def test_dash_install_requires_explicit_approval(self) -> None:
-        with tempfile.TemporaryDirectory() as tmpdir:
-            write_config(tmpdir, "explore-apple-swift-docs", {"requireExplicitApprovalForDashInstallYes": True})
-            env = dict(os.environ)
-            env["APPLE_DEV_SKILLS_CONFIG_HOME"] = tmpdir
-            code, payload = self.run_script("--mode", "dash-install", "--docset-request", "Swift", env=env)
-            self.assertEqual(code, 1)
-            self.assertEqual(payload["status"], "blocked")
+        code, payload = self.run_script("--mode", "dash-install", "--docset-request", "Swift")
+        self.assertEqual(code, 1)
+        self.assertEqual(payload["status"], "blocked")
 
     def test_dash_install_launches_open_when_approved(self) -> None:
         script_body = """#!/bin/sh
@@ -180,22 +163,17 @@ exit 0
         self.assertIn("guidance", payload)
         self.assertEqual(payload["source_path"], "automation-guidance")
 
-    def test_dash_generate_can_emit_manual_fallback_path(self) -> None:
-        with tempfile.TemporaryDirectory() as tmpdir:
-            write_config(tmpdir, "explore-apple-swift-docs", {"dashGenerationPolicy": "manual-first"})
-            env = dict(os.environ)
-            env["APPLE_DEV_SKILLS_CONFIG_HOME"] = tmpdir
-            code, payload = self.run_script(
-                "--mode",
-                "dash-generate",
-                "--docset-request",
-                "Swift",
-                "--dry-run",
-                env=env,
-            )
-            self.assertEqual(code, 0)
-            self.assertEqual(payload["path_type"], "fallback")
-            self.assertEqual(payload["guidance"]["policy"], "manual-first")
+    def test_dash_generate_uses_automated_policy_default(self) -> None:
+        code, payload = self.run_script(
+            "--mode",
+            "dash-generate",
+            "--docset-request",
+            "Swift",
+            "--dry-run",
+        )
+        self.assertEqual(code, 0)
+        self.assertEqual(payload["path_type"], "primary")
+        self.assertEqual(payload["guidance"]["policy"], "automate-stable")
 
 
 if __name__ == "__main__":

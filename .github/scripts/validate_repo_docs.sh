@@ -98,8 +98,9 @@ require_contains "$customization_review_doc" "## Shared Helper Decision"
 require_contains "$customization_review_doc" "## Follow-Up Plan"
 require_contains "$customization_review_doc" "Milestone 20 concludes that the repo should shrink the customization surface rather than expand it."
 require_contains "$customization_review_doc" "## Sync Skill Simplification Decision"
-require_contains "$customization_review_doc" 'proposed replacement: `writeMode`'
+require_contains "$customization_review_doc" 'implemented replacement: `writeMode`'
 require_contains "ROADMAP.md" "- [x] Milestone 20: Customization Consolidation Review"
+require_contains "ROADMAP.md" "- [x] Milestone 27: Customization Surface Simplification Implementation"
 require_contains "ROADMAP.md" "## Milestone 27: Customization Surface Simplification Implementation"
 
 echo "Validating skill directory layout..."

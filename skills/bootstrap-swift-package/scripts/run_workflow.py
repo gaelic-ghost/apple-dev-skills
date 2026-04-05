@@ -106,9 +106,9 @@ def main() -> int:
     settings = config["settings"]
 
     name = args.name
-    pkg_type = args.type or str(settings.get("defaultPackageType", "library"))
+    pkg_type = args.type or "library"
     destination = args.destination or "."
-    platform = args.platform or str(settings.get("defaultPlatformPreset", "multiplatform"))
+    platform = args.platform or "multiplatform"
     version_profile = args.version_profile or str(settings.get("defaultVersionProfile", "current-minus-one"))
     testing_mode = args.testing_mode or str(settings.get("defaultTestingMode", "swift-testing"))
     initialize_git = bool(settings.get("initializeGit", True))

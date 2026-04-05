@@ -80,14 +80,14 @@ class XcodeGuidanceSyncWorkflowTests(unittest.TestCase):
             self.assertIn("## Existing Section", agents_text)
             self.assertIn("## Apple / Xcode Project Workflow", agents_text)
 
-    def test_customization_can_disable_append_behavior(self) -> None:
+    def test_write_mode_can_disable_append_behavior(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             Path(tmpdir, "Demo.xcodeproj").mkdir()
             Path(tmpdir, "AGENTS.md").write_text("# AGENTS.md\n", encoding="utf-8")
             write_config(
                 tmpdir,
                 "sync-xcode-project-guidance",
-                {"appendSectionWhenAgentsExists": False},
+                {"writeMode": "create-missing-only"},
             )
             env = dict(os.environ)
             env["APPLE_DEV_SKILLS_CONFIG_HOME"] = tmpdir
@@ -95,6 +95,22 @@ class XcodeGuidanceSyncWorkflowTests(unittest.TestCase):
             self.assertEqual(code, 1)
             self.assertEqual(payload["status"], "blocked")
             self.assertIn("append behavior is disabled", payload["stderr"])
+
+    def test_report_only_mode_returns_non_mutating_success(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            Path(tmpdir, "Demo.xcodeproj").mkdir()
+            write_config(
+                tmpdir,
+                "sync-xcode-project-guidance",
+                {"writeMode": "report-only"},
+            )
+            env = dict(os.environ)
+            env["APPLE_DEV_SKILLS_CONFIG_HOME"] = tmpdir
+            code, payload = self.run_script("--repo-root", tmpdir, env=env)
+            self.assertEqual(code, 0)
+            self.assertEqual(payload["status"], "success")
+            self.assertEqual(payload["path_type"], "fallback")
+            self.assertIn("report that AGENTS.md is missing", payload["actions"][0])
 
 
 if __name__ == "__main__":

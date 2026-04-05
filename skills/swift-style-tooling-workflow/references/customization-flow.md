@@ -9,16 +9,12 @@ Tune the documented default preferences for selecting SwiftLint and SwiftFormat 
 | Knob | Default | Status | Effect |
 | --- | --- | --- | --- |
 | `defaultToolSelection` | `both` | `policy-only` | Sets the default planning posture when the user wants “style tooling” without naming one tool. |
-| `defaultSurface` | `cli` | `policy-only` | Sets the default surface to discuss first when the user asks for a generic setup path. |
-| `preferSwiftLintPlugins` | `true` | `policy-only` | Prefers SwiftLint plugin-based setup before Run Script guidance when the project shape supports it. |
-| `preferProjectRootConfigFiles` | `true` | `policy-only` | Prefers checked-in root config files over purely user-local settings. |
-| `preferSwiftFormatHostAppExport` | `true` | `policy-only` | Prefers the SwiftFormat for Xcode host app export flow before the shared-defaults script path. |
 
 ## Runtime Behavior
 
 - `scripts/customization_config.py` reads, writes, resets, and reports customization state.
 - `scripts/export_swiftformat_xcode_config.py` is deterministic, but it does not currently read these customization knobs.
-- The rest of the customization surface is guidance-only until a runtime entrypoint is added.
+- Surface selection, plugin preference, config-file placement, and host-app export preference now live as workflow defaults rather than durable user customization.
 
 ## Update Flow
 

@@ -100,7 +100,7 @@ Use this skill as the top-level workflow for integrating and maintaining SwiftLi
 
 - Use `references/customization-flow.md`.
 - `scripts/customization_config.py` reads, writes, resets, and reports per-skill customization metadata.
-- The current customization knobs are policy-only guidance defaults. This skill has no `run_workflow.py` runtime entrypoint at present.
+- The current customization surface is one policy-only guidance default for tool selection. This skill has no `run_workflow.py` runtime entrypoint at present.
 
 ## References
 

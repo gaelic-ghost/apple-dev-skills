@@ -127,7 +127,7 @@ Create a new native Apple app repository from nothing to a usable baseline on di
 - Use `references/customization-flow.md`.
 - `scripts/customization_config.py` stores and reports customization state.
 - `scripts/run_workflow.py` loads runtime-safe defaults from customization state before invoking the supported implementation path.
-- Current runtime-enforced knobs include the default platform, UI stack, generator preference, bundle-ID prefix, `AGENTS.md` copy behavior, and validation mode.
+- Current runtime-enforced knobs include the default platform, bundle-ID prefix, and `AGENTS.md` copy behavior. Project kind, UI stack, generator choice, and validation policy now live as fixed workflow behavior or explicit invocation inputs.
 
 ## References
 

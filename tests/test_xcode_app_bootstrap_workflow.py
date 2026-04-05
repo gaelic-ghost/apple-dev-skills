@@ -61,23 +61,19 @@ class XcodeAppBootstrapWorkflowTests(unittest.TestCase):
                 "bootstrap-xcode-app-project",
                 {
                     "defaultPlatform": "macos",
-                    "defaultUIStack": "swiftui",
-                    "defaultProjectGenerator": "xcodegen",
                     "defaultOrgIdentifier": "dev.example",
                     "copyAgentsMd": False,
-                    "validationMode": "light",
                 },
             )
             env = dict(os.environ)
             env["APPLE_DEV_SKILLS_CONFIG_HOME"] = tmpdir
-            code, payload = self.run_script("--name", "DemoApp", "--dry-run", env=env)
+            code, payload = self.run_script("--name", "DemoApp", "--project-generator", "xcodegen", "--dry-run", env=env)
             self.assertEqual(code, 0)
             self.assertEqual(payload["normalized_inputs"]["platform"], "macos")
             self.assertEqual(payload["normalized_inputs"]["ui_stack"], "swiftui")
             self.assertEqual(payload["normalized_inputs"]["project_generator"], "xcodegen")
             self.assertEqual(payload["bundle_identifier"], "dev.example.DemoApp")
             self.assertFalse(payload["normalized_inputs"]["copy_agents_md"])
-            self.assertEqual(payload["normalized_inputs"]["validation_mode"], "light")
 
     def test_blocks_non_app_project_kind(self) -> None:
         code, payload = self.run_script(

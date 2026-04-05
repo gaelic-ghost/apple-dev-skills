@@ -66,8 +66,7 @@ Bring an existing Xcode app repository up to the expected guidance baseline with
 - Defaults:
   - runtime entrypoint: executable `scripts/run_workflow.py`
   - `repo_root=.` when omitted
-  - `appendSectionWhenAgentsExists=true`
-  - `copyAgentsTemplateWhenMissing=true`
+  - `writeMode=sync-if-needed`
   - validation runs unless `--skip-validation` is passed
 
 ## Outputs
@@ -92,7 +91,7 @@ Bring an existing Xcode app repository up to the expected guidance baseline with
 - Stop with `blocked` if the repo root cannot be resolved.
 - Stop with `blocked` if the repo does not contain an `.xcodeproj` or `.xcworkspace`.
 - Stop with `blocked` if the repo appears to be a SwiftPM-only package without Xcode-managed app markers.
-- Stop with `blocked` if `AGENTS.md` exists but append behavior is disabled and the repo still lacks the required Xcode guidance section.
+- Stop with `blocked` if the chosen `writeMode` does not allow the mutation the repo still needs, such as creating a missing `AGENTS.md` or appending the bounded Xcode guidance section.
 - Stop with `blocked` if the target `AGENTS.md` path exists but is not a regular file.
 
 ## Fallbacks and Handoffs
@@ -107,7 +106,7 @@ Bring an existing Xcode app repository up to the expected guidance baseline with
 - Use `references/customization-flow.md`.
 - `scripts/customization_config.py` stores and reports customization state.
 - `scripts/run_workflow.py` loads runtime-safe defaults from customization state before invoking the supported sync path.
-- Current runtime-enforced knobs include whether missing `AGENTS.md` files should be created from template, whether an existing `AGENTS.md` may receive the bounded Xcode section, and whether validation runs after sync.
+- The current runtime-enforced customization surface is one `writeMode` knob that controls whether the workflow may create missing `AGENTS.md`, append the bounded Xcode section, or stay report-only.
 
 ## References
 

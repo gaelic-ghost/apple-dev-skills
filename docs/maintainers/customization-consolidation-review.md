@@ -11,14 +11,23 @@ Record the Milestone 20 audit of the current customization system, decide whethe
 - The active skill surface ships `7` separate `references/customization.template.yaml` files.
 - The active skill surface ships `7` separate `scripts/customization_config.py` entrypoints.
 - Those `customization_config.py` files are functionally identical and exist only because installed skills are expected to keep runtime resources inside the skill directory.
-- The current templates expose `35` knobs total:
-  - `30` are documented as `runtime-enforced`
-  - `5` are documented as `policy-only`
+- The current templates expose `11` knobs total:
+  - `10` are documented as `runtime-enforced`
+  - `1` is documented as `policy-only`
 - The current surface mixes together four different categories that should not all be presented as the same kind of user customization:
   - durable user preference
   - inference candidate
   - maintainer tuning
   - safety or invariants that should not be softened through ordinary customization
+
+## Original Audit Baseline
+
+Milestone 20 audited a larger surface before the implementation pass landed.
+
+- The original Milestone 20 audit counted `35` knobs total:
+  - `30` documented as `runtime-enforced`
+  - `5` documented as `policy-only`
+- Milestone 27 applied the approved reduction so the live surface now reflects the smaller counts in the current-state summary above.
 
 ## Decision
 
@@ -40,7 +49,7 @@ The decision is:
 
 ## Knob Classification
 
-### Keep As User-Meaningful Customization
+### Implemented User-Meaningful Customization
 
 - `bootstrap-swift-package`
   - `defaultVersionProfile`
@@ -56,13 +65,13 @@ The decision is:
 - `swift-style-tooling-workflow`
   - `defaultToolSelection`
 - `sync-xcode-project-guidance`
-  - replace the current booleans with one smaller `writeMode`
+  - `writeMode`
 - `sync-swift-package-guidance`
-  - replace the current booleans with one smaller `writeMode`
+  - `writeMode`
 
 These are the knobs most likely to reflect real user preference instead of hidden implementation detail.
 
-### Prefer Inference First, With Escape Hatches If Needed
+### Implemented As Inference, Fixed Workflow Defaults, Or Explicit Invocation Inputs
 
 - `bootstrap-swift-package`
   - `defaultPackageType`
@@ -78,9 +87,9 @@ These are the knobs most likely to reflect real user preference instead of hidde
 - `xcode-app-project-workflow`
   - `fallbackCommandMappingProfile`
 
-These are better derived from request wording, available tools, repo shape, or the actual failure mode than held as broad durable user state.
+These are now better derived from request wording, available tools, repo shape, explicit CLI input, or fixed workflow defaults than held as broad durable user state.
 
-### Move Out Of Ordinary User Customization
+### Removed From Ordinary User Customization
 
 - `bootstrap-xcode-app-project`
   - `defaultProjectKind`
@@ -115,7 +124,7 @@ The two guidance-sync skills currently expose:
 
 This should collapse into one smaller write model:
 
-- proposed replacement: `writeMode`
+- implemented replacement: `writeMode`
 - target values:
   - `sync-if-needed`
   - `create-missing-only`
@@ -144,24 +153,34 @@ If the repo still wants less duplication after the surface shrinks, the approved
 
 ### Phase 1: Surface Reduction
 
+Status: complete
+
 - shrink each customization template to the user-meaningful knobs listed above
 - reclassify or remove maintainer-only and invariant knobs
 - update `references/customization-flow.md` files so their `Status` labels match the reduced model
 
 ### Phase 2: Inference Pass
 
+Status: complete for the current approved scope
+
 - teach the relevant workflow docs and runtime wrappers to infer the approved inference-first defaults
 - keep escape hatches only where inference is likely to be wrong often enough to matter
 
 ### Phase 3: Helper Plumbing Review
+
+Status: deferred on purpose
 
 - after the surface is smaller, re-evaluate whether duplicated `customization_config.py` maintenance is still painful
 - if yes, add maintainer-time generation or sync while preserving local per-skill shipped copies
 
 ### Phase 4: UI Follow-On
 
+Status: not started
+
 - only after the smaller customization model is in place should the repo build MCP App or other UI surfaces on top of it
 
 ## Outcome
 
 Milestone 20 is complete once the roadmap reflects this review and the repository treats this document as the source of truth for the next implementation pass.
+
+Milestone 27 is complete once the live customization templates, flow docs, runtime wrappers, tests, and roadmap all match the reduced surface described here. That implementation pass is now in place.

@@ -68,7 +68,7 @@ class XcodeWorkflowTests(unittest.TestCase):
             self.assertEqual(payload["status"], "success")
             self.assertFalse(payload["guard_result"]["managed_scope"])
 
-    def test_advisory_cooldown_and_retry_count_follow_config(self) -> None:
+    def test_advisory_cooldown_and_retry_count_use_fixed_defaults(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             write_config(
                 tmpdir,
@@ -90,8 +90,8 @@ class XcodeWorkflowTests(unittest.TestCase):
                 env=env,
             )
             self.assertEqual(code, 0)
-            self.assertEqual(payload["retry_count"], 2)
-            self.assertEqual(payload["advisory"]["cooldown_days"], 30)
+            self.assertEqual(payload["retry_count"], 1)
+            self.assertEqual(payload["advisory"]["cooldown_days"], 21)
             self.assertFalse(payload["advisory"]["should_emit"])
 
     def test_fallback_commands_follow_mapping_profile(self) -> None:

@@ -62,8 +62,6 @@ class BootstrapWorkflowTests(unittest.TestCase):
                 tmpdir,
                 "bootstrap-swift-package",
                 {
-                    "defaultPackageType": "executable",
-                    "defaultPlatformPreset": "mac",
                     "defaultVersionProfile": "latest-major",
                     "defaultTestingMode": "xctest",
                     "initializeGit": False,
@@ -74,8 +72,8 @@ class BootstrapWorkflowTests(unittest.TestCase):
             env["APPLE_DEV_SKILLS_CONFIG_HOME"] = tmpdir
             code, payload = self.run_script("--name", "DemoPkg", "--dry-run", env=env)
             self.assertEqual(code, 0)
-            self.assertEqual(payload["normalized_inputs"]["type"], "executable")
-            self.assertEqual(payload["normalized_inputs"]["platform"], "mac")
+            self.assertEqual(payload["normalized_inputs"]["type"], "library")
+            self.assertEqual(payload["normalized_inputs"]["platform"], "multiplatform")
             self.assertEqual(payload["normalized_inputs"]["version_profile"], "latest-major")
             self.assertEqual(payload["normalized_inputs"]["testing_mode"], "xctest")
             self.assertFalse(payload["normalized_inputs"]["initialize_git"])
@@ -92,8 +90,6 @@ class BootstrapWorkflowTests(unittest.TestCase):
                 tmpdir,
                 "bootstrap-swift-package",
                 {
-                    "defaultPackageType": "library",
-                    "defaultPlatformPreset": "multiplatform",
                     "defaultVersionProfile": "current-minus-one",
                 },
             )

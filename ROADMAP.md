@@ -39,7 +39,7 @@
 - [x] Milestone 24: Repo Self-Compliance and Install-Surface Audit
 - [x] Milestone 25: Use `Agent Dev Skills` plugin to align repo with skills/plugin repo standards
 - [ ] Milestone 26: Swift and Xcode Testing Offload Workflow
-- [ ] Milestone 27: Customization Surface Simplification Implementation
+- [x] Milestone 27: Customization Surface Simplification Implementation
 
 ## Milestone 1: Initial Apple Skill Bundle
 
@@ -536,3 +536,4 @@ Tickets:
 Exit criteria:
 
 - The shipped customization surface is materially smaller, better classified, and ready to support future UI work without carrying the current drift forward.
+- Completed 2026-04-04 by reducing the live customization surface, introducing sync-skill `writeMode`, and aligning wrappers, tests, and maintainer docs with the smaller model.
