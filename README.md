@@ -37,20 +37,38 @@ That means this package intentionally stays narrow: Hummingbird for transport ho
 
 ### Current SpeakSwiftly Alignment
 
-The sibling [`SpeakSwiftly`](https://github.com/gaelic-ghost/SpeakSwiftly) checkout currently resolves to tag `v0.9.1`, and this server is aligned to that public library surface rather than an older private worker boundary.
+This server is aligned to the current public library surface in the sibling [`SpeakSwiftly`](https://github.com/gaelic-ghost/SpeakSwiftly) checkout rather than an older private worker boundary.
 
 Today the server talks directly to:
 
 - `SpeakSwiftly.live()`
 - `SpeakSwiftly.Runtime.statusEvents()`
-- `SpeakSwiftly.Runtime.speak(text:with:as:id:)`
+- `SpeakSwiftly.Runtime.speak(text:with:as:textProfileName:textContext:id:)`
 - `SpeakSwiftly.Runtime.createProfile(named:from:voice:outputPath:id:)`
+- `SpeakSwiftly.Runtime.createClone(named:from:transcript:id:)`
 - `SpeakSwiftly.Runtime.profiles(id:)`
 - `SpeakSwiftly.Runtime.removeProfile(named:id:)`
 - `SpeakSwiftly.Runtime.queue(_:id:)`
 - `SpeakSwiftly.Runtime.playback(_:id:)`
 - `SpeakSwiftly.Runtime.clearQueue(id:)`
 - `SpeakSwiftly.Runtime.cancelRequest(_:requestID:)`
+
+For text normalization, the server stays on the public `TextForSpeech` model surface through the runtime normalizer rather than inventing a parallel server-only schema:
+
+- `SpeakSwiftly.Runtime.normalizer.activeProfile()`
+- `SpeakSwiftly.Runtime.normalizer.baseProfile()`
+- `SpeakSwiftly.Runtime.normalizer.profile(named:)`
+- `SpeakSwiftly.Runtime.normalizer.profiles()`
+- `SpeakSwiftly.Runtime.normalizer.effectiveProfile(named:)`
+- `SpeakSwiftly.Runtime.normalizer.persistenceURL()`
+- `SpeakSwiftly.Runtime.normalizer.createProfile(id:named:replacements:)`
+- `SpeakSwiftly.Runtime.normalizer.storeProfile(_:)`
+- `SpeakSwiftly.Runtime.normalizer.useProfile(_:)`
+- `SpeakSwiftly.Runtime.normalizer.removeProfile(named:)`
+- `SpeakSwiftly.Runtime.normalizer.reset()`
+- `SpeakSwiftly.Runtime.normalizer.addReplacement(...)`
+- `SpeakSwiftly.Runtime.normalizer.replaceReplacement(...)`
+- `SpeakSwiftly.Runtime.normalizer.removeReplacement(...)`
 
 The server also consumes the public summary and event types that those calls vend, including `SpeakSwiftly.RequestHandle`, `SpeakSwiftly.RequestEvent`, `SpeakSwiftly.StatusEvent`, `SpeakSwiftly.ProfileSummary`, `SpeakSwiftly.ActiveRequest`, `SpeakSwiftly.QueuedRequest`, and `SpeakSwiftly.PlaybackStateSnapshot`.
 
@@ -155,30 +173,51 @@ The current HTTP surface is:
 - `GET /readyz`
 - `GET /status`
 - `GET /profiles`
+- `POST /profiles/clone`
 - `GET /jobs`
 - `GET /queue/generation`
 - `GET /queue/playback`
 - `GET /playback`
+- `GET /text-profiles`
+- `GET /text-profiles/base`
+- `GET /text-profiles/active`
+- `GET /text-profiles/effective`
+- `GET /text-profiles/effective/{profile_id}`
+- `GET /text-profiles/stored/{profile_id}`
 - `POST /profiles`
 - `POST /playback/pause`
 - `POST /playback/resume`
+- `POST /text-profiles/stored`
+- `POST /text-profiles/active/reset`
+- `POST /text-profiles/active/replacements`
+- `POST /text-profiles/stored/{profile_id}/replacements`
 - `DELETE /profiles/{profile_name}`
 - `DELETE /queue`
 - `DELETE /queue/{request_id}`
+- `DELETE /text-profiles/stored/{profile_id}`
+- `DELETE /text-profiles/active/replacements/{replacement_id}`
+- `DELETE /text-profiles/stored/{profile_id}/replacements/{replacement_id}`
+- `PUT /text-profiles/stored/{profile_id}`
+- `PUT /text-profiles/active`
+- `PUT /text-profiles/active/replacements/{replacement_id}`
+- `PUT /text-profiles/stored/{profile_id}/replacements/{replacement_id}`
 - `POST /speak`
 - `GET /jobs/{job_id}`
 - `GET /jobs/{job_id}/events`
 
-`POST /speak`, `POST /profiles`, and `DELETE /profiles/{profile_name}` all return job metadata immediately. `POST /speak` mirrors the current public `SpeakSwiftly.Runtime.speak(... as: .live)` path directly, which means every speech request records the initial acknowledgement event before it starts and eventually reaches terminal completion. `POST /speak` also accepts optional `cwd` and `repo_root` fields so clients can pass `SpeakSwiftly` normalization context through to the runtime when path-aware speech normalization matters. Progress, worker status changes, acknowledgements, and terminal results are exposed through `GET /jobs/{job_id}/events` as SSE, and retained job state is discoverable through `GET /jobs`.
+`POST /speak`, `POST /profiles`, `POST /profiles/clone`, and `DELETE /profiles/{profile_name}` all return job metadata immediately. `POST /speak` mirrors the current public `SpeakSwiftly.Runtime.speak(... as: .live)` path directly, which means every speech request records the initial acknowledgement event before it starts and eventually reaches terminal completion. `POST /speak` also accepts optional `cwd`, `repo_root`, and `text_profile_name` fields so clients can pass `SpeakSwiftly` text-normalization context through to the runtime when path-aware or stored-profile-aware speech normalization matters. Progress, worker status changes, acknowledgements, and terminal results are exposed through `GET /jobs/{job_id}/events` as SSE, and retained job state is discoverable through `GET /jobs`.
+
+The `/text-profiles` route family is intentionally synchronous and state-oriented rather than job-oriented. It exposes the current base, active, stored, and effective `TextForSpeech.Profile` state plus replacement editing and profile persistence paths for downstream apps or agents that need to help a user shape text normalization directly.
 
 The queue and playback control routes are immediate control operations rather than long-running jobs. `GET /queue/generation` and `GET /queue/playback` expose the generation and playback queues separately so the HTTP layer matches the runtime's split control surface. `GET /playback`, `POST /playback/pause`, and `POST /playback/resume` expose the current playback state and let clients control it directly. `DELETE /queue` clears queued work and returns the number of cancelled queued requests. `DELETE /queue/{request_id}` cancels one active or queued request and returns the cancelled request ID.
 
-The route surface now mirrors the current `SpeakSwiftly` control model directly instead of preserving the older foreground/background split. The remaining alignment work is narrower: re-checking any app-facing payload details that still matter outside this repository and deciding whether any server-local transport shaping should disappear now that the public library surface is more expressive.
+The route surface now mirrors the current `SpeakSwiftly` control model directly instead of preserving the older foreground/background split. The remaining alignment work is narrower: keeping the transport docs accurate as the sibling runtime evolves and deciding whether any server-local transport shaping should disappear now that the public library surface is more expressive.
 
 The current MCP surface is optional and mounts on the same shared Hummingbird process at `APP_MCP_PATH` when `APP_MCP_ENABLED=true`. It currently exposes these tools:
 
 - `queue_speech_live`
 - `create_profile`
+- `create_clone`
 - `list_profiles`
 - `remove_profile`
 - `list_queue_generation`
@@ -189,6 +228,15 @@ The current MCP surface is optional and mounts on the same shared Hummingbird pr
 - `clear_queue`
 - `cancel_request`
 - `status`
+- `list_text_profiles`
+- `create_text_profile`
+- `store_text_profile`
+- `use_text_profile`
+- `remove_text_profile`
+- `reset_text_profile`
+- `add_text_replacement`
+- `replace_text_replacement`
+- `remove_text_replacement`
 
 The embedded MCP resources are:
 
@@ -198,6 +246,13 @@ The embedded MCP resources are:
 - `speak://jobs`
 - `speak://jobs/{job_id}`
 - `speak://runtime`
+- `speak://text-profiles`
+- `speak://text-profiles/base`
+- `speak://text-profiles/active`
+- `speak://text-profiles/effective`
+- `speak://text-profiles/effective/{profile_id}`
+- `speak://text-profiles/stored/{profile_id}`
+- `speak://text-profiles/guide`
 
 Those MCP tools and resources are intentionally thin adapters over the same `ServerHost` snapshots and mutations used by the HTTP API and the app-facing `ServerState`.
 
@@ -209,6 +264,10 @@ The embedded MCP surface also now carries a small prompt catalog migrated from t
 - `draft_profile_source_text`
 - `draft_voice_design_instruction`
 - `draft_queue_playback_notice`
+- `draft_text_profile`
+- `draft_text_replacement`
+
+The text-profile prompts and the `speak://text-profiles/guide` resource are there so an app-hosted or MCP-hosted agent can help a user author replacements deliberately instead of treating normalization rules like hidden implementation detail. That parity is intentional because text profiles are meant to be downstream-user-facing, whether the downstream caller is a SwiftUI app, an MCP client, or a local HTTP consumer.
 
 The embedded MCP surface now also supports resource subscriptions for those URIs. Clients connected to the standalone MCP event stream can subscribe to `speak://status`, `speak://profiles`, `speak://profiles/{profile_name}/detail`, `speak://jobs`, `speak://jobs/{job_id}`, and `speak://runtime` and receive `notifications/resources/updated` when shared host events change the underlying state.
 
@@ -230,7 +289,7 @@ The executable entrypoint lives in [`Sources/SpeakSwiftlyServer/SpeakSwiftlyServ
 - [`ServerRuntimeBridge.swift`](https://github.com/gaelic-ghost/SpeakSwiftlyServer/blob/main/Sources/SpeakSwiftlyServer/Host/ServerRuntimeBridge.swift) keeps the runtime boundary thin around the public `SpeakSwiftly.Runtime` actor.
 - [`ServerModels.swift`](https://github.com/gaelic-ghost/SpeakSwiftlyServer/blob/main/Sources/SpeakSwiftlyServer/Host/ServerModels.swift) defines request and response payloads.
 
-The design is deliberately direct. Adding extra wrappers, managers, or intermediate layers here would be easy, but it would also be the kind of unnecessary complexity that makes a small localhost service harder to reason about, so the server is kept close to the typed runtime API on purpose. As of sibling `SpeakSwiftly v0.9.1`, that means the service talks to the public `SpeakSwiftly.Runtime` surface and its public event and summary types instead of reaching through the library boundary to construct raw worker requests itself.
+The design is deliberately direct. Adding extra wrappers, managers, or intermediate layers here would be easy, but it would also be the kind of unnecessary complexity that makes a small localhost service harder to reason about, so the server is kept close to the typed runtime API on purpose. That means the service talks to the public `SpeakSwiftly.Runtime` surface, its public text normalizer, and its public event and summary types instead of reaching through the library boundary to construct raw worker requests itself.
 
 For repository maintenance, treat this standalone repository as the source of truth for package development, tags, and releases. When the `speak-to-user` monorepo adopts a new server version, prefer bumping that submodule pointer to a tagged `SpeakSwiftlyServer` release rather than a floating branch tip.
 
@@ -251,7 +310,7 @@ swift build
 swift test
 ```
 
-The current automated suite covers configuration parsing, queued live speech job completion semantics, generation and playback queue inspection, playback control routes, queue cancellation routes, startup failure before readiness, runtime degradation while active and queued speech jobs are in flight, in-memory retention and pruning, SSE replay and heartbeat behavior, route-level health, profile, and job lifecycle responses against a controlled typed runtime, the embedded MCP tool and resource surface, the shared host snapshot stream and typed host event stream, plus an opt-in live end-to-end path against a real `SpeakSwiftly` runtime:
+The current automated suite covers configuration parsing, queued live speech job completion semantics, generation and playback queue inspection, playback control routes, queue cancellation routes, startup failure before readiness, runtime degradation while active and queued speech jobs are in flight, in-memory retention and pruning, SSE replay and heartbeat behavior, route-level health, profile, clone, text-profile, and job lifecycle responses against a controlled typed runtime, the embedded MCP tool, prompt, and resource surface, the shared host snapshot stream and typed host event stream, plus an opt-in live end-to-end path against a real `SpeakSwiftly` runtime:
 
 ```bash
 SPEAKSWIFTLYSERVER_E2E=1 swift test --filter SpeakSwiftlyServerE2ETests
@@ -267,7 +326,7 @@ If you want the underlying playback trace logs too, add `SPEAKSWIFTLY_PLAYBACK_T
 
 That live path expects the sibling [`SpeakSwiftly`](https://github.com/gaelic-ghost/SpeakSwiftly) checkout to have already been built with Xcode at least once so `../SpeakSwiftly/.derived/Build/Products/Debug/mlx-swift_Cmlx.bundle/Contents/Resources/default.metallib` exists for the server process.
 
-The remaining coverage work is now narrower and more integration-focused. The main open checks are downstream payload-alignment expectations for adjacent consumers and any future end-to-end assertions that should exercise those consumers directly.
+The remaining coverage work is now narrower and more cleanup-focused. The main open checks are trimming any transport-local wrappers that no longer buy clarity and expanding end-to-end assertions when the sibling runtime surface settles again.
 
 ## Roadmap
 

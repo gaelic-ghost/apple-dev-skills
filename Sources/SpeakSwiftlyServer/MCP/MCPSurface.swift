@@ -90,7 +90,7 @@ struct MCPSurface {
             version: "0.1.0",
             title: configuration.title,
             instructions: """
-            Shared-process SpeakSwiftly MCP surface backed by the same ServerHost used by the app-facing HTTP API. Read status, job, profile, and runtime resources for operator-visible state, use the tools to queue speech, inspect queues, control playback, and manage profiles, and use the built-in prompts for reusable voice-design and operator acknowledgement authoring without starting a second runtime owner.
+            Shared-process SpeakSwiftly MCP surface backed by the same ServerHost used by the app-facing HTTP API. Read status, job, profile, text-profile, and runtime resources for operator-visible state, use the tools to queue speech, inspect queues, control playback, and manage both voice and text profiles, and use the built-in prompts for reusable voice-design, text-normalization authoring, and operator acknowledgement workflows without starting a second runtime owner.
             """,
             capabilities: .init(
                 prompts: .init(listChanged: false),
@@ -113,6 +113,7 @@ struct MCPSurface {
                 let jobID = try await host.submitSpeak(
                     text: requiredString("text", in: arguments),
                     profileName: requiredString("profile_name", in: arguments),
+                    textProfileName: optionalString("text_profile_name", in: arguments),
                     normalizationContext: normalizationContext(in: arguments)
                 )
                 return try toolResult(
@@ -286,6 +287,17 @@ struct MCPSurface {
             case "speak://text-profiles":
                 return try resourceResult(uri: params.uri, payload: await host.textProfilesSnapshot())
 
+            case "speak://text-profiles/guide":
+                return .init(
+                    contents: [
+                        .text(
+                            textProfilesGuideMarkdown(),
+                            uri: params.uri,
+                            mimeType: "text/markdown"
+                        ),
+                    ]
+                )
+
             case "speak://text-profiles/base":
                 return try resourceResult(uri: params.uri, payload: (await host.textProfilesSnapshot()).baseProfile)
 
@@ -382,6 +394,40 @@ struct MCPSurface {
                 """
                 return .init(
                     description: "Reusable authoring prompt for profile source text.",
+                    messages: [.user(.text(text: compactPrompt(body)))]
+                )
+
+            case "draft_text_profile":
+                let userGoal = try requiredPromptString("user_goal", in: arguments)
+                let profileScope = try requiredPromptString("profile_scope", in: arguments)
+                let body = """
+                Draft exactly one initial SpeakSwiftly text profile plan for a downstream app or agent workflow.
+                User goal: \(userGoal)
+                Profile scope: \(profileScope)
+                Format focus: \(textIfPresent("format_focus", in: arguments) ?? "general")
+                \(textIfPresent("constraints", in: arguments).map { "Constraints: \($0)" } ?? "")
+                Return concise JSON with keys id, name, and replacements. Use a stable lowercase id with hyphens, a human-readable display name, and a short replacements array that only includes high-confidence initial rules.
+                """
+                return .init(
+                    description: "Reusable authoring prompt for an initial stored text profile.",
+                    messages: [.user(.text(text: compactPrompt(body)))]
+                )
+
+            case "draft_text_replacement":
+                let originalText = try requiredPromptString("original_text", in: arguments)
+                let desiredOutput = try requiredPromptString("desired_output", in: arguments)
+                let usageContext = try requiredPromptString("usage_context", in: arguments)
+                let body = """
+                Draft exactly one SpeakSwiftly text replacement rule.
+                Original text: \(originalText)
+                Desired output: \(desiredOutput)
+                Usage context: \(usageContext)
+                Format focus: \(textIfPresent("format_focus", in: arguments) ?? "general")
+                \(textIfPresent("constraints", in: arguments).map { "Constraints: \($0)" } ?? "")
+                Return concise JSON with keys id, text, replacement, match, phase, is_case_sensitive, formats, and priority. Prefer whole_token when the rule should not fire inside larger words, and use exact_phrase when multi-word phrasing matters.
+                """
+                return .init(
+                    description: "Reusable authoring prompt for one text replacement rule.",
                     messages: [.user(.text(text: compactPrompt(body)))]
                 )
 
@@ -699,6 +745,35 @@ private func compactPrompt(_ raw: String) -> String {
         .map { $0.trimmingCharacters(in: .whitespaces) }
         .filter { $0.isEmpty == false }
         .joined(separator: "\n")
+}
+
+private func textProfilesGuideMarkdown() -> String {
+    """
+    # SpeakSwiftly Text Profile Guide
+
+    Use text profiles when a downstream app or agent needs to normalize phrasing before speech generation without changing the underlying voice profile.
+
+    - `base profile`: immutable built-ins that always participate in effective normalization.
+    - `active profile`: the current custom profile used by default when no explicit `text_profile_name` is provided during speech submission.
+    - `stored profiles`: named reusable normalization policies that an app or agent can apply on demand.
+    - `effective profile`: the merged profile SpeakSwiftly will actually apply after combining the base profile with the selected active or stored profile.
+
+    Recommended workflow:
+
+    1. Read `speak://text-profiles` to inspect the current base, active, stored, and effective state.
+    2. Draft or edit rules with the `draft_text_profile` and `draft_text_replacement` prompts when a user needs help authoring replacements.
+    3. Store reusable policies with `create_text_profile` or `store_text_profile`.
+    4. Use `use_text_profile` when the downstream app wants a temporary active custom profile, or pass `text_profile_name` on one speech request when the caller wants stored-profile selection without mutating the active profile.
+    5. Read `speak://text-profiles/effective/{profile_id}` before queuing speech if the user wants to verify what normalization will really happen.
+
+    Replacement guidance:
+
+    - Prefer `whole_token` for acronyms, identifiers, and word-level substitutions.
+    - Prefer `exact_phrase` for multi-word phrasing that should only fire as a phrase.
+    - Use `before_built_ins` when custom text should shape built-in normalization input.
+    - Use `after_built_ins` when the custom rule should clean up the normalized output instead.
+    - Restrict `formats` when a rule should only apply to source code, CLI output, or other narrow content types.
+    """
 }
 
 private func profileDetailName(from uri: String) -> String? {

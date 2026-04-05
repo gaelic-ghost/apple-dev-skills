@@ -235,6 +235,7 @@ private func registerHTTPRoutes(
         let jobID = try await host.submitSpeak(
             text: payload.text,
             profileName: payload.profileName,
+            textProfileName: payload.textProfileName,
             normalizationContext: payload.normalizationContext
         )
         return try buildAcceptedJobResponse(request: request, configuration: configuration, jobID: jobID)

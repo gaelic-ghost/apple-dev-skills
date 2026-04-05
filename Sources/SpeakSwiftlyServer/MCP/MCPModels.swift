@@ -28,6 +28,7 @@ enum MCPToolCatalog {
                 "properties": [
                     "text": ["type": "string"],
                     "profile_name": ["type": "string"],
+                    "text_profile_name": ["type": "string"],
                     "cwd": ["type": "string"],
                     "repo_root": ["type": "string"],
                 ],
@@ -300,6 +301,7 @@ enum MCPResourceCatalog {
         "speak://status",
         "speak://profiles",
         "speak://text-profiles",
+        "speak://text-profiles/guide",
         "speak://text-profiles/base",
         "speak://text-profiles/active",
         "speak://text-profiles/effective",
@@ -325,6 +327,12 @@ enum MCPResourceCatalog {
             uri: "speak://text-profiles",
             description: "Current SpeakSwiftly text-profile state, including the base, active, stored, and effective profiles.",
             mimeType: "application/json"
+        ),
+        Resource(
+            name: "Text Profile Guide",
+            uri: "speak://text-profiles/guide",
+            description: "Operator-facing guidance for when to use base, active, effective, and stored SpeakSwiftly text profiles.",
+            mimeType: "text/markdown"
         ),
         Resource(
             name: "Base Text Profile",
@@ -390,6 +398,8 @@ enum MCPPromptCatalog {
     static let promptNames = Set([
         "draft_profile_voice_description",
         "draft_profile_source_text",
+        "draft_text_profile",
+        "draft_text_replacement",
         "draft_voice_design_instruction",
         "draft_queue_playback_notice",
     ])
@@ -416,6 +426,29 @@ enum MCPPromptCatalog {
                 .init(name: "persona_or_context", required: true),
                 .init(name: "length_hint"),
                 .init(name: "style_notes"),
+            ]
+        ),
+        Prompt(
+            name: "draft_text_profile",
+            title: "Draft Text Profile",
+            description: "Draft a stored SpeakSwiftly text profile id, display name, and initial replacement plan for a downstream app or agent workflow.",
+            arguments: [
+                .init(name: "user_goal", required: true),
+                .init(name: "profile_scope", required: true),
+                .init(name: "format_focus"),
+                .init(name: "constraints"),
+            ]
+        ),
+        Prompt(
+            name: "draft_text_replacement",
+            title: "Draft Text Replacement",
+            description: "Draft one SpeakSwiftly text replacement rule with the right match mode, phase, casing, and format scope.",
+            arguments: [
+                .init(name: "original_text", required: true),
+                .init(name: "desired_output", required: true),
+                .init(name: "usage_context", required: true),
+                .init(name: "format_focus"),
+                .init(name: "constraints"),
             ]
         ),
         Prompt(

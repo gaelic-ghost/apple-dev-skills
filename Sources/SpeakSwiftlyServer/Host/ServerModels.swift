@@ -8,12 +8,14 @@ import TextForSpeech
 struct SpeakRequestPayload: Decodable {
     let text: String
     let profileName: String
+    let textProfileName: String?
     let cwd: String?
     let repoRoot: String?
 
     enum CodingKeys: String, CodingKey {
         case text
         case profileName = "profile_name"
+        case textProfileName = "text_profile_name"
         case cwd
         case repoRoot = "repo_root"
     }

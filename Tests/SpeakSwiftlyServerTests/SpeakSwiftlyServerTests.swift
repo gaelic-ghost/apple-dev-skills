@@ -22,6 +22,7 @@ actor MockRuntime: ServerRuntimeProtocol {
     struct QueuedSpeechInvocation: Sendable, Equatable {
         let text: String
         let profileName: String
+        let textProfileName: String?
         let normalizationContext: SpeechNormalizationContext?
     }
 
@@ -95,6 +96,7 @@ actor MockRuntime: ServerRuntimeProtocol {
     func queueSpeechHandle(
         text: String,
         profileName: String,
+        textProfileName: String?,
         normalizationContext: SpeechNormalizationContext?,
         as jobType: SpeakSwiftly.Job,
         id: String
@@ -104,6 +106,7 @@ actor MockRuntime: ServerRuntimeProtocol {
             .init(
                 text: text,
                 profileName: profileName,
+                textProfileName: textProfileName,
                 normalizationContext: normalizationContext
             )
         )
@@ -309,27 +312,27 @@ actor MockRuntime: ServerRuntimeProtocol {
         }
     }
 
-    func activeTextProfile() -> TextForSpeech.Profile {
+    func activeTextProfile() async -> TextForSpeech.Profile {
         textRuntime.customProfile
     }
 
-    func baseTextProfile() -> TextForSpeech.Profile {
+    func baseTextProfile() async -> TextForSpeech.Profile {
         textRuntime.baseProfile
     }
 
-    func textProfile(named profileID: String) -> TextForSpeech.Profile? {
+    func textProfile(named profileID: String) async -> TextForSpeech.Profile? {
         textRuntime.profile(named: profileID)
     }
 
-    func textProfiles() -> [TextForSpeech.Profile] {
+    func textProfiles() async -> [TextForSpeech.Profile] {
         textRuntime.storedProfiles()
     }
 
-    func effectiveTextProfile(named profileID: String?) -> TextForSpeech.Profile {
+    func effectiveTextProfile(named profileID: String?) async -> TextForSpeech.Profile {
         textRuntime.effectiveProfile(named: profileID)
     }
 
-    func textProfilePersistenceURL() -> URL? {
+    func textProfilePersistenceURL() async -> URL? {
         URL(fileURLWithPath: "/tmp/mock-text-profiles.json")
     }
 
@@ -337,56 +340,56 @@ actor MockRuntime: ServerRuntimeProtocol {
         id: String,
         named name: String,
         replacements: [TextForSpeech.Replacement]
-    ) throws -> TextForSpeech.Profile {
+    ) async throws -> TextForSpeech.Profile {
         try textRuntime.createProfile(id: id, named: name, replacements: replacements)
     }
 
-    func storeTextProfile(_ profile: TextForSpeech.Profile) throws {
+    func storeTextProfile(_ profile: TextForSpeech.Profile) async throws {
         textRuntime.store(profile)
     }
 
-    func useTextProfile(_ profile: TextForSpeech.Profile) throws {
+    func useTextProfile(_ profile: TextForSpeech.Profile) async throws {
         textRuntime.use(profile)
     }
 
-    func removeTextProfile(named profileID: String) throws {
+    func removeTextProfile(named profileID: String) async throws {
         textRuntime.removeProfile(named: profileID)
     }
 
-    func resetTextProfile() throws {
+    func resetTextProfile() async throws {
         textRuntime.reset()
     }
 
-    func addTextReplacement(_ replacement: TextForSpeech.Replacement) throws -> TextForSpeech.Profile {
+    func addTextReplacement(_ replacement: TextForSpeech.Replacement) async throws -> TextForSpeech.Profile {
         textRuntime.addReplacement(replacement)
     }
 
     func addTextReplacement(
         _ replacement: TextForSpeech.Replacement,
         toStoredTextProfileNamed profileID: String
-    ) throws -> TextForSpeech.Profile {
+    ) async throws -> TextForSpeech.Profile {
         try textRuntime.addReplacement(replacement, toStoredProfileNamed: profileID)
     }
 
-    func replaceTextReplacement(_ replacement: TextForSpeech.Replacement) throws -> TextForSpeech.Profile {
+    func replaceTextReplacement(_ replacement: TextForSpeech.Replacement) async throws -> TextForSpeech.Profile {
         try textRuntime.replaceReplacement(replacement)
     }
 
     func replaceTextReplacement(
         _ replacement: TextForSpeech.Replacement,
         inStoredTextProfileNamed profileID: String
-    ) throws -> TextForSpeech.Profile {
+    ) async throws -> TextForSpeech.Profile {
         try textRuntime.replaceReplacement(replacement, inStoredProfileNamed: profileID)
     }
 
-    func removeTextReplacement(id replacementID: String) throws -> TextForSpeech.Profile {
+    func removeTextReplacement(id replacementID: String) async throws -> TextForSpeech.Profile {
         try textRuntime.removeReplacement(id: replacementID)
     }
 
     func removeTextReplacement(
         id replacementID: String,
         fromStoredTextProfileNamed profileID: String
-    ) throws -> TextForSpeech.Profile {
+    ) async throws -> TextForSpeech.Profile {
         try textRuntime.removeReplacement(id: replacementID, fromStoredProfileNamed: profileID)
     }
 
@@ -1126,7 +1129,7 @@ actor MockRuntime: ServerRuntimeProtocol {
             uri: "/speak",
             method: .post,
             headers: [.contentType: "application/json"],
-            body: byteBuffer(#"{"text":"Route test","profile_name":"default","cwd":"./Sources","repo_root":"../SpeakSwiftlyServer"}"#)
+            body: byteBuffer(#"{"text":"Route test","profile_name":"default","text_profile_name":"swift-docs","cwd":"./Sources","repo_root":"../SpeakSwiftlyServer"}"#)
         )
         let speakJSON = try jsonObject(from: speakResponse.body)
         let speakJobID = try #require(speakJSON["job_id"] as? String)
@@ -1139,6 +1142,7 @@ actor MockRuntime: ServerRuntimeProtocol {
             queuedSpeechInvocation.normalizationContext
                 == SpeechNormalizationContext(cwd: "./Sources", repoRoot: "../SpeakSwiftlyServer")
         )
+        #expect(queuedSpeechInvocation.textProfileName == "swift-docs")
 
         _ = try await waitForJobSnapshot(speakJobID, on: host)
 
@@ -1235,6 +1239,7 @@ actor MockRuntime: ServerRuntimeProtocol {
                     arguments: [
                         "text": "Inspect MCP resources",
                         "profile_name": "default",
+                        "text_profile_name": "mcp-text",
                         "cwd": "./Tests",
                         "repo_root": "../SpeakSwiftlyServer",
                     ]
@@ -1252,6 +1257,7 @@ actor MockRuntime: ServerRuntimeProtocol {
         queuedSpeechInvocation.normalizationContext
             == SpeechNormalizationContext(cwd: "./Tests", repoRoot: "../SpeakSwiftlyServer")
     )
+    #expect(queuedSpeechInvocation.textProfileName == "mcp-text")
 
     let createCloneToolEnvelope = try await mcpEnvelope(
         from: await mcpSurface.handle(
@@ -1288,6 +1294,7 @@ actor MockRuntime: ServerRuntimeProtocol {
     let resources = try #require(listResourcesResult["resources"] as? [[String: Any]])
     #expect(resources.contains { $0["uri"] as? String == "speak://status" })
     #expect(resources.contains { $0["uri"] as? String == "speak://text-profiles" })
+    #expect(resources.contains { $0["uri"] as? String == "speak://text-profiles/guide" })
     #expect(resources.contains { $0["uri"] as? String == "speak://jobs" })
     #expect(resources.contains { $0["uri"] as? String == "speak://runtime" })
 
@@ -1342,6 +1349,8 @@ actor MockRuntime: ServerRuntimeProtocol {
     let listPromptsResult = try #require(mcpResultPayload(from: listPromptsEnvelope))
     let prompts = try #require(listPromptsResult["prompts"] as? [[String: Any]])
     #expect(prompts.contains { $0["name"] as? String == "draft_profile_voice_description" })
+    #expect(prompts.contains { $0["name"] as? String == "draft_text_profile" })
+    #expect(prompts.contains { $0["name"] as? String == "draft_text_replacement" })
     #expect(prompts.contains { $0["name"] as? String == "draft_queue_playback_notice" })
 
     let getPromptEnvelope = try await mcpEnvelope(
@@ -1363,6 +1372,26 @@ actor MockRuntime: ServerRuntimeProtocol {
     let firstPromptMessage = try #require(promptMessages.first)
     let promptContent = try #require(firstPromptMessage["content"] as? [String: Any])
     #expect((promptContent["text"] as? String)?.contains("gentle narration") == true)
+
+    let textProfilePromptEnvelope = try await mcpEnvelope(
+        from: await mcpSurface.handle(
+            mcpPOSTRequest(
+                body: mcpGetPromptRequestJSON(
+                    name: "draft_text_profile",
+                    arguments: [
+                        "user_goal": "expand acronyms in technical speech",
+                        "profile_scope": "swift package walkthroughs",
+                        "format_focus": "swift_source",
+                    ]
+                ),
+                sessionID: initializeSessionID
+            )
+        )
+    )
+    let textProfilePromptResult = try #require(mcpResultPayload(from: textProfilePromptEnvelope))
+    let textProfilePromptMessages = try #require(textProfilePromptResult["messages"] as? [[String: Any]])
+    let textProfilePromptContent = try #require(textProfilePromptMessages.first?["content"] as? [String: Any])
+    #expect((textProfilePromptContent["text"] as? String)?.contains("expand acronyms in technical speech") == true)
 
     let statusToolEnvelope = try await mcpEnvelope(
         from: await mcpSurface.handle(
@@ -1435,6 +1464,19 @@ actor MockRuntime: ServerRuntimeProtocol {
     let textProfilesPayload = try jsonObject(from: Data(textProfilesText.utf8))
     let storedProfilesPayload = try #require(textProfilesPayload["stored_profiles"] as? [[String: Any]])
     #expect(storedProfilesPayload.contains { $0["id"] as? String == "mcp-text" })
+
+    let textProfilesGuideEnvelope = try await mcpEnvelope(
+        from: await mcpSurface.handle(
+            mcpPOSTRequest(
+                body: mcpReadResourceRequestJSON(uri: "speak://text-profiles/guide"),
+                sessionID: initializeSessionID
+            )
+        )
+    )
+    let textProfilesGuideResult = try #require(mcpResultPayload(from: textProfilesGuideEnvelope))
+    let textProfilesGuideContents = try #require(textProfilesGuideResult["contents"] as? [[String: Any]])
+    let textProfilesGuideText = try #require(textProfilesGuideContents.first?["text"] as? String)
+    #expect(textProfilesGuideText.contains("text_profile_name"))
 
     let storedTextProfileEnvelope = try await mcpEnvelope(
         from: await mcpSurface.handle(

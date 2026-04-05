@@ -404,7 +404,7 @@ actor ServerHost {
             persistenceURL: await runtime.textProfilePersistenceURL()?.path,
             baseProfile: .init(profile: await runtime.baseTextProfile()),
             activeProfile: .init(profile: await runtime.activeTextProfile()),
-            storedProfiles: await runtime.textProfiles().map(TextProfileSnapshot.init(profile:)),
+            storedProfiles: (await runtime.textProfiles()).map(TextProfileSnapshot.init(profile:)),
             effectiveProfile: .init(profile: await runtime.effectiveTextProfile(named: nil))
         )
     }
@@ -529,6 +529,7 @@ actor ServerHost {
     func submitSpeak(
         text: String,
         profileName: String,
+        textProfileName: String? = nil,
         normalizationContext: SpeechNormalizationContext? = nil
     ) async throws -> String {
         try ensureWorkerReady()
@@ -536,6 +537,7 @@ actor ServerHost {
         let handle = await runtime.queueSpeechHandle(
             text: text,
             profileName: profileName,
+            textProfileName: textProfileName,
             normalizationContext: normalizationContext,
             as: .live,
             id: requestID
