@@ -77,6 +77,8 @@ class SwiftPackageGuidanceSyncWorkflowTests(unittest.TestCase):
             self.assertIn("sync-swift-package-guidance", agents_text)
             self.assertIn("swift build", agents_text)
             self.assertIn("swift test", agents_text)
+            self.assertTrue(Path(tmpdir, "scripts/repo-maintenance/validate-all.sh").is_file())
+            self.assertTrue(Path(tmpdir, ".github/workflows/validate-repo-maintenance.yml").is_file())
 
     def test_sync_appends_section_to_existing_agents(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -89,6 +91,7 @@ class SwiftPackageGuidanceSyncWorkflowTests(unittest.TestCase):
             agents_text = agents_path.read_text(encoding="utf-8")
             self.assertIn("## Existing Section", agents_text)
             self.assertIn("## Swift Package Workflow", agents_text)
+            self.assertTrue(Path(tmpdir, "scripts/repo-maintenance/release.sh").is_file())
 
     def test_write_mode_can_disable_append_behavior(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:

@@ -78,6 +78,7 @@ require_contains "$workflow_doc" "## Repo Workflow Map"
 require_contains "$workflow_doc" '## `xcode-app-project-workflow`'
 require_contains "$workflow_doc" '## `explore-apple-swift-docs`'
 require_contains "$workflow_doc" '## `swift-style-tooling-workflow`'
+require_contains "$workflow_doc" '## `repo-maintenance-toolkit`'
 require_contains "$workflow_doc" '## `bootstrap-swift-package`'
 require_contains "$workflow_doc" '## `bootstrap-xcode-app-project`'
 require_contains "$workflow_doc" '## `sync-xcode-project-guidance`'
@@ -108,12 +109,13 @@ active_skill_mds=(
   "./skills/xcode-app-project-workflow/SKILL.md"
   "./skills/explore-apple-swift-docs/SKILL.md"
   "./skills/swift-style-tooling-workflow/SKILL.md"
+  "./skills/repo-maintenance-toolkit/SKILL.md"
   "./skills/bootstrap-swift-package/SKILL.md"
   "./skills/bootstrap-xcode-app-project/SKILL.md"
   "./skills/sync-xcode-project-guidance/SKILL.md"
   "./skills/sync-swift-package-guidance/SKILL.md"
 )
-[[ ${#active_skill_mds[@]} -eq 7 ]] || fail "Expected exactly 7 active skills, found ${#active_skill_mds[@]}."
+[[ ${#active_skill_mds[@]} -eq 8 ]] || fail "Expected exactly 8 active skills, found ${#active_skill_mds[@]}."
 
 shared_xcode_snippet="./shared/agents-snippets/apple-xcode-project-core.md"
 shared_package_snippet="./shared/agents-snippets/apple-swift-package-core.md"
@@ -148,6 +150,11 @@ for skill_md in "${active_skill_mds[@]}"; do
   fi
 
   case "$skill_dir" in
+    ./skills/repo-maintenance-toolkit)
+      local_snippet=""
+      shared_snippet=""
+      snippet_ref=""
+      ;;
     ./skills/bootstrap-swift-package|./skills/sync-swift-package-guidance)
       local_snippet="$skill_dir/references/snippets/apple-swift-package-core.md"
       shared_snippet="$shared_package_snippet"
@@ -160,11 +167,27 @@ for skill_md in "${active_skill_mds[@]}"; do
       ;;
   esac
 
-  [[ -f "$local_snippet" ]] || fail "Missing $local_snippet"
-  cmp -s "$shared_snippet" "$local_snippet" || fail "Snippet drift detected between $shared_snippet and $local_snippet"
+  if [[ -n "$local_snippet" ]]; then
+    [[ -f "$local_snippet" ]] || fail "Missing $local_snippet"
+    cmp -s "$shared_snippet" "$local_snippet" || fail "Snippet drift detected between $shared_snippet and $local_snippet"
 
-  grep -Fq "$snippet_ref" "$skill_md" || fail "Missing local snippet reference in $skill_md"
-  grep -Eiq "recommend.{0,120}$snippet_ref|$snippet_ref.{0,120}recommend" "$skill_md" || fail "Missing snippet recommendation guidance in $skill_md"
+    grep -Fq "$snippet_ref" "$skill_md" || fail "Missing local snippet reference in $skill_md"
+    grep -Eiq "recommend.{0,120}$snippet_ref|$snippet_ref.{0,120}recommend" "$skill_md" || fail "Missing snippet recommendation guidance in $skill_md"
+  fi
+done
+
+echo "Validating repo-maintenance toolkit asset copies..."
+toolkit_source_dir="./skills/repo-maintenance-toolkit/assets/repo-maintenance"
+toolkit_workflow_source="./skills/repo-maintenance-toolkit/assets/github/repo-maintenance-workflows/validate-repo-maintenance.yml"
+for skill_dir in \
+  "./skills/bootstrap-swift-package" \
+  "./skills/bootstrap-xcode-app-project" \
+  "./skills/sync-swift-package-guidance" \
+  "./skills/sync-xcode-project-guidance"
+do
+  cmp -s "$skill_dir/scripts/install_repo_maintenance_toolkit.py" "./skills/repo-maintenance-toolkit/scripts/install_repo_maintenance_toolkit.py" || fail "Repo-maintenance toolkit installer drift detected in $skill_dir"
+  diff -qr "$toolkit_source_dir" "$skill_dir/assets/repo-maintenance" >/dev/null || fail "Repo-maintenance toolkit asset drift detected in $skill_dir/assets/repo-maintenance"
+  cmp -s "$toolkit_workflow_source" "$skill_dir/assets/github/repo-maintenance-workflows/validate-repo-maintenance.yml" || fail "Repo-maintenance workflow asset drift detected in $skill_dir"
 done
 
 echo "Validating skill-creator contract..."

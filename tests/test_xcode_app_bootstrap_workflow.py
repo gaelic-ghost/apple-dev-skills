@@ -190,4 +190,7 @@ exit 1
             self.assertTrue((target / "project.yml").exists())
             self.assertTrue((target / "AGENTS.md").exists())
             self.assertTrue((target / "DemoApp.xcodeproj").exists())
+            self.assertTrue((target / "scripts" / "repo-maintenance" / "validate-all.sh").exists())
+            self.assertTrue((target / "scripts" / "repo-maintenance" / "release.sh").exists())
+            self.assertTrue((target / ".github" / "workflows" / "validate-repo-maintenance.yml").exists())
             self.assertEqual(payload["validation_result"], "passed (xcodebuild -list)")

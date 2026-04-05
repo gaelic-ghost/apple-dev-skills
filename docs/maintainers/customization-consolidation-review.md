@@ -8,12 +8,12 @@ Record the Milestone 20 audit of the current customization system, decide whethe
 
 ## Current State Summary
 
-- The active skill surface ships `7` separate `references/customization.template.yaml` files.
-- The active skill surface ships `7` separate `scripts/customization_config.py` entrypoints.
+- The active skill surface ships `8` separate `references/customization.template.yaml` files.
+- The active skill surface ships `8` separate `scripts/customization_config.py` entrypoints.
 - Those `customization_config.py` files are functionally identical and exist only because installed skills are expected to keep runtime resources inside the skill directory.
-- The current templates expose `11` knobs total:
+- The current templates expose `12` knobs total:
   - `10` are documented as `runtime-enforced`
-  - `1` is documented as `policy-only`
+  - `2` are documented as `policy-only`
 - The current surface mixes together four different categories that should not all be presented as the same kind of user customization:
   - durable user preference
   - inference candidate
@@ -68,6 +68,8 @@ The decision is:
   - `writeMode`
 - `sync-swift-package-guidance`
   - `writeMode`
+- `repo-maintenance-toolkit`
+  - `defaultReleaseMode`
 
 These are the knobs most likely to reflect real user preference instead of hidden implementation detail.
 

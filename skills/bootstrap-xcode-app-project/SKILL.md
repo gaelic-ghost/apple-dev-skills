@@ -7,7 +7,7 @@ description: Bootstrap a new native Apple app project for macOS, iOS, or iPadOS 
 
 ## Purpose
 
-Create a new native Apple app repository from nothing to a usable baseline on disk. The first implementation prioritizes a deterministic `XcodeGen` path for SwiftUI app projects and a guarded planning path for the standard Xcode-created-project flow. `scripts/run_workflow.py` is the runtime entrypoint, and `scripts/bootstrap_xcode_app_project.py` is the current implementation core for XcodeGen-backed scaffold creation.
+Create a new native Apple app repository from nothing to a usable baseline on disk. The first implementation prioritizes a deterministic `XcodeGen` path for SwiftUI app projects and a guarded planning path for the standard Xcode-created-project flow. `scripts/run_workflow.py` is the runtime entrypoint, and `scripts/bootstrap_xcode_app_project.py` is the current implementation core for XcodeGen-backed scaffold creation plus repo-maintenance toolkit installation.
 
 ## When To Use
 
@@ -59,6 +59,7 @@ Create a new native Apple app repository from nothing to a usable baseline on di
 8. Validate the scaffold:
    - verify the expected app files exist
    - verify `AGENTS.md` exists when enabled
+   - verify `scripts/repo-maintenance/validate-all.sh` and `scripts/repo-maintenance/release.sh` exist
    - if validation is enabled, verify project generation and basic project introspection succeeded
 9. Hand off existing-project work cleanly:
    - recommend `sync-xcode-project-guidance` when the repo guidance should be refreshed or merged after creation
@@ -85,6 +86,7 @@ Create a new native Apple app repository from nothing to a usable baseline on di
   - `project_generator` defaults to `ask`
   - `copy_agents_md` defaults to `true`
   - validation runs unless `--skip-validation` is passed
+  - the repo-maintenance toolkit is installed into `scripts/repo-maintenance/` on successful mutating runs
 
 ## Outputs
 
@@ -100,6 +102,7 @@ Create a new native Apple app repository from nothing to a usable baseline on di
   - normalized inputs
   - resolved bundle identifier
   - generator path
+  - installed repo-maintenance toolkit paths
   - validation result
   - one concise next step or handoff
 
@@ -119,6 +122,7 @@ Create a new native Apple app repository from nothing to a usable baseline on di
 - Preferred implementation path in the first iteration is `XcodeGen` plus generated scaffold files.
 - Use the standard Xcode-created-project path only as a guided fallback for now.
 - After a successful bootstrap, hand off to `sync-xcode-project-guidance` for repo-guidance alignment when needed, then to `xcode-app-project-workflow` for build, test, run, diagnostics, mutation, and docs work.
+- After a successful bootstrap, use `scripts/repo-maintenance/validate-all.sh` for local maintainer validation and `scripts/repo-maintenance/release.sh` for releases.
 - Recommend `bootstrap-swift-package` directly when the task is really package bootstrap.
 - Recommend `sync-xcode-project-guidance` when the repo already exists and only needs repo-guidance or documentation alignment.
 
@@ -151,4 +155,5 @@ Create a new native Apple app repository from nothing to a usable baseline on di
 
 - `scripts/run_workflow.py`
 - `scripts/bootstrap_xcode_app_project.py`
+- `scripts/install_repo_maintenance_toolkit.py`
 - `scripts/customization_config.py`

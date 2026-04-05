@@ -421,6 +421,10 @@ exec "{real_swift}" "$@"
             self.assertEqual(payload["testing_mode"], "swift-testing")
             self.assertEqual(payload["testing_strategy"], "init-flags")
             self.assertEqual(payload["swift_toolchain"], "6.3")
+            package_dir = Path(payload["resolved_path"])
+            self.assertTrue((package_dir / "scripts" / "repo-maintenance" / "validate-all.sh").is_file())
+            self.assertTrue((package_dir / "scripts" / "repo-maintenance" / "release.sh").is_file())
+            self.assertTrue((package_dir / ".github" / "workflows" / "validate-repo-maintenance.yml").is_file())
 
     @unittest.skipUnless(shutil.which("swift"), "swift is required for executable bootstrap coverage")
     def test_executable_bootstrap_creates_swift_testing_test_target(self) -> None:
@@ -466,6 +470,7 @@ exec "{real_swift}" "$@"
             self.assertNotIn('.iOS("26.0")', manifest_text)
             self.assertTrue((package_dir / ".git").is_dir())
             self.assertTrue((package_dir / "AGENTS.md").is_file())
+            self.assertTrue((package_dir / "scripts" / "repo-maintenance" / "sync-shared.sh").is_file())
 
 
 if __name__ == "__main__":

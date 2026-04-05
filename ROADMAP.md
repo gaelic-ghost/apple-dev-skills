@@ -40,6 +40,7 @@
 - [x] Milestone 25: Use `Agent Dev Skills` plugin to align repo with skills/plugin repo standards
 - [ ] Milestone 26: Swift and Xcode Testing Offload Workflow
 - [x] Milestone 27: Customization Surface Simplification Implementation
+- [x] Milestone 28: Repo Maintenance Toolkit Skill
 
 ## Milestone 1: Initial Apple Skill Bundle
 
@@ -537,3 +538,24 @@ Exit criteria:
 
 - The shipped customization surface is materially smaller, better classified, and ready to support future UI work without carrying the current drift forward.
 - Completed 2026-04-04 by reducing the live customization surface, introducing sync-skill `writeMode`, and aligning wrappers, tests, and maintainer docs with the smaller model.
+
+## Milestone 28: Repo Maintenance Toolkit Skill
+
+Scope:
+
+- Add a reusable local-first maintainer toolkit skill for Swift and Xcode repositories, then wire the bootstrap and guidance-sync skills to install or refresh that toolkit in target repos.
+
+Tickets:
+
+- Add `repo-maintenance-toolkit` as an active top-level skill with a managed `scripts/repo-maintenance/` asset tree.
+- Ship a thin GitHub workflow wrapper that calls the local validation entrypoint instead of owning logic itself.
+- Add standard and submodule-aware release flows to the managed toolkit.
+- Update bootstrap and guidance-sync skills to install or refresh the toolkit in target repos.
+- Update tests, validators, root docs, and maintainer docs to reflect the expanded active skill surface.
+
+Exit criteria:
+
+- The repo ships an independently usable `repo-maintenance-toolkit` skill.
+- Successful bootstrap and guidance-sync runs install or refresh the managed toolkit in target repos.
+- Root docs, maintainer docs, and validation all describe the same eight-skill active surface.
+- Completed 2026-04-05 by shipping the toolkit skill, adding managed repo-maintenance assets, and wiring bootstrap and sync workflows to install or refresh them.
