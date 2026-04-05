@@ -114,7 +114,8 @@ struct MCPSurface {
                     text: requiredString("text", in: arguments),
                     profileName: requiredString("profile_name", in: arguments),
                     textProfileName: optionalString("text_profile_name", in: arguments),
-                    normalizationContext: normalizationContext(in: arguments)
+                    normalizationContext: try normalizationContext(in: arguments),
+                    sourceFormat: try sourceFormat(in: arguments)
                 )
                 return try toolResult(
                     acceptedJobResult(
@@ -751,15 +752,75 @@ private func decodeOptionalArgument<T: Decodable>(
     return try decodeValue(value, fieldName: key)
 }
 
-private func normalizationContext(in arguments: [String: Value]) -> SpeechNormalizationContext? {
+private func normalizationContext(in arguments: [String: Value]) throws -> SpeechNormalizationContext? {
     let context = SpeechNormalizationContext(
         cwd: optionalString("cwd", in: arguments),
-        repoRoot: optionalString("repo_root", in: arguments)
+        repoRoot: optionalString("repo_root", in: arguments),
+        textFormat: try requestTextFormat(in: arguments),
+        nestedSourceFormat: try requestSourceFormat("nested_source_format", in: arguments)
     )
-    guard context.cwd != nil || context.repoRoot != nil else {
+    guard
+        context.cwd != nil
+            || context.repoRoot != nil
+            || context.textFormat != nil
+            || context.nestedSourceFormat != nil
+    else {
         return nil
     }
     return context
+}
+
+private func sourceFormat(in arguments: [String: Value]) throws -> TextForSpeech.SourceFormat? {
+    try requestSourceFormat("source_format", in: arguments)
+}
+
+private func requestTextFormat(in arguments: [String: Value]) throws -> TextForSpeech.TextFormat? {
+    guard let rawValue = optionalString("text_format", in: arguments) else {
+        return nil
+    }
+    if let format = TextForSpeech.TextFormat(rawValue: rawValue) {
+        return format
+    }
+    if let legacyFormat = TextForSpeech.Format(rawValue: rawValue),
+       let textFormat = legacyRequestTextFormat(for: legacyFormat)
+    {
+        return textFormat
+    }
+
+    let supportedFormats = TextForSpeech.TextFormat.allCases.map(\.rawValue)
+    let legacyFormats = TextForSpeech.Format.allCases.map(\.rawValue)
+    let acceptedValues = (supportedFormats + legacyFormats).joined(separator: ", ")
+    throw MCPError.invalidParams(
+        "Tool argument 'text_format' used unsupported value '\(rawValue)'. Expected one of: \(acceptedValues)."
+    )
+}
+
+private func requestSourceFormat(
+    _ key: String,
+    in arguments: [String: Value]
+) throws -> TextForSpeech.SourceFormat? {
+    guard let rawValue = optionalString(key, in: arguments) else {
+        return nil
+    }
+    guard let format = TextForSpeech.SourceFormat(rawValue: rawValue) else {
+        let acceptedValues = TextForSpeech.SourceFormat.allCases.map(\.rawValue).joined(separator: ", ")
+        throw MCPError.invalidParams(
+            "Tool argument '\(key)' used unsupported value '\(rawValue)'. Expected one of: \(acceptedValues)."
+        )
+    }
+    return format
+}
+
+private func legacyRequestTextFormat(for format: TextForSpeech.Format) -> TextForSpeech.TextFormat? {
+    switch format {
+    case .plain: .plain
+    case .markdown: .markdown
+    case .html: .html
+    case .log: .log
+    case .cli: .cli
+    case .list: .list
+    case .source, .swift, .python, .rust: nil
+    }
 }
 
 private func acceptedJobResult(jobID: String, message: String) -> MCPAcceptedJobResult {
@@ -837,8 +898,9 @@ private func voiceProfilesGuideMarkdown() -> String {
     2. Use `create_profile` when the user wants a new synthetic profile from source text plus a voice description.
     3. Use `create_clone` when the user already has reference audio and wants SpeakSwiftly to capture that voice.
     4. Provide `transcript` to `create_clone` when the user knows the spoken words already; omit it only when transcription is actually needed.
-    5. Use `queue_speech_live` after the user has chosen the correct voice profile, then read `speak://jobs/{job_id}` or `speak://status` for progress.
-    6. Use `remove_profile` only after confirming the exact `profile_name`, especially when multiple similar profiles exist.
+    5. Pass `text_format`, `nested_source_format`, or `source_format` to `queue_speech_live` when the input needs explicit format-aware normalization instead of automatic detection.
+    6. Use `queue_speech_live` after the user has chosen the correct voice profile, then read `speak://jobs/{job_id}` or `speak://status` for progress.
+    7. Use `remove_profile` only after confirming the exact `profile_name`, especially when multiple similar profiles exist.
 
     Drafting guidance:
 

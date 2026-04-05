@@ -46,6 +46,7 @@ protocol ServerRuntimeProtocol: Actor {
         as jobType: SpeakSwiftly.Job,
         textProfileName: String?,
         normalizationContext: SpeechNormalizationContext?,
+        sourceFormat: TextForSpeech.SourceFormat?,
         id: String
     ) async -> RuntimeRequestHandle
     func createProfile(
@@ -97,6 +98,7 @@ extension SpeakSwiftly.Runtime: ServerRuntimeProtocol {
         as jobType: SpeakSwiftly.Job,
         textProfileName: String?,
         normalizationContext: SpeechNormalizationContext?,
+        sourceFormat: TextForSpeech.SourceFormat?,
         id: String
     ) async -> RuntimeRequestHandle {
         RuntimeRequestHandle(
@@ -106,6 +108,7 @@ extension SpeakSwiftly.Runtime: ServerRuntimeProtocol {
                 as: jobType,
                 textProfileName: textProfileName,
                 textContext: normalizationContext,
+                sourceFormat: sourceFormat,
                 id: id
             )
         )

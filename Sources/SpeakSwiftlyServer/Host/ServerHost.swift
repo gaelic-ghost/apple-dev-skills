@@ -544,7 +544,8 @@ actor ServerHost {
         text: String,
         profileName: String,
         textProfileName: String? = nil,
-        normalizationContext: SpeechNormalizationContext? = nil
+        normalizationContext: SpeechNormalizationContext? = nil,
+        sourceFormat: TextForSpeech.SourceFormat? = nil
     ) async throws -> String {
         try ensureWorkerReady()
         let requestID = UUID().uuidString
@@ -554,6 +555,7 @@ actor ServerHost {
             as: .live,
             textProfileName: textProfileName,
             normalizationContext: normalizationContext,
+            sourceFormat: sourceFormat,
             id: requestID
         )
         return await enqueuePublicJob(handle)

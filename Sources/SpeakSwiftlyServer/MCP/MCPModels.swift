@@ -21,7 +21,7 @@ enum MCPToolCatalog {
     static let definitions: [Tool] = [
         Tool(
             name: "queue_speech_live",
-            description: "Queue live speech playback with a stored SpeakSwiftly voice profile. Use this after choosing or creating a voice profile, optionally pass text_profile_name for one-shot normalization, and then read the returned speak://jobs/{job_id} resource until playback completes.",
+            description: "Queue live speech playback with a stored SpeakSwiftly voice profile. Use this after choosing or creating a voice profile, optionally pass text_profile_name for one-shot normalization, and optionally provide text_format, nested_source_format, or source_format when the input should be normalized as a specific textual or whole-source lane before speech generation.",
             inputSchema: [
                 "type": "object",
                 "required": ["text", "profile_name"],
@@ -31,6 +31,9 @@ enum MCPToolCatalog {
                     "text_profile_name": ["type": "string"],
                     "cwd": ["type": "string"],
                     "repo_root": ["type": "string"],
+                    "text_format": ["type": "string"],
+                    "nested_source_format": ["type": "string"],
+                    "source_format": ["type": "string"],
                 ],
             ]
         ),

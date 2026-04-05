@@ -244,7 +244,8 @@ private func registerHTTPRoutes(
             text: payload.text,
             profileName: payload.profileName,
             textProfileName: payload.textProfileName,
-            normalizationContext: payload.normalizationContext
+            normalizationContext: try payload.normalizationContext(),
+            sourceFormat: try payload.sourceFormatModel()
         )
         return try buildAcceptedJobResponse(request: request, configuration: configuration, jobID: jobID)
     }

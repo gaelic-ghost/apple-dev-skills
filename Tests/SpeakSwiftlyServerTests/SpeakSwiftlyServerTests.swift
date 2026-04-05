@@ -24,6 +24,7 @@ actor MockRuntime: ServerRuntimeProtocol {
         let profileName: String
         let textProfileName: String?
         let normalizationContext: SpeechNormalizationContext?
+        let sourceFormat: TextForSpeech.SourceFormat?
     }
 
     struct CreateCloneInvocation: Sendable, Equatable {
@@ -101,6 +102,7 @@ actor MockRuntime: ServerRuntimeProtocol {
         as jobType: SpeakSwiftly.Job,
         textProfileName: String?,
         normalizationContext: SpeechNormalizationContext?,
+        sourceFormat: TextForSpeech.SourceFormat?,
         id: String
     ) async -> RuntimeRequestHandle {
         let request = MockRequest(id: id, operation: speechOperationName(for: jobType), profileName: profileName)
@@ -109,7 +111,8 @@ actor MockRuntime: ServerRuntimeProtocol {
                 text: text,
                 profileName: profileName,
                 textProfileName: textProfileName,
-                normalizationContext: normalizationContext
+                normalizationContext: normalizationContext,
+                sourceFormat: sourceFormat
             )
         )
         var requestContinuation: AsyncThrowingStream<SpeakSwiftly.RequestEvent, Error>.Continuation?
@@ -1158,7 +1161,7 @@ actor MockRuntime: ServerRuntimeProtocol {
             uri: "/speak",
             method: .post,
             headers: [.contentType: "application/json"],
-            body: byteBuffer(#"{"text":"Route test","profile_name":"default","text_profile_name":"swift-docs","cwd":"./Sources","repo_root":"../SpeakSwiftlyServer"}"#)
+            body: byteBuffer(#"{"text":"Route test","profile_name":"default","text_profile_name":"swift-docs","cwd":"./Sources","repo_root":"../SpeakSwiftlyServer","text_format":"markdown","nested_source_format":"swift_source","source_format":"python_source"}"#)
         )
         let speakJSON = try jsonObject(from: speakResponse.body)
         let speakJobID = try #require(speakJSON["job_id"] as? String)
@@ -1169,9 +1172,15 @@ actor MockRuntime: ServerRuntimeProtocol {
         let queuedSpeechInvocation = try #require(await runtime.latestQueuedSpeechInvocation())
         #expect(
             queuedSpeechInvocation.normalizationContext
-                == SpeechNormalizationContext(cwd: "./Sources", repoRoot: "../SpeakSwiftlyServer")
+                == SpeechNormalizationContext(
+                    cwd: "./Sources",
+                    repoRoot: "../SpeakSwiftlyServer",
+                    textFormat: .markdown,
+                    nestedSourceFormat: .swift
+                )
         )
         #expect(queuedSpeechInvocation.textProfileName == "swift-docs")
+        #expect(queuedSpeechInvocation.sourceFormat == .python)
 
         _ = try await waitForJobSnapshot(speakJobID, on: host)
 
@@ -1271,6 +1280,9 @@ actor MockRuntime: ServerRuntimeProtocol {
                         "text_profile_name": "mcp-text",
                         "cwd": "./Tests",
                         "repo_root": "../SpeakSwiftlyServer",
+                        "text_format": "cli_output",
+                        "nested_source_format": "rust_source",
+                        "source_format": "source_code",
                     ]
                 ),
                 sessionID: initializeSessionID
@@ -1284,9 +1296,15 @@ actor MockRuntime: ServerRuntimeProtocol {
     let queuedSpeechInvocation = try #require(await runtime.latestQueuedSpeechInvocation())
     #expect(
         queuedSpeechInvocation.normalizationContext
-            == SpeechNormalizationContext(cwd: "./Tests", repoRoot: "../SpeakSwiftlyServer")
+            == SpeechNormalizationContext(
+                cwd: "./Tests",
+                repoRoot: "../SpeakSwiftlyServer",
+                textFormat: .cli,
+                nestedSourceFormat: .rust
+            )
     )
     #expect(queuedSpeechInvocation.textProfileName == "mcp-text")
+    #expect(queuedSpeechInvocation.sourceFormat == .generic)
 
     let createCloneToolEnvelope = try await mcpEnvelope(
         from: await mcpSurface.handle(

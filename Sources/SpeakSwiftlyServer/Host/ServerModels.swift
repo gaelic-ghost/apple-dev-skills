@@ -11,6 +11,9 @@ struct SpeakRequestPayload: Decodable {
     let textProfileName: String?
     let cwd: String?
     let repoRoot: String?
+    let textFormat: String?
+    let nestedSourceFormat: String?
+    let sourceFormat: String?
 
     enum CodingKeys: String, CodingKey {
         case text
@@ -18,14 +21,35 @@ struct SpeakRequestPayload: Decodable {
         case textProfileName = "text_profile_name"
         case cwd
         case repoRoot = "repo_root"
+        case textFormat = "text_format"
+        case nestedSourceFormat = "nested_source_format"
+        case sourceFormat = "source_format"
     }
 
-    var normalizationContext: SpeechNormalizationContext? {
-        let context = SpeechNormalizationContext(cwd: cwd, repoRoot: repoRoot)
-        guard context.cwd != nil || context.repoRoot != nil else {
+    func normalizationContext() throws -> SpeechNormalizationContext? {
+        let resolvedTextFormat = try textFormat.flatMap(resolveRequestTextFormat(_:))
+        let resolvedNestedSourceFormat = try nestedSourceFormat.flatMap {
+            try resolveSourceFormat($0, fieldName: "nested_source_format")
+        }
+        let context = SpeechNormalizationContext(
+            cwd: cwd,
+            repoRoot: repoRoot,
+            textFormat: resolvedTextFormat,
+            nestedSourceFormat: resolvedNestedSourceFormat
+        )
+        guard
+            context.cwd != nil
+                || context.repoRoot != nil
+                || context.textFormat != nil
+                || context.nestedSourceFormat != nil
+        else {
             return nil
         }
         return context
+    }
+
+    func sourceFormatModel() throws -> TextForSpeech.SourceFormat? {
+        try sourceFormat.flatMap { try resolveSourceFormat($0, fieldName: "source_format") }
     }
 }
 
@@ -582,4 +606,48 @@ private func resolveTextFormat(_ rawValue: String) throws -> TextForSpeech.Forma
         )
     }
     return format
+}
+
+private func resolveRequestTextFormat(_ rawValue: String) throws -> TextForSpeech.TextFormat {
+    if let format = TextForSpeech.TextFormat(rawValue: rawValue) {
+        return format
+    }
+    if let legacyFormat = TextForSpeech.Format(rawValue: rawValue),
+       let textFormat = legacyRequestTextFormat(for: legacyFormat)
+    {
+        return textFormat
+    }
+
+    let supportedFormats = TextForSpeech.TextFormat.allCases.map(\.rawValue)
+    let legacyFormats = TextForSpeech.Format.allCases.map(\.rawValue)
+    throw HTTPError(
+        .badRequest,
+        message: "Speech request text_format '\(rawValue)' is not supported. Expected one of: \((supportedFormats + legacyFormats).joined(separator: ", "))."
+    )
+}
+
+private func resolveSourceFormat(
+    _ rawValue: String,
+    fieldName: String
+) throws -> TextForSpeech.SourceFormat {
+    guard let format = TextForSpeech.SourceFormat(rawValue: rawValue) else {
+        let supportedFormats = TextForSpeech.SourceFormat.allCases.map(\.rawValue).joined(separator: ", ")
+        throw HTTPError(
+            .badRequest,
+            message: "Speech request \(fieldName) '\(rawValue)' is not supported. Expected one of: \(supportedFormats)."
+        )
+    }
+    return format
+}
+
+private func legacyRequestTextFormat(for format: TextForSpeech.Format) -> TextForSpeech.TextFormat? {
+    switch format {
+    case .plain: .plain
+    case .markdown: .markdown
+    case .html: .html
+    case .log: .log
+    case .cli: .cli
+    case .list: .list
+    case .source, .swift, .python, .rust: nil
+    }
 }
