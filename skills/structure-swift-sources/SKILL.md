@@ -49,7 +49,7 @@ Use this skill as the top-level workflow for structural cleanup inside existing 
    - group declarations into explicit `// MARK: - <Heading>` sections, then place a descriptive secondary `// MARK: <Comment>` line directly below each heading
    - ensure every symbol declaration has DocC-compliant documentation comments
    - move TODO and FIXME text into `TODO.md` and `FIXME.md`, keeping only ticket IDs in source comments
-   - when the task is TODO or FIXME normalization, use `scripts/normalize_todo_fixme_ledgers.py` for the deterministic ledger rewrite pass
+  - when the task is TODO or FIXME normalization, use `scripts/normalize_todo_fixme_ledgers.py` for the deterministic ledger rewrite pass across supported Swift and Objective-C source forms
 6. Apply repo-shape rules:
    - for Swift packages, prefer directories grouped by layer and feature, such as `API/<Feature>/<Concern>.swift` and `Features/<Feature>/<Concern>.swift`
    - for Xcode app projects, ensure important app-facing source directories such as `Views/`, `Controllers/`, and `Models/`
