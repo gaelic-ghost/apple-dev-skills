@@ -132,6 +132,8 @@ Create a new native Apple app repository from nothing to a usable baseline on di
 - `scripts/customization_config.py` stores and reports customization state.
 - `scripts/run_workflow.py` loads runtime-safe defaults from customization state before invoking the supported implementation path.
 - Current runtime-enforced knobs include the default platform, bundle-ID prefix, and `AGENTS.md` copy behavior. Project kind, UI stack, generator choice, and validation policy now live as fixed workflow behavior or explicit invocation inputs.
+- Run the Python wrapper and customization entrypoints through `uv`, because they rely on inline `PyYAML` script metadata rather than a repo-global Python environment.
+- In consuming repos, the supported path is `uv run scripts/run_workflow.py ...` and `uv run scripts/customization_config.py ...`; do not assume plain `python` or `python3` will have the needed YAML dependency installed.
 
 ## References
 

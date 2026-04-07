@@ -16,17 +16,20 @@ Adjust the documented bootstrap defaults while keeping runtime behavior grounded
 
 - `scripts/customization_config.py` reads, writes, resets, and reports customization state.
 - `scripts/run_workflow.py` loads the effective merged customization state at runtime.
+- Both Python entrypoints are `uv` scripts with inline `PyYAML` dependency metadata.
+- In consuming repos, prefer `uv run scripts/customization_config.py ...` and `uv run scripts/run_workflow.py ...` so YAML support is provisioned correctly.
 - Project kind, UI stack, project generator, and post-bootstrap validation policy are now fixed workflow behavior or explicit invocation inputs instead of durable user customization.
 - `scripts/bootstrap_xcode_app_project.py` remains the implementation core for the current XcodeGen-backed scaffold path.
 
 ## Update Flow
 
 1. Inspect current settings with `scripts/customization_config.py effective`.
+   Supported invocation: `uv run scripts/customization_config.py effective`
 2. Update `SKILL.md`, `references/project-generators.md`, and `references/automation-prompts.md` to reflect the approved policy change.
 3. Persist the metadata change with `scripts/customization_config.py apply --input <yaml-file>`.
 4. Re-run `scripts/customization_config.py effective` and confirm the stored values match the docs.
 5. Use `scripts/customization_config.py reset` only when the user explicitly wants to clear customization state.
-6. Verify runtime defaults with `scripts/run_workflow.py --name DemoApp --platform macos --project-generator xcodegen --dry-run`.
+6. Verify runtime defaults with `uv run scripts/run_workflow.py --name DemoApp --platform macos --project-generator xcodegen --dry-run`.
 
 ## Validation
 
