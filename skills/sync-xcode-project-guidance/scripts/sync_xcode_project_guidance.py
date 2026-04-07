@@ -16,6 +16,9 @@ REQUIRED_STRINGS = [
     "xcode-app-project-workflow",
     "sync-xcode-project-guidance",
     "Never edit `.pbxproj` files directly.",
+    "scripts/repo-maintenance/validate-all.sh",
+    "scripts/repo-maintenance/sync-shared.sh",
+    "scripts/repo-maintenance/release.sh",
 ]
 
 
@@ -183,7 +186,7 @@ def main() -> int:
         "detected_state": detected_state,
         "validation_result": validation_result,
         "actions": actions,
-        "next_step": "Use xcode-app-project-workflow for active Xcode collaboration now that repo guidance is aligned.",
+        "next_step": "Use xcode-app-project-workflow for active Xcode collaboration now that repo guidance is aligned, and rerun sync-xcode-project-guidance after substantial plugin updates.",
     }
     print(json.dumps(payload, indent=2, sort_keys=True))
     return 0

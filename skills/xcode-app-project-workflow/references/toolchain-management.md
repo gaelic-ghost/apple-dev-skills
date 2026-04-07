@@ -11,6 +11,7 @@
 - `xcodebuild -version`
 - `xcode-select -p`
 - `xcrun --find swift`
+- `xcodebuild -showComponent metalToolchain`
 
 ## Official Xcode and CLT actions
 
@@ -25,3 +26,4 @@
 - Keep fallback commands deterministic and project-local.
 - When a Swift package build appears to depend on Xcode-managed assets or components, verify the active Xcode toolchain before defaulting to `swift build`.
 - `xcodebuild` may expose Apple-managed toolchain paths, including components like the Metal toolchain, that do not show up the same way through plain SwiftPM invocation.
+- When Metal shader compilation or packaged `.metallib` validation matters, verify the active Xcode component state and prefer explicit `xcodebuild` validation over assuming SwiftPM alone covers the Apple-managed build path.

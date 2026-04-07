@@ -15,8 +15,12 @@ from pathlib import Path
 REQUIRED_STRINGS = [
     "bootstrap-swift-package",
     "sync-swift-package-guidance",
+    "swift-package-workflow",
     "swift build",
     "swift test",
+    "scripts/repo-maintenance/validate-all.sh",
+    "scripts/repo-maintenance/sync-shared.sh",
+    "scripts/repo-maintenance/release.sh",
 ]
 
 
@@ -200,7 +204,7 @@ def main() -> int:
         "detected_state": detected_state,
         "validation_result": validation_result,
         "actions": actions,
-        "next_step": "Use swift build and swift test for ordinary package work, and use xcode-app-project-workflow only when package work needs Xcode-managed tooling.",
+        "next_step": "Use swift-package-workflow plus swift build and swift test for ordinary package work, rerun sync-swift-package-guidance after substantial plugin updates, and use xcode-app-project-workflow only when package work needs Xcode-managed tooling.",
     }
     print(json.dumps(payload, indent=2, sort_keys=True))
     return 0

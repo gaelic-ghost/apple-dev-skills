@@ -10,6 +10,7 @@
 
 - Use Swift Package Manager (SPM) as the source of truth for package structure and dependencies.
 - Use `sync-swift-package-guidance` if this repo's package-specific `AGENTS.md` guidance later drifts and needs to be refreshed or merged forward.
+- Re-run `sync-swift-package-guidance` after substantial package-workflow or plugin updates so local guidance stays aligned.
 - Use `scripts/repo-maintenance/validate-all.sh` for local maintainer validation, `scripts/repo-maintenance/sync-shared.sh` for repo-local sync steps, and `scripts/repo-maintenance/release.sh` for releases.
 - Prefer `swift package` CLI commands for structural changes whenever the command exists.
 - Use `swift package add-dependency` to add dependencies instead of hand-editing package graphs.
@@ -55,6 +56,7 @@
 - Keep code compliant with Swift 6 language mode.
 - Keep strict concurrency checking enabled.
 - Use modern structured concurrency (`async`/`await`, task groups, actors, `AsyncSequence`) instead of legacy async patterns when it keeps the flow clearer and more direct.
+- Make async APIs cancellation-aware, prefer direct async flows over detached work unless isolation must be severed intentionally, and keep sendability concerns explicit.
 - Prefer compact syntax when it improves local reasoning, including shorthand syntax, ternary expressions, trailing closures, `switch`, `map`, `filter`, `forEach`, and async iteration.
 - Prefer explicit default values at initialization when they reduce optional-handling clutter and keep the code easier to follow.
 - When lines, chains, or expressions get long, prefer chopping them down into a clean vertical, top-down structure with straight visual flow.
@@ -74,6 +76,8 @@
 
 - Use Swift Testing (`import Testing`) as the default test framework.
 - Avoid XCTest unless an external constraint requires it.
+- Prefer Swift Testing suites, tags, and parameterized coverage on current toolchains, and use Swift Testing confirmations for event-driven asynchronous tests instead of fixed sleeps.
+- Keep XCTest only when a legacy dependency, package surface, or Apple tooling constraint still requires it.
 - Prefer Nick Lockwood's SwiftFormat and/or SwiftLint as baseline Swift formatting and linting tools; at least one should be configured and used in any Swift project.
 - Keep formatting consistent with `swift-format` conventions.
 - Keep linting clean against `swiftlint` with clear, maintainable rule intent.
@@ -99,6 +103,11 @@
 - Prefer `swift package` for package-focused workflows (dependency graph, targets, manifest intent, and local package validation).
 - Prefer `swift package` subcommands for structural package edits before manually editing `Package.swift`.
 - Use `swift build` and `swift test` as the default first-pass validation commands.
+- Keep package resources under the owning target tree, declare them intentionally with `Resource.process(...)`, `Resource.copy(...)`, or `Resource.embedInCode(...)`, and load them through `Bundle.module`.
+- Keep test fixtures as test-target resources instead of relying on the working directory.
+- Bundle precompiled Metal artifacts such as `.metallib` files as explicit package resources when they ship with the package, and prefer `.copy(...)` when exact distribution matters.
 - Use `xcodebuild` when validating Apple platform integration details that `swift package` does not cover well (schemes, destinations, SDK-specific behavior, and configuration-specific builds/tests).
+- Use `xcodebuild -showTestPlans` and `xcodebuild -testPlan ...` when the package contract depends on `.xctestplan` coverage.
+- Validate both Debug and Release paths when optimization or packaging differences matter, and treat tagged releases as a cue to verify the Release artifact path before publishing.
 - Keep `xcodebuild` invocations explicit and reproducible (always pass scheme, destination or SDK, and configuration when relevant).
 - Prefer deterministic non-interactive CLI usage in automation/CI for both `swift package` and `xcodebuild`.

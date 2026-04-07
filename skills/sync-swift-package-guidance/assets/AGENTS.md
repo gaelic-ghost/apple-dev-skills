@@ -5,6 +5,7 @@
 - Use `swift build` and `swift test` as the default first-pass validation commands for this package.
 - Use `bootstrap-swift-package` when a new Swift package repo still needs to be created from scratch.
 - Use `sync-swift-package-guidance` when the repo guidance for this package drifts and needs to be refreshed or merged forward.
+- Re-run `sync-swift-package-guidance` after substantial package-workflow or plugin updates so local guidance stays aligned.
 - Use `swift-package-workflow` for ordinary package development, manifest edits, dependency changes, builds, tests, runs, and plugin work when `Package.swift` is the source of truth.
 - Use `scripts/repo-maintenance/validate-all.sh` for local maintainer validation, `scripts/repo-maintenance/sync-shared.sh` for repo-local sync steps, and `scripts/repo-maintenance/release.sh` for releases.
 - Read relevant SwiftPM, Swift, and Apple documentation before proposing package-structure, dependency, manifest, concurrency, or architecture changes.
@@ -15,4 +16,8 @@
 - Treat `Package.swift` as the source of truth for package structure, targets, products, and dependencies.
 - Prefer `swift package` subcommands for structural package edits before manually editing `Package.swift`.
 - Prefer Swift Testing by default unless an external constraint requires XCTest.
+- Keep package resources under the owning target tree, declare them intentionally with `Resource.process(...)`, `Resource.copy(...)`, `Resource.embedInCode(...)`, and load them through `Bundle.module`.
+- Keep test fixtures as test-target resources instead of relying on the working directory.
+- Bundle precompiled Metal artifacts such as `.metallib` files as explicit resources when they ship with the package, and prefer `xcode-app-project-workflow` when shader compilation or Apple-managed Metal toolchain behavior matters.
+- Validate both Debug and Release paths when optimization or packaging differences matter, and treat tagged releases as a cue to verify the Release artifact path before publishing.
 - Prefer `xcode-app-project-workflow` only when package work needs Xcode-managed SDK or toolchain behavior.

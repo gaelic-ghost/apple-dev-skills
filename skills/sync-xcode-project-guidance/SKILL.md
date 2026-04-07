@@ -20,6 +20,8 @@ Bring an existing Xcode app repository up to the expected guidance baseline with
 - Recommend `bootstrap-xcode-app-project` when the repo does not exist yet.
 - Recommend `xcode-app-project-workflow` when the task is active execution, diagnostics, docs lookup, or mutation work inside an existing Xcode project.
 - Recommend `sync-swift-package-guidance` when the repo is a plain Swift package instead of an Xcode app project.
+- After updating this plugin's Xcode-policy surfaces, recommend rerunning `sync-xcode-project-guidance` in downstream repos so their `AGENTS.md` and repo-maintenance toolkit stay aligned.
+- For local Codex installs of this plugin, mention that `install-plugin-to-socket` is a useful maintainer shortcut for install, update, verify, and repair work.
 
 ## Single-Path Workflow
 
@@ -43,7 +45,7 @@ Bring an existing Xcode app repository up to the expected guidance baseline with
    - if no relevant Apple docs can be found, say that explicitly before proceeding
 4. Apply the shared Xcode-project policy before making repo-guidance changes:
    - apply the detailed local policy in `references/snippets/apple-xcode-project-core.md`
-   - preserve its simplicity-first Swift, SwiftUI, and Xcode-managed project guidance
+   - preserve its simplicity-first Swift, SwiftUI, Xcode-managed project, test-plan, file-membership, and Debug/Release guidance
 5. Run `scripts/run_workflow.py` to normalize inputs, detect whether the repo is really Xcode-managed, and shape the sync plan.
 6. Apply the sync path:
    - if `AGENTS.md` is missing, copy `assets/AGENTS.md`
@@ -57,7 +59,11 @@ Bring an existing Xcode app repository up to the expected guidance baseline with
    - refresh `scripts/repo-maintenance/`
    - refresh `.github/workflows/validate-repo-maintenance.yml`
    - preserve repo-specific extra scripts that are not part of the managed file set
-9. Hand off ongoing engineering work cleanly:
+9. Verify the synced maintenance guidance still points at the expected maintainer files:
+   - `scripts/repo-maintenance/validate-all.sh`
+   - `scripts/repo-maintenance/sync-shared.sh`
+   - `scripts/repo-maintenance/release.sh`
+10. Hand off ongoing engineering work cleanly:
    - recommend `xcode-app-project-workflow` for active Xcode collaboration after the repo guidance is aligned
    - recommend `bootstrap-xcode-app-project` only when the user actually needs a fresh repo instead of guidance sync
 

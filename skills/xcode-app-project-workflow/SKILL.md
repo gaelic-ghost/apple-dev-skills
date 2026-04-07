@@ -14,6 +14,8 @@ Use this skill as the top-level entry point for execution work in or around Xcod
 - Use this skill for Xcode workspace inspection, read or search, diagnostics, build, test, run, preview, and navigator-issue tasks.
 - Use this skill for Xcode MCP operations, scheme-aware execution, and official Apple CLI fallback.
 - Use this skill when direct filesystem mutation around an Xcode-managed project may be required.
+- Use this skill for Swift Testing, XCTest, XCUITest, `.xctestplan`, Debug/Release build-configuration work, and file-membership verification after on-disk edits.
+- Use this skill when Metal toolchain state, Apple-managed SDK components, or package-in-Xcode validation make `xcodebuild` more authoritative than plain SwiftPM.
 - Use this skill after Apple or Swift docs have already been gathered through `explore-apple-swift-docs` and the work has shifted into Xcode-aware execution or implementation.
 - Do not use this skill as the default path for ordinary Swift package development when `Package.swift` is the source of truth and Xcode-managed behavior is not the main concern.
 - Recommend `explore-apple-swift-docs` when the user needs Apple or Swift documentation lookup, source selection, Dash compatibility, or docs install follow-up rather than execution work.
@@ -45,8 +47,9 @@ Use this skill as the top-level entry point for execution work in or around Xcod
    - preserve its project-appropriate logging, telemetry, and SwiftUI architecture guidance
 4. Run `scripts/run_workflow.py` to apply runtime configuration, `.pbxproj` edit safeguards, and CLI fallback planning.
 5. Use the guidance in `references/mcp-tool-matrix.md` for agent-executed MCP operations.
-6. If MCP fails, use the structured fallback output from `scripts/run_workflow.py` together with `references/cli-fallback-matrix.md`.
-7. Report which parts were agent-executed, which parts were locally enforced by script, the Apple docs relied on, and any required next step.
+6. Use `references/testing-plans-file-membership-and-configurations.md` when the task touches Swift Testing, XCTest, XCUITest, `.xctestplan`, file membership after filesystem edits, or Debug/Release validation.
+7. If MCP fails, use the structured fallback output from `scripts/run_workflow.py` together with `references/cli-fallback-matrix.md`.
+8. Report which parts were agent-executed, which parts were locally enforced by script, the Apple docs relied on, and any required next step.
 
 ## Inputs
 
@@ -94,6 +97,7 @@ Use this skill as the top-level entry point for execution work in or around Xcod
 - Recommend `bootstrap-swift-package` directly when the task becomes new-package scaffolding.
 - Recommend `sync-xcode-project-guidance` directly when the repo needs Xcode-specific guidance sync rather than execution.
 - `scripts/run_workflow.py` plans fallback commands; MCP execution itself remains agent-side tool usage guided by this skill.
+- When maintaining this plugin itself, refresh repo-guidance consumers after substantial Xcode-policy changes and keep the local plugin install current; `install-plugin-to-socket` is a useful maintainer shortcut for install, update, verify, and repair work.
 
 ## Customization
 
@@ -110,6 +114,7 @@ Use this skill as the top-level entry point for execution work in or around Xcod
 - `references/mcp-tool-matrix.md`
 - `references/cli-fallback-matrix.md`
 - `references/toolchain-management.md`
+- `references/testing-plans-file-membership-and-configurations.md`
 - `references/mutation-risk-policy.md`
 - `references/mutation-via-mcp.md`
 

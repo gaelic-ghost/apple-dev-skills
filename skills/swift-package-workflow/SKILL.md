@@ -15,6 +15,8 @@ Use this skill as the top-level execution workflow for existing Swift Package Ma
 - Use this skill for manifest, target, product, dependency, plugin, build-tool, and test work driven by `Package.swift`.
 - Use this skill when the user is working in a terminal or in editors such as Zed, VS Code, Neovim, Sublime Text, or other non-Xcode environments.
 - Use this skill for cross-platform, server-side, library, CLI-tool, and package-plugin workflows where SwiftPM is the primary control surface.
+- Use this skill for package resource layout, `Bundle.module` access, `.process(...)` / `.copy(...)` / `.embedInCode(...)` choices, and package-local fixture organization.
+- Use this skill for Swift Testing-first package work, package XCTest holdouts, and package-level `xcodebuild` test-plan execution when the package surface needs it.
 - Do not use this skill for brand-new package bootstrap from nothing.
 - Do not use this skill for repo-guidance alignment in an existing package repo.
 - Do not use this skill as the default path for Xcode workspace, scheme, preview, simulator, or navigator-driven work.
@@ -47,8 +49,9 @@ Use this skill as the top-level execution workflow for existing Swift Package Ma
    - preserve its package-appropriate logging, telemetry, and testing guidance
 4. Run `scripts/run_workflow.py` to resolve repo shape, detect whether the root is a plain package repo, and plan the SwiftPM-first command path.
 5. Use the guidance in `references/cli-command-matrix.md` for agent-executed SwiftPM commands and terminal-first editor workflows.
-6. If the repo root is ambiguous because Xcode-managed markers are present at the same root, use `references/xcode-handoff-conditions.md` and hand off cleanly to `xcode-app-project-workflow`.
-7. Report which parts were agent-executed, the docs relied on, the repo-shape result, and any required next step or handoff.
+6. Use `references/package-resources-testing-and-builds.md` when the request touches package resources, Metal artifacts, Swift Testing, XCTest holdouts, test plans, or Debug/Release validation.
+7. If the repo root is ambiguous because Xcode-managed markers are present at the same root, use `references/xcode-handoff-conditions.md` and hand off cleanly to `xcode-app-project-workflow`.
+8. Report which parts were agent-executed, the docs relied on, the repo-shape result, and any required next step or handoff.
 
 ## Inputs
 
@@ -94,9 +97,11 @@ Use this skill as the top-level execution workflow for existing Swift Package Ma
   - previews, snippet execution, simulator, or device flows
   - navigator issues or Xcode build-log inspection
   - Xcode MCP mutation tools
+  - Metal shader compilation, Apple-managed Metal toolchain inspection, or package distribution that depends on Xcode-managed Apple SDK integration
   - direct changes inside `.xcodeproj`, `.xcworkspace`, or `.pbxproj` managed scope
 - Recommend `sync-swift-package-guidance` when the request is really about repo guidance instead of execution.
 - Recommend `bootstrap-swift-package` when the repository still needs to be created from scratch.
+- When maintaining this plugin itself, refresh guidance-sync consumers after substantial package-policy changes and keep the local plugin install current; `install-plugin-to-socket` is a useful maintainer shortcut for install, update, verify, and repair work.
 
 ## Customization
 
@@ -112,6 +117,7 @@ Use this skill as the top-level execution workflow for existing Swift Package Ma
 - `references/workflow-policy.md`
 - `references/repo-shape-detection.md`
 - `references/cli-command-matrix.md`
+- `references/package-resources-testing-and-builds.md`
 - `references/xcode-handoff-conditions.md`
 
 ### Contract References
