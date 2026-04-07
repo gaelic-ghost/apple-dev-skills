@@ -5,7 +5,9 @@ Canonical Apple development skills with a plugin-first packaging layout for Code
 ## Active Skills
 
 - `xcode-app-project-workflow`
-  - Top-level Apple and Swift execution skill for Xcode work, diagnostics, toolchains, mutation decisions, and guarded fallback planning.
+  - Top-level Apple and Swift execution skill for Xcode work, diagnostics, toolchains, and `.pbxproj`-aware mutation decisions.
+- `swift-package-workflow`
+  - Top-level SwiftPM-first execution skill for existing package repos, manifest work, dependency changes, builds, tests, runs, plugins, and terminal-first editor workflows.
 - `explore-apple-swift-docs`
   - Top-level docs skill for Apple and Swift docs exploration across Xcode MCP docs, Dash, and official web docs, with optional Dash follow-up when needed.
 - `format-swift-sources`
@@ -252,6 +254,7 @@ Use these snippets for cross-project standards that belong in end-user `AGENTS.m
     ├── bootstrap-swift-package/
     ├── explore-apple-swift-docs/
     ├── format-swift-sources/
+    ├── swift-package-workflow/
     ├── structure-swift-sources/
     ├── sync-swift-package-guidance/
     ├── sync-xcode-project-guidance/
