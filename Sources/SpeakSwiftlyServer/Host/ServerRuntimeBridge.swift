@@ -100,7 +100,11 @@ actor ServerRuntimeAdapter: ServerRuntimeProtocol {
         self.runtime = runtime
     }
 
-    func start() {}
+    func start() {
+        Task {
+            await runtime.start()
+        }
+    }
 
     func shutdown() async {
         await runtime.shutdown()

@@ -362,6 +362,10 @@ struct E2EMCPClient {
     }
 
     func callTool(name: String, arguments: [String: String]) async throws -> [String: Any] {
+        try await callTool(name: name, arguments: arguments as [String: Any])
+    }
+
+    func callTool(name: String, arguments: [String: Any]) async throws -> [String: Any] {
         let payload = try await callToolJSON(name: name, arguments: arguments)
         guard let object = payload as? [String: Any] else {
             throw E2ETransportError(
@@ -372,21 +376,17 @@ struct E2EMCPClient {
     }
 
     func callToolJSON(name: String, arguments: [String: String]) async throws -> Any {
-        let response = try await Self.post(
-            baseURL: baseURL,
-            path: path,
-            jsonBody: [
-                "jsonrpc": "2.0",
-                "id": UUID().uuidString,
-                "method": "tools/call",
-                "params": [
-                    "name": name,
-                    "arguments": arguments,
-                ],
-            ],
-            sessionID: sessionID
+        try await callToolJSON(name: name, arguments: arguments as [String: Any])
+    }
+
+    func callToolJSON(name: String, arguments: [String: Any]) async throws -> Any {
+        let envelope = try await callMethod(
+            "tools/call",
+            params: [
+                "name": name,
+                "arguments": arguments,
+            ]
         )
-        let envelope = try parseMCPEnvelope(from: response.data)
         if let error = envelope["error"] as? [String: Any] {
             throw E2ETransportError("The live MCP tools/call request for '\(name)' failed with payload: \(error)")
         }
@@ -398,18 +398,7 @@ struct E2EMCPClient {
     }
 
     func readResourceText(uri: String) async throws -> String {
-        let response = try await Self.post(
-            baseURL: baseURL,
-            path: path,
-            jsonBody: [
-                "jsonrpc": "2.0",
-                "id": UUID().uuidString,
-                "method": "resources/read",
-                "params": ["uri": uri],
-            ],
-            sessionID: sessionID
-        )
-        let envelope = try parseMCPEnvelope(from: response.data)
+        let envelope = try await callMethod("resources/read", params: ["uri": uri])
         if let error = envelope["error"] as? [String: Any] {
             throw E2ETransportError("The live MCP resources/read request for '\(uri)' failed with payload: \(error)")
         }
@@ -417,6 +406,66 @@ struct E2EMCPClient {
         let contents = try requireArray("contents", in: result)
         let first = try requireFirstDictionary(in: contents)
         return try requireString("text", in: first)
+    }
+
+    func readResourceJSON(uri: String) async throws -> Any {
+        try JSONSerialization.jsonObject(with: Data(try await readResourceText(uri: uri).utf8))
+    }
+
+    func listResources() async throws -> [[String: Any]] {
+        let envelope = try await callMethod("resources/list", params: [:])
+        let result = try requireDictionary("result", in: envelope)
+        return try requireArray("resources", in: result)
+    }
+
+    func listResourceTemplates() async throws -> [[String: Any]] {
+        let envelope = try await callMethod("resources/templates/list", params: [:])
+        let result = try requireDictionary("result", in: envelope)
+        return try requireArray("resourceTemplates", in: result)
+    }
+
+    func listPrompts() async throws -> [[String: Any]] {
+        let envelope = try await callMethod("prompts/list", params: [:])
+        let result = try requireDictionary("result", in: envelope)
+        return try requireArray("prompts", in: result)
+    }
+
+    func getPrompt(name: String, arguments: [String: String]) async throws -> [String: Any] {
+        let envelope = try await callMethod(
+            "prompts/get",
+            params: [
+                "name": name,
+                "arguments": arguments,
+            ]
+        )
+        return try requireDictionary("result", in: envelope)
+    }
+
+    func subscribe(to uri: String) async throws {
+        _ = try await callMethod("resources/subscribe", params: ["uri": uri])
+    }
+
+    func unsubscribe(from uri: String) async throws {
+        _ = try await callMethod("resources/unsubscribe", params: ["uri": uri])
+    }
+
+    func callMethod(_ method: String, params: [String: Any]) async throws -> [String: Any] {
+        let response = try await Self.post(
+            baseURL: baseURL,
+            path: path,
+            jsonBody: [
+                "jsonrpc": "2.0",
+                "id": UUID().uuidString,
+                "method": method,
+                "params": params,
+            ],
+            sessionID: sessionID
+        )
+        return try parseMCPEnvelope(from: response.data)
+    }
+
+    func openEventStream() -> E2EMCPEventStream {
+        .init(baseURL: baseURL, path: path, sessionID: sessionID)
     }
 
     private static func post(
@@ -439,6 +488,122 @@ struct E2EMCPClient {
             throw E2ETransportError("The live MCP transport did not return an HTTPURLResponse.")
         }
         return E2EHTTPResponse(statusCode: httpResponse.statusCode, headers: httpResponse.allHeaderFields, data: data)
+    }
+}
+
+final class E2EMCPEventStream: @unchecked Sendable {
+    private let baseURL: URL
+    private let path: String
+    private let sessionID: String
+    private let buffer = E2ENotificationBuffer()
+    private var task: Task<Void, Never>?
+
+    init(baseURL: URL, path: String, sessionID: String) {
+        self.baseURL = baseURL
+        self.path = path
+        self.sessionID = sessionID
+    }
+
+    func start() {
+        guard task == nil else { return }
+
+        task = Task {
+            var request = URLRequest(url: baseURL.appending(path: path))
+            request.httpMethod = "GET"
+            request.setValue("text/event-stream", forHTTPHeaderField: "Accept")
+            request.setValue(sessionID, forHTTPHeaderField: "Mcp-Session-Id")
+
+            do {
+                let (bytes, response) = try await URLSession.shared.bytes(for: request)
+                guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+                    await buffer.finish(
+                        with: E2ETransportError(
+                            "The live MCP event stream did not open successfully for session '\(sessionID)'."
+                        )
+                    )
+                    return
+                }
+
+                var dataLines = [String]()
+                for try await line in bytes.lines {
+                    if Task.isCancelled {
+                        return
+                    }
+
+                    if line.isEmpty {
+                        if dataLines.isEmpty == false {
+                            let payload = dataLines.joined(separator: "\n")
+                            dataLines.removeAll(keepingCapacity: true)
+                            if let data = payload.data(using: .utf8) {
+                                await buffer.append(data)
+                            }
+                        }
+                        continue
+                    }
+
+                    if line.hasPrefix("data: ") {
+                        dataLines.append(String(line.dropFirst(6)))
+                    }
+                }
+            } catch is CancellationError {
+                return
+            } catch {
+                await buffer.finish(with: error)
+            }
+        }
+    }
+
+    func stop() {
+        task?.cancel()
+        task = nil
+    }
+
+    func waitForNotification(
+        timeout: Duration,
+        matching predicate: @escaping @Sendable ([String: Any]) -> Bool
+    ) async throws -> [String: Any] {
+        try await e2eWaitUntil(timeout: timeout, pollInterval: .milliseconds(100)) {
+            guard let data = try await self.buffer.takeMatching(predicate) else {
+                return nil
+            }
+            let json = try JSONSerialization.jsonObject(with: data)
+            guard let object = json as? [String: Any] else {
+                throw E2ETransportError(
+                    "The live MCP event stream produced a notification payload that was not a JSON object."
+                )
+            }
+            return object
+        }
+    }
+}
+
+private actor E2ENotificationBuffer {
+    private var notifications = [Data]()
+    private var terminalError: Error?
+
+    func append(_ notification: Data) {
+        notifications.append(notification)
+    }
+
+    func finish(with error: Error) {
+        terminalError = error
+    }
+
+    func takeMatching(_ predicate: @escaping @Sendable ([String: Any]) -> Bool) throws -> Data? {
+        if let terminalError {
+            throw terminalError
+        }
+
+        for (index, notification) in notifications.enumerated() {
+            let json = try JSONSerialization.jsonObject(with: notification)
+            guard let object = json as? [String: Any] else {
+                continue
+            }
+            if predicate(object) {
+                return notifications.remove(at: index)
+            }
+        }
+        return nil
     }
 }
 
@@ -776,9 +941,201 @@ struct E2EProfileListResponse: Decodable, Sendable {
 
 struct E2EProfileSnapshot: Decodable, Sendable {
     let profileName: String
+    let vibe: String?
+    let voiceDescription: String?
+    let sourceText: String?
 
     enum CodingKeys: String, CodingKey {
         case profileName = "profile_name"
+        case vibe
+        case voiceDescription = "voice_description"
+        case sourceText = "source_text"
+    }
+}
+
+struct E2ETransportStatus: Decodable, Sendable {
+    let name: String
+    let state: String
+    let advertisedAddress: String?
+
+    enum CodingKeys: String, CodingKey {
+        case name
+        case state
+        case advertisedAddress = "advertised_address"
+    }
+}
+
+struct E2EHealthSnapshot: Decodable, Sendable {
+    let status: String
+    let workerMode: String
+    let workerReady: Bool
+
+    enum CodingKeys: String, CodingKey {
+        case status
+        case workerMode = "worker_mode"
+        case workerReady = "worker_ready"
+    }
+}
+
+struct E2EStatusSnapshot: Decodable, Sendable {
+    let workerMode: String
+    let cachedProfiles: [E2EProfileSnapshot]
+    let transports: [E2ETransportStatus]
+    let generationQueue: E2EQueueStatusSnapshot
+    let playbackQueue: E2EQueueStatusSnapshot
+    let playback: E2EPlaybackStatusSnapshot
+
+    enum CodingKeys: String, CodingKey {
+        case workerMode = "worker_mode"
+        case cachedProfiles = "cached_profiles"
+        case transports
+        case generationQueue = "generation_queue"
+        case playbackQueue = "playback_queue"
+        case playback
+    }
+}
+
+struct E2EQueueStatusSnapshot: Decodable, Sendable {
+    let activeRequest: E2EActiveRequestSnapshot?
+    let queuedRequests: [E2EQueuedRequestSnapshot]
+
+    enum CodingKeys: String, CodingKey {
+        case activeRequest = "active_request"
+        case queuedRequests = "queued_requests"
+    }
+}
+
+struct E2EPlaybackStatusSnapshot: Decodable, Sendable {
+    let state: String
+    let activeRequest: E2EActiveRequestSnapshot?
+
+    enum CodingKeys: String, CodingKey {
+        case state
+        case activeRequest = "active_request"
+    }
+}
+
+struct E2EActiveRequestSnapshot: Decodable, Sendable, Equatable {
+    let id: String
+    let op: String
+    let profileName: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case op
+        case profileName = "profile_name"
+    }
+}
+
+struct E2EQueuedRequestSnapshot: Decodable, Sendable, Equatable {
+    let id: String
+    let op: String
+    let profileName: String?
+    let queuePosition: Int
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case op
+        case profileName = "profile_name"
+        case queuePosition = "queue_position"
+    }
+}
+
+struct E2EQueueSnapshotResponse: Decodable, Sendable {
+    let queueType: String
+    let activeRequest: E2EActiveRequestSnapshot?
+    let queue: [E2EQueuedRequestSnapshot]
+
+    enum CodingKeys: String, CodingKey {
+        case queueType = "queue_type"
+        case activeRequest = "active_request"
+        case queue
+    }
+}
+
+struct E2EPlaybackStateResponse: Decodable, Sendable {
+    let playback: E2EPlaybackStateSnapshot
+}
+
+struct E2EPlaybackStateSnapshot: Decodable, Sendable {
+    let state: String
+    let activeRequest: E2EActiveRequestSnapshot?
+
+    enum CodingKeys: String, CodingKey {
+        case state
+        case activeRequest = "active_request"
+    }
+}
+
+struct E2EQueueClearedResponse: Decodable, Sendable {
+    let clearedCount: Int
+
+    enum CodingKeys: String, CodingKey {
+        case clearedCount = "cleared_count"
+    }
+}
+
+struct E2EQueueCancellationResponse: Decodable, Sendable {
+    let cancelledRequestID: String
+
+    enum CodingKeys: String, CodingKey {
+        case cancelledRequestID = "cancelled_request_id"
+    }
+}
+
+struct E2ETextProfileListResponse: Decodable, Sendable {
+    let textProfiles: E2ETextProfilesSnapshot
+
+    enum CodingKeys: String, CodingKey {
+        case textProfiles = "text_profiles"
+    }
+}
+
+struct E2ETextProfileResponse: Decodable, Sendable {
+    let profile: E2ETextProfileSnapshot
+}
+
+struct E2ETextProfilesSnapshot: Decodable, Sendable {
+    let persistenceURL: String?
+    let baseProfile: E2ETextProfileSnapshot
+    let activeProfile: E2ETextProfileSnapshot
+    let storedProfiles: [E2ETextProfileSnapshot]
+    let effectiveProfile: E2ETextProfileSnapshot
+
+    enum CodingKeys: String, CodingKey {
+        case persistenceURL = "persistence_url"
+        case baseProfile = "base_profile"
+        case activeProfile = "active_profile"
+        case storedProfiles = "stored_profiles"
+        case effectiveProfile = "effective_profile"
+    }
+}
+
+struct E2ETextProfileSnapshot: Decodable, Sendable, Equatable {
+    let id: String
+    let name: String
+    let replacements: [E2ETextReplacementSnapshot]
+}
+
+struct E2ETextReplacementSnapshot: Decodable, Sendable, Equatable {
+    let id: String
+    let text: String
+    let replacement: String
+    let match: String
+    let phase: String
+    let isCaseSensitive: Bool
+    let formats: [String]
+    let priority: Int
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case text
+        case replacement
+        case match
+        case phase
+        case isCaseSensitive = "is_case_sensitive"
+        case formats
+        case priority
     }
 }
 
@@ -806,6 +1163,7 @@ struct E2EJobEvent: Decodable, Sendable {
     let profilePath: String?
     let message: String?
     let code: String?
+    let cancelledRequestID: String?
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -817,5 +1175,6 @@ struct E2EJobEvent: Decodable, Sendable {
         case profilePath = "profile_path"
         case message
         case code
+        case cancelledRequestID = "cancelled_request_id"
     }
 }
