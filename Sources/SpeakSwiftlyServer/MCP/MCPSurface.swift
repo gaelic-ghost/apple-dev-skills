@@ -3,6 +3,7 @@ import Hummingbird
 import HTTPTypes
 import MCP
 import NIOCore
+import SpeakSwiftlyCore
 import TextForSpeech
 
 // MARK: - MCP Surface
@@ -113,6 +114,7 @@ struct MCPSurface {
             case "create_profile":
                 let jobID = try await host.submitCreateProfile(
                     profileName: requiredString("profile_name", in: arguments),
+                    vibe: try requiredVibe("vibe", in: arguments),
                     text: requiredString("text", in: arguments),
                     voiceDescription: requiredString("voice_description", in: arguments),
                     outputPath: optionalString("output_path", in: arguments)
@@ -127,6 +129,7 @@ struct MCPSurface {
             case "create_clone":
                 let jobID = try await host.submitCreateClone(
                     profileName: requiredString("profile_name", in: arguments),
+                    vibe: try requiredVibe("vibe", in: arguments),
                     referenceAudioPath: requiredString("reference_audio_path", in: arguments),
                     transcript: optionalString("transcript", in: arguments)
                 )
@@ -976,6 +979,20 @@ private func requestSourceFormat(
         )
     }
     return format
+}
+
+private func requiredVibe(
+    _ key: String,
+    in arguments: [String: Value]
+) throws -> SpeakSwiftly.Vibe {
+    let rawValue = try requiredString(key, in: arguments)
+    guard let vibe = SpeakSwiftly.Vibe(rawValue: rawValue) else {
+        let acceptedValues = SpeakSwiftly.Vibe.allCases.map(\.rawValue).joined(separator: ", ")
+        throw MCPError.invalidParams(
+            "Tool argument '\(key)' used unsupported value '\(rawValue)'. Expected one of: \(acceptedValues)."
+        )
+    }
+    return vibe
 }
 
 private func legacyRequestTextFormat(for format: TextForSpeech.Format) -> TextForSpeech.TextFormat? {

@@ -203,6 +203,7 @@ private func registerHTTPRoutes(
         let payload = try await request.decode(as: CreateProfileRequestPayload.self, context: context)
         let jobID = try await host.submitCreateProfile(
             profileName: payload.profileName,
+            vibe: try payload.vibeModel(),
             text: payload.text,
             voiceDescription: payload.voiceDescription,
             outputPath: payload.outputPath
@@ -214,6 +215,7 @@ private func registerHTTPRoutes(
         let payload = try await request.decode(as: CreateCloneRequestPayload.self, context: context)
         let jobID = try await host.submitCreateClone(
             profileName: payload.profileName,
+            vibe: try payload.vibeModel(),
             referenceAudioPath: payload.referenceAudioPath,
             transcript: payload.transcript
         )

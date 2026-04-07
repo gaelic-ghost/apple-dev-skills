@@ -45,8 +45,8 @@ Today the server talks directly to:
 - `SpeakSwiftly.live()`
 - `SpeakSwiftly.Runtime.statusEvents()`
 - `SpeakSwiftly.Runtime.speak(text:with:as:textProfileName:textContext:sourceFormat:id:)`
-- `SpeakSwiftly.Runtime.createProfile(named:from:voice:outputPath:id:)`
-- `SpeakSwiftly.Runtime.createClone(named:from:transcript:id:)`
+- `SpeakSwiftly.Runtime.createProfile(named:from:vibe:voice:outputPath:id:)`
+- `SpeakSwiftly.Runtime.createClone(named:from:vibe:transcript:id:)`
 - `SpeakSwiftly.Runtime.profiles(id:)`
 - `SpeakSwiftly.Runtime.removeProfile(named:id:)`
 - `SpeakSwiftly.Runtime.queue(_:id:)`
@@ -73,7 +73,7 @@ For text normalization, the server stays on the public `TextForSpeech` model sur
 - `SpeakSwiftly.Runtime.normalizer.replaceReplacement(...)`
 - `SpeakSwiftly.Runtime.normalizer.removeReplacement(...)`
 
-The server also consumes the public summary and event types that those calls vend, including `SpeakSwiftly.RequestHandle`, `SpeakSwiftly.RequestEvent`, `SpeakSwiftly.StatusEvent`, `SpeakSwiftly.ProfileSummary`, `SpeakSwiftly.ActiveRequest`, `SpeakSwiftly.QueuedRequest`, and `SpeakSwiftly.PlaybackStateSnapshot`.
+The server also consumes the public summary and event types that those calls vend, including `SpeakSwiftly.RequestHandle`, `SpeakSwiftly.RequestEvent`, `SpeakSwiftly.StatusEvent`, `SpeakSwiftly.ProfileSummary`, `SpeakSwiftly.ActiveRequest`, `SpeakSwiftly.QueuedRequest`, `SpeakSwiftly.PlaybackStateSnapshot`, `SpeakSwiftly.Vibe`, and `SpeakSwiftly.Configuration`.
 
 That alignment means the remaining translation layer is intentionally transport-local: snake_case HTTP and MCP payload shaping, retained job snapshots, and SSE framing. The server is not reaching through the library boundary to construct raw worker protocol messages or private runtime state directly.
 
@@ -291,7 +291,7 @@ The current HTTP surface is:
 - `GET /jobs/{job_id}`
 - `GET /jobs/{job_id}/events`
 
-`POST /speak`, `POST /profiles`, `POST /profiles/clone`, and `DELETE /profiles/{profile_name}` all return job metadata immediately. `POST /speak` mirrors the current public `SpeakSwiftly.Runtime.speak(... as: .live)` path directly, which means every speech request records the initial acknowledgement event before it starts and eventually reaches terminal completion. `POST /speak` also accepts optional `cwd`, `repo_root`, `text_profile_name`, `text_format`, `nested_source_format`, and `source_format` fields so clients can pass path-aware, stored-profile-aware, and explicit format-aware normalization context through to the runtime when speech input should not rely on automatic format detection. Progress, worker status changes, acknowledgements, and terminal results are exposed through `GET /jobs/{job_id}/events` as SSE, and retained job state is discoverable through `GET /jobs`.
+`POST /speak`, `POST /profiles`, `POST /profiles/clone`, and `DELETE /profiles/{profile_name}` all return job metadata immediately. `POST /speak` mirrors the current public `SpeakSwiftly.Runtime.speak(... as: .live)` path directly, which means every speech request records the initial acknowledgement event before it starts and eventually reaches terminal completion. `POST /speak` also accepts optional `cwd`, `repo_root`, `text_profile_name`, `text_format`, `nested_source_format`, and `source_format` fields so clients can pass path-aware, stored-profile-aware, and explicit format-aware normalization context through to the runtime when speech input should not rely on automatic format detection. `POST /profiles` and `POST /profiles/clone` now require an explicit `vibe` value of `masc`, `femme`, or `androgenous` so the server stays aligned with the current `SpeakSwiftly` profile model instead of guessing. Progress, worker status changes, acknowledgements, and terminal results are exposed through `GET /jobs/{job_id}/events` as SSE, and retained job state is discoverable through `GET /jobs`.
 
 The `/text-profiles` route family is intentionally synchronous and state-oriented rather than job-oriented. It exposes the current base, active, stored, and effective `TextForSpeech.Profile` state plus replacement editing and profile persistence paths for downstream apps or agents that need to help a user shape text normalization directly. `POST /text-profiles/load` and `POST /text-profiles/save` map directly to the public normalizer persistence calls so operators can refresh or flush stored normalization state without reaching into the runtime process manually.
 

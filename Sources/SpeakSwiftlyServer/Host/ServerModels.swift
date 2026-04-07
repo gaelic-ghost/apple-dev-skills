@@ -55,27 +55,39 @@ struct SpeakRequestPayload: Decodable {
 
 struct CreateProfileRequestPayload: Decodable {
     let profileName: String
+    let vibe: String
     let text: String
     let voiceDescription: String
     let outputPath: String?
 
     enum CodingKeys: String, CodingKey {
         case profileName = "profile_name"
+        case vibe
         case text
         case voiceDescription = "voice_description"
         case outputPath = "output_path"
+    }
+
+    func vibeModel() throws -> SpeakSwiftly.Vibe {
+        try resolveVibe(vibe, fieldName: "vibe")
     }
 }
 
 struct CreateCloneRequestPayload: Decodable {
     let profileName: String
+    let vibe: String
     let referenceAudioPath: String
     let transcript: String?
 
     enum CodingKeys: String, CodingKey {
         case profileName = "profile_name"
+        case vibe
         case referenceAudioPath = "reference_audio_path"
         case transcript
+    }
+
+    func vibeModel() throws -> SpeakSwiftly.Vibe {
+        try resolveVibe(vibe, fieldName: "vibe")
     }
 }
 
@@ -99,12 +111,14 @@ struct JobListResponse: ResponseEncodable, Sendable {
 
 public struct ProfileSnapshot: Codable, Sendable, Equatable {
     public let profileName: String
+    public let vibe: String
     public let createdAt: String
     public let voiceDescription: String
     public let sourceText: String
 
     enum CodingKeys: String, CodingKey {
         case profileName = "profile_name"
+        case vibe
         case createdAt = "created_at"
         case voiceDescription = "voice_description"
         case sourceText = "source_text"
@@ -112,6 +126,7 @@ public struct ProfileSnapshot: Codable, Sendable, Equatable {
 
     init(profile: SpeakSwiftly.ProfileSummary) {
         self.profileName = profile.profileName
+        self.vibe = profile.vibe.rawValue
         self.createdAt = TimestampFormatter.string(from: profile.createdAt)
         self.voiceDescription = profile.voiceDescription
         self.sourceText = profile.sourceText
@@ -638,6 +653,20 @@ private func resolveSourceFormat(
         )
     }
     return format
+}
+
+private func resolveVibe(
+    _ rawValue: String,
+    fieldName: String
+) throws -> SpeakSwiftly.Vibe {
+    guard let vibe = SpeakSwiftly.Vibe(rawValue: rawValue) else {
+        let supportedVibes = SpeakSwiftly.Vibe.allCases.map(\.rawValue).joined(separator: ", ")
+        throw HTTPError(
+            .badRequest,
+            message: "Voice profile field '\(fieldName)' used unsupported value '\(rawValue)'. Expected one of: \(supportedVibes)."
+        )
+    }
+    return vibe
 }
 
 private func legacyRequestTextFormat(for format: TextForSpeech.Format) -> TextForSpeech.TextFormat? {

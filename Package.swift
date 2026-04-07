@@ -22,7 +22,7 @@ let package = Package(
         .package(url: "https://github.com/hummingbird-project/hummingbird.git", from: "2.21.1"),
         .package(
             url: "https://github.com/gaelic-ghost/SpeakSwiftly.git",
-            exact: "0.9.6"
+            exact: "0.11.0"
         ),
         .package(url: "https://github.com/gaelic-ghost/TextForSpeech.git", from: "0.9.3"),
         .package(url: "https://github.com/apple/swift-async-algorithms", from: "1.1.3"),

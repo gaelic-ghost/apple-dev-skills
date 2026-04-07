@@ -39,7 +39,7 @@ struct RuntimeRequestHandle: Sendable {
 protocol ServerRuntimeProtocol: Actor {
     func start()
     func shutdown() async
-    func statusEvents() -> AsyncStream<SpeakSwiftly.StatusEvent>
+    func statusEvents() async -> AsyncStream<SpeakSwiftly.StatusEvent>
     func speak(
         text: String,
         with profileName: String,
@@ -51,6 +51,7 @@ protocol ServerRuntimeProtocol: Actor {
     ) async -> RuntimeRequestHandle
     func createProfile(
         named profileName: String,
+        vibe: SpeakSwiftly.Vibe,
         from text: String,
         voice voiceDescription: String,
         outputPath: String?,
@@ -58,6 +59,7 @@ protocol ServerRuntimeProtocol: Actor {
     ) async -> RuntimeRequestHandle
     func createClone(
         named profileName: String,
+        vibe: SpeakSwiftly.Vibe,
         from referenceAudioURL: URL,
         transcript: String?,
         id: String
@@ -91,7 +93,23 @@ protocol ServerRuntimeProtocol: Actor {
 
 // MARK: - Runtime Adapter
 
-extension SpeakSwiftly.Runtime: ServerRuntimeProtocol {
+actor ServerRuntimeAdapter: ServerRuntimeProtocol {
+    private let runtime: SpeakSwiftly.Runtime
+
+    init(runtime: SpeakSwiftly.Runtime) {
+        self.runtime = runtime
+    }
+
+    func start() {}
+
+    func shutdown() async {
+        await runtime.shutdown()
+    }
+
+    func statusEvents() async -> AsyncStream<SpeakSwiftly.StatusEvent> {
+        await runtime.statusEvents()
+    }
+
     func speak(
         text: String,
         with profileName: String,
@@ -102,7 +120,7 @@ extension SpeakSwiftly.Runtime: ServerRuntimeProtocol {
         id: String
     ) async -> RuntimeRequestHandle {
         RuntimeRequestHandle(
-            await self.speak(
+            await runtime.speak(
                 text: text,
                 with: profileName,
                 as: jobType,
@@ -116,15 +134,17 @@ extension SpeakSwiftly.Runtime: ServerRuntimeProtocol {
 
     func createProfile(
         named profileName: String,
+        vibe: SpeakSwiftly.Vibe,
         from text: String,
         voice voiceDescription: String,
         outputPath: String?,
         id: String
     ) async -> RuntimeRequestHandle {
         RuntimeRequestHandle(
-            await self.createProfile(
+            await runtime.createProfile(
                 named: profileName,
                 from: text,
+                vibe: vibe,
                 voice: voiceDescription,
                 outputPath: outputPath,
                 id: id
@@ -134,14 +154,16 @@ extension SpeakSwiftly.Runtime: ServerRuntimeProtocol {
 
     func createClone(
         named profileName: String,
+        vibe: SpeakSwiftly.Vibe,
         from referenceAudioURL: URL,
         transcript: String?,
         id: String
     ) async -> RuntimeRequestHandle {
         RuntimeRequestHandle(
-            await self.createClone(
+            await runtime.createClone(
                 named: profileName,
                 from: referenceAudioURL,
+                vibe: vibe,
                 transcript: transcript,
                 id: id
             )
@@ -149,59 +171,59 @@ extension SpeakSwiftly.Runtime: ServerRuntimeProtocol {
     }
 
     func profiles(id: String) async -> RuntimeRequestHandle {
-        RuntimeRequestHandle(await self.profiles(id: id))
+        RuntimeRequestHandle(await runtime.profiles(id: id))
     }
 
     func removeProfile(named profileName: String, id: String) async -> RuntimeRequestHandle {
-        RuntimeRequestHandle(await self.removeProfile(named: profileName, id: id))
+        RuntimeRequestHandle(await runtime.removeProfile(named: profileName, id: id))
     }
 
     func queue(_ queueType: SpeakSwiftly.Queue, id requestID: String) async -> RuntimeRequestHandle {
-        RuntimeRequestHandle(await self.queue(queueType, id: requestID))
+        RuntimeRequestHandle(await runtime.queue(queueType, id: requestID))
     }
 
     func playback(_ action: SpeakSwiftly.PlaybackAction, id requestID: String) async -> RuntimeRequestHandle {
-        RuntimeRequestHandle(await self.playback(action, id: requestID))
+        RuntimeRequestHandle(await runtime.playback(action, id: requestID))
     }
 
     func clearQueue(id requestID: String) async -> RuntimeRequestHandle {
-        RuntimeRequestHandle(await self.clearQueue(id: requestID))
+        RuntimeRequestHandle(await runtime.clearQueue(id: requestID))
     }
 
     func cancelRequest(_ id: String, requestID: String) async -> RuntimeRequestHandle {
-        RuntimeRequestHandle(await self.cancelRequest(id, requestID: requestID))
+        RuntimeRequestHandle(await runtime.cancelRequest(id, requestID: requestID))
     }
 
     func activeTextProfile() async -> TextForSpeech.Profile {
-        await normalizer.activeProfile()
+        await runtime.normalizer.activeProfile()
     }
 
     func baseTextProfile() async -> TextForSpeech.Profile {
-        await normalizer.baseProfile()
+        await runtime.normalizer.baseProfile()
     }
 
     func textProfile(named profileID: String) async -> TextForSpeech.Profile? {
-        await normalizer.profile(named: profileID)
+        await runtime.normalizer.profile(named: profileID)
     }
 
     func textProfiles() async -> [TextForSpeech.Profile] {
-        await normalizer.profiles()
+        await runtime.normalizer.profiles()
     }
 
     func effectiveTextProfile(named profileID: String?) async -> TextForSpeech.Profile {
-        await normalizer.effectiveProfile(named: profileID)
+        await runtime.normalizer.effectiveProfile(named: profileID)
     }
 
     func textProfilePersistenceURL() async -> URL? {
-        await normalizer.persistenceURL()
+        await runtime.normalizer.persistenceURL()
     }
 
     func loadTextProfiles() async throws {
-        try await normalizer.loadProfiles()
+        try await runtime.normalizer.loadProfiles()
     }
 
     func saveTextProfiles() async throws {
-        try await normalizer.saveProfiles()
+        try await runtime.normalizer.saveProfiles()
     }
 
     func createTextProfile(
@@ -209,55 +231,55 @@ extension SpeakSwiftly.Runtime: ServerRuntimeProtocol {
         named name: String,
         replacements: [TextForSpeech.Replacement]
     ) async throws -> TextForSpeech.Profile {
-        try await normalizer.createProfile(id: id, named: name, replacements: replacements)
+        try await runtime.normalizer.createProfile(id: id, named: name, replacements: replacements)
     }
 
     func storeTextProfile(_ profile: TextForSpeech.Profile) async throws {
-        try await normalizer.storeProfile(profile)
+        try await runtime.normalizer.storeProfile(profile)
     }
 
     func useTextProfile(_ profile: TextForSpeech.Profile) async throws {
-        try await normalizer.useProfile(profile)
+        try await runtime.normalizer.useProfile(profile)
     }
 
     func removeTextProfile(named profileID: String) async throws {
-        try await normalizer.removeProfile(named: profileID)
+        try await runtime.normalizer.removeProfile(named: profileID)
     }
 
     func resetTextProfile() async throws {
-        try await normalizer.reset()
+        try await runtime.normalizer.reset()
     }
 
     func addTextReplacement(_ replacement: TextForSpeech.Replacement) async throws -> TextForSpeech.Profile {
-        try await normalizer.addReplacement(replacement)
+        try await runtime.normalizer.addReplacement(replacement)
     }
 
     func addTextReplacement(
         _ replacement: TextForSpeech.Replacement,
         toStoredTextProfileNamed profileID: String
     ) async throws -> TextForSpeech.Profile {
-        try await normalizer.addReplacement(replacement, toStoredProfileNamed: profileID)
+        try await runtime.normalizer.addReplacement(replacement, toStoredProfileNamed: profileID)
     }
 
     func replaceTextReplacement(_ replacement: TextForSpeech.Replacement) async throws -> TextForSpeech.Profile {
-        try await normalizer.replaceReplacement(replacement)
+        try await runtime.normalizer.replaceReplacement(replacement)
     }
 
     func replaceTextReplacement(
         _ replacement: TextForSpeech.Replacement,
         inStoredTextProfileNamed profileID: String
     ) async throws -> TextForSpeech.Profile {
-        try await normalizer.replaceReplacement(replacement, inStoredProfileNamed: profileID)
+        try await runtime.normalizer.replaceReplacement(replacement, inStoredProfileNamed: profileID)
     }
 
     func removeTextReplacement(id replacementID: String) async throws -> TextForSpeech.Profile {
-        try await normalizer.removeReplacement(id: replacementID)
+        try await runtime.normalizer.removeReplacement(id: replacementID)
     }
 
     func removeTextReplacement(
         id replacementID: String,
         fromStoredTextProfileNamed profileID: String
     ) async throws -> TextForSpeech.Profile {
-        try await normalizer.removeReplacement(id: replacementID, fromStoredProfileNamed: profileID)
+        try await runtime.normalizer.removeReplacement(id: replacementID, fromStoredProfileNamed: profileID)
     }
 }

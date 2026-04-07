@@ -39,12 +39,13 @@ enum MCPToolCatalog {
         ),
         Tool(
             name: "create_profile",
-            description: "Create a new stored SpeakSwiftly voice profile from source text and a voice description. Prefer drafting the text and voice description first when the user is still exploring voice direction, and use output_path when a downstream app wants the generated reference audio file preserved.",
+            description: "Create a new stored SpeakSwiftly voice profile from source text, an explicit vibe, and a voice description. Prefer drafting the text and voice description first when the user is still exploring voice direction, and use output_path when a downstream app wants the generated reference audio file preserved.",
             inputSchema: [
                 "type": "object",
-                "required": ["profile_name", "text", "voice_description"],
+                "required": ["profile_name", "vibe", "text", "voice_description"],
                 "properties": [
                     "profile_name": ["type": "string"],
+                    "vibe": ["type": "string", "enum": ["masc", "femme", "androgenous"]],
                     "text": ["type": "string"],
                     "voice_description": ["type": "string"],
                     "output_path": ["type": "string"],
@@ -53,12 +54,13 @@ enum MCPToolCatalog {
         ),
         Tool(
             name: "create_clone",
-            description: "Create a new stored SpeakSwiftly voice clone from local reference audio. Provide transcript when the user already knows the spoken text to avoid unnecessary transcription work, otherwise omit it and let SpeakSwiftly infer the transcript internally.",
+            description: "Create a new stored SpeakSwiftly voice clone from local reference audio with an explicit vibe. Provide transcript when the user already knows the spoken text to avoid unnecessary transcription work, otherwise omit it and let SpeakSwiftly infer the transcript internally.",
             inputSchema: [
                 "type": "object",
-                "required": ["profile_name", "reference_audio_path"],
+                "required": ["profile_name", "vibe", "reference_audio_path"],
                 "properties": [
                     "profile_name": ["type": "string"],
+                    "vibe": ["type": "string", "enum": ["masc", "femme", "androgenous"]],
                     "reference_audio_path": ["type": "string"],
                     "transcript": ["type": "string"],
                 ],

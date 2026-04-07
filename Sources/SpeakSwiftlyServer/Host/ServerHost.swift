@@ -82,7 +82,7 @@ actor ServerHost {
     // MARK: - Construction
 
     static func live(appConfig: AppConfig, state: ServerState) async -> ServerHost {
-        let runtime = await SpeakSwiftly.live()
+        let runtime = ServerRuntimeAdapter(runtime: await SpeakSwiftly.live())
         let host = ServerHost(
             configuration: appConfig.server,
             httpConfig: appConfig.http,
@@ -563,6 +563,7 @@ actor ServerHost {
 
     func submitCreateProfile(
         profileName: String,
+        vibe: SpeakSwiftly.Vibe,
         text: String,
         voiceDescription: String,
         outputPath: String?
@@ -571,6 +572,7 @@ actor ServerHost {
         let requestID = UUID().uuidString
         let handle = await runtime.createProfile(
             named: profileName,
+            vibe: vibe,
             from: text,
             voice: voiceDescription,
             outputPath: outputPath,
@@ -581,6 +583,7 @@ actor ServerHost {
 
     func submitCreateClone(
         profileName: String,
+        vibe: SpeakSwiftly.Vibe,
         referenceAudioPath: String,
         transcript: String?
     ) async throws -> String {
@@ -588,6 +591,7 @@ actor ServerHost {
         let requestID = UUID().uuidString
         let handle = await runtime.createClone(
             named: profileName,
+            vibe: vibe,
             from: URL(fileURLWithPath: referenceAudioPath),
             transcript: transcript,
             id: requestID

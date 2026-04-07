@@ -29,6 +29,7 @@ actor MockRuntime: ServerRuntimeProtocol {
 
     struct CreateCloneInvocation: Sendable, Equatable {
         let profileName: String
+        let vibe: SpeakSwiftly.Vibe
         let referenceAudioPath: String
         let transcript: String?
     }
@@ -88,7 +89,7 @@ actor MockRuntime: ServerRuntimeProtocol {
         queuedRequests.removeAll()
     }
 
-    func statusEvents() -> AsyncStream<SpeakSwiftly.StatusEvent> {
+    func statusEvents() async -> AsyncStream<SpeakSwiftly.StatusEvent> {
         AsyncStream { continuation in
             self.statusContinuation = continuation
         }
@@ -145,6 +146,7 @@ actor MockRuntime: ServerRuntimeProtocol {
 
     func createProfile(
         named profileName: String,
+        vibe: SpeakSwiftly.Vibe,
         from text: String,
         voice voiceDescription: String,
         outputPath: String?,
@@ -155,6 +157,7 @@ actor MockRuntime: ServerRuntimeProtocol {
             profiles.append(
                 SpeakSwiftly.ProfileSummary(
                     profileName: profileName,
+                    vibe: vibe,
                     createdAt: Date(),
                     voiceDescription: voiceDescription,
                     sourceText: text
@@ -170,6 +173,7 @@ actor MockRuntime: ServerRuntimeProtocol {
 
     func createClone(
         named profileName: String,
+        vibe: SpeakSwiftly.Vibe,
         from referenceAudioURL: URL,
         transcript: String?,
         id: String
@@ -177,6 +181,7 @@ actor MockRuntime: ServerRuntimeProtocol {
         createCloneInvocations.append(
             .init(
                 profileName: profileName,
+                vibe: vibe,
                 referenceAudioPath: referenceAudioURL.path,
                 transcript: transcript
             )
@@ -185,6 +190,7 @@ actor MockRuntime: ServerRuntimeProtocol {
             profiles.append(
                 SpeakSwiftly.ProfileSummary(
                     profileName: profileName,
+                    vibe: vibe,
                     createdAt: Date(),
                     voiceDescription: "Imported reference audio clone.",
                     sourceText: transcript ?? "Imported clone transcript."
@@ -491,6 +497,8 @@ actor MockRuntime: ServerRuntimeProtocol {
         switch jobType {
         case .live:
             "queue_speech_live"
+        case .file:
+            "queue_speech_file"
         }
     }
 
@@ -1232,7 +1240,7 @@ actor MockRuntime: ServerRuntimeProtocol {
             method: .post,
             headers: [.contentType: "application/json"],
             body: byteBuffer(
-                #"{"profile_name":"clone-default","reference_audio_path":"./Fixtures/reference.wav","transcript":"Cloned route test transcript."}"#
+                #"{"profile_name":"clone-default","vibe":"femme","reference_audio_path":"./Fixtures/reference.wav","transcript":"Cloned route test transcript."}"#
             )
         )
         let cloneJSON = try jsonObject(from: cloneResponse.body)
@@ -1401,6 +1409,7 @@ actor MockRuntime: ServerRuntimeProtocol {
                     name: "create_clone",
                     arguments: [
                         "profile_name": "clone-from-mcp",
+                        "vibe": "androgenous",
                         "reference_audio_path": "./Fixtures/mcp-reference.wav",
                         "transcript": "Imported from MCP",
                     ]
@@ -1414,6 +1423,7 @@ actor MockRuntime: ServerRuntimeProtocol {
     #expect(createCloneToolPayload["job_resource_uri"] as? String == "speak://jobs/\(createCloneJobID)")
     let createCloneInvocation = try #require(await runtime.latestCreateCloneInvocation())
     #expect(createCloneInvocation.profileName == "clone-from-mcp")
+    #expect(createCloneInvocation.vibe == .androgenous)
     #expect(createCloneInvocation.referenceAudioPath == URL(fileURLWithPath: "./Fixtures/mcp-reference.wav").path)
     #expect(createCloneInvocation.transcript == "Imported from MCP")
 
@@ -2363,6 +2373,7 @@ actor MockRuntime: ServerRuntimeProtocol {
 
     let jobID = try await host.submitCreateProfile(
         profileName: "bright-guide",
+        vibe: .femme,
         text: "Hello there",
         voiceDescription: "Warm and bright",
         outputPath: nil
@@ -2432,6 +2443,7 @@ private func testHTTPConfig(_ configuration: ServerConfiguration) -> HTTPConfig 
 private func sampleProfile() -> SpeakSwiftly.ProfileSummary {
     .init(
         profileName: "default",
+        vibe: .femme,
         createdAt: Date(timeIntervalSince1970: 1_700_000_000),
         voiceDescription: "Warm and clear",
         sourceText: "A reference voice sample."

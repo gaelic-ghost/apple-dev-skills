@@ -315,12 +315,14 @@ struct SpeakSwiftlyServerE2ETests {
         using client: E2EHTTPClient,
         server: ServerProcess,
         profileName: String,
+        vibe: String = "femme",
         text: String,
         voiceDescription: String,
         outputPath: String? = nil
     ) async throws {
         var body: [String: Any] = [
             "profile_name": profileName,
+            "vibe": vibe,
             "text": text,
             "voice_description": voiceDescription,
         ]
@@ -350,12 +352,14 @@ struct SpeakSwiftlyServerE2ETests {
         using client: E2EHTTPClient,
         server: ServerProcess,
         profileName: String,
+        vibe: String = "femme",
         referenceAudioPath: String,
         transcript: String?,
         expectTranscription: Bool
     ) async throws {
         var body: [String: Any] = [
             "profile_name": profileName,
+            "vibe": vibe,
             "reference_audio_path": referenceAudioPath,
         ]
         if let transcript {
@@ -514,12 +518,14 @@ struct SpeakSwiftlyServerE2ETests {
         using client: E2EMCPClient,
         server: ServerProcess,
         profileName: String,
+        vibe: String = "femme",
         text: String,
         voiceDescription: String,
         outputPath: String? = nil
     ) async throws {
         var arguments = [
             "profile_name": profileName,
+            "vibe": vibe,
             "text": text,
             "voice_description": voiceDescription,
         ]
@@ -549,12 +555,14 @@ struct SpeakSwiftlyServerE2ETests {
         using client: E2EMCPClient,
         server: ServerProcess,
         profileName: String,
+        vibe: String = "femme",
         referenceAudioPath: String,
         transcript: String?,
         expectTranscription: Bool
     ) async throws {
         var arguments = [
             "profile_name": profileName,
+            "vibe": vibe,
             "reference_audio_path": referenceAudioPath,
         ]
         if let transcript {
