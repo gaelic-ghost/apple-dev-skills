@@ -1,0 +1,73 @@
+from __future__ import annotations
+
+import json
+import os
+import subprocess
+import tempfile
+import unittest
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+SCRIPT = ROOT / "skills/swift-package-workflow/scripts/run_workflow.py"
+
+
+class SwiftPackageWorkflowTests(unittest.TestCase):
+    def run_script(self, *args: str, env: dict | None = None) -> tuple[int, dict]:
+        command_env = dict(env or os.environ)
+        command_env.setdefault("UV_CACHE_DIR", str(Path(tempfile.gettempdir()) / "apple-dev-skills-uv-cache"))
+        proc = subprocess.run(
+            [str(SCRIPT), *args],
+            cwd="/tmp",
+            env=command_env,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        return proc.returncode, json.loads(proc.stdout)
+
+    def test_blocks_non_package_repo(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            code, payload = self.run_script("--operation-type", "build", "--repo-root", tmpdir)
+            self.assertEqual(code, 1)
+            self.assertEqual(payload["status"], "blocked")
+            self.assertEqual(payload["output"]["repo_shape"]["reason"], "package-swift-missing")
+
+    def test_succeeds_for_plain_package_repo(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            Path(tmpdir, "Package.swift").write_text("// swift-tools-version: 6.0\n", encoding="utf-8")
+            code, payload = self.run_script("--operation-type", "build", "--repo-root", tmpdir)
+            self.assertEqual(code, 0)
+            self.assertEqual(payload["status"], "success")
+            self.assertEqual(payload["path_type"], "primary")
+            self.assertEqual(payload["output"]["planned_commands"], ["swift build"])
+            self.assertFalse(payload["output"]["repo_shape"]["mixed_root"])
+
+    def test_handoffs_mixed_root_without_opt_in(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            Path(tmpdir, "Package.swift").write_text("// swift-tools-version: 6.0\n", encoding="utf-8")
+            Path(tmpdir, "Demo.xcodeproj").mkdir()
+            code, payload = self.run_script("--operation-type", "build", "--repo-root", tmpdir)
+            self.assertEqual(code, 0)
+            self.assertEqual(payload["status"], "handoff")
+            self.assertTrue(payload["output"]["repo_shape"]["mixed_root"])
+            self.assertIn("xcode-app-project-workflow", payload["output"]["next_step"])
+
+    def test_allows_mixed_root_with_opt_in(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            Path(tmpdir, "Package.swift").write_text("// swift-tools-version: 6.0\n", encoding="utf-8")
+            Path(tmpdir, "Demo.xcodeproj").mkdir()
+            code, payload = self.run_script(
+                "--operation-type",
+                "build",
+                "--repo-root",
+                tmpdir,
+                "--mixed-root-opt-in",
+            )
+            self.assertEqual(code, 0)
+            self.assertEqual(payload["status"], "success")
+            self.assertTrue(payload["output"]["repo_shape"]["mixed_root"])
+
+
+if __name__ == "__main__":
+    unittest.main()

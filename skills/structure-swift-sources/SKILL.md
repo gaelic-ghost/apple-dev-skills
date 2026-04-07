@@ -17,6 +17,7 @@ Use this skill as the top-level workflow for structural cleanup inside existing 
 - Use this skill when the user wants DocC comments added across Swift symbols as part of a structure or hygiene pass.
 - Use this skill when a Swift package or Xcode app repo has drifted away from the intended feature-plus-layer directory shape.
 - Recommend `format-swift-sources` first when formatter or linter setup is missing, unclear, or stale.
+- Recommend `swift-package-workflow` when structural cleanup in a plain package repo turns into ordinary package execution, manifest work, or SwiftPM validation.
 - Recommend `xcode-app-project-workflow` when structural cleanup turns into active Xcode execution, scheme validation, or guarded project mutation work.
 - Recommend `sync-xcode-project-guidance` or `sync-swift-package-guidance` when the real need is repo-level `AGENTS.md` alignment rather than source-structure cleanup.
 

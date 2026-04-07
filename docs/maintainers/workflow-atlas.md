@@ -20,6 +20,7 @@ This document describes the maintainer-facing workflow view of the active skills
 flowchart TD
     U["User request"] --> A["Agent classifies request"]
     A --> X["xcode-app-project-workflow"]
+    A --> WP["swift-package-workflow"]
     A --> D["explore-apple-swift-docs"]
     A --> ST["format-swift-sources"]
     A --> SS["structure-swift-sources"]
@@ -31,8 +32,12 @@ flowchart TD
     X --> XT["May recommend format-swift-sources for SwiftLint or SwiftFormat setup"]
     X --> XSRC["May recommend structure-swift-sources for source cleanup"]
     X --> XB["May recommend bootstrap-swift-package"]
+    X --> XWP["May recommend swift-package-workflow for ordinary package work"]
     X --> XS["May recommend bootstrap-xcode-app-project only when the user actually means new-project creation"]
     X --> SG["May recommend sync-xcode-project-guidance for repo guidance alignment"]
+    WP --> WPD["May recommend explore-apple-swift-docs"]
+    WP --> WPX["May recommend xcode-app-project-workflow when Xcode-managed behavior matters"]
+    WP --> WPS["May recommend sync-swift-package-guidance for repo guidance alignment"]
     D --> DX["May recommend xcode-app-project-workflow"]
     D --> DT["May recommend format-swift-sources when docs work turns into style-tooling setup"]
     ST --> SXD["May recommend xcode-app-project-workflow when setup becomes active Xcode work"]
@@ -41,6 +46,7 @@ flowchart TD
     SS --> SSF["Uses format-swift-sources before and after structure work"]
     SS --> SSX["May recommend xcode-app-project-workflow when file moves need guarded Xcode follow-through"]
     D --> DB["May recommend bootstrap-xcode-app-project"]
+    B --> BW["May recommend swift-package-workflow"]
     B --> BX["May recommend xcode-app-project-workflow"]
     B --> BS["May recommend sync-swift-package-guidance after bootstrap or later repo-guidance drift"]
     B --> BR["Installs repo-maintenance toolkit into the new repo"]
@@ -48,14 +54,14 @@ flowchart TD
     AX --> AR["Installs repo-maintenance toolkit into the new repo"]
     SX --> SXW["Hands off to xcode-app-project-workflow after sync"]
     SX --> SR["Refreshes repo-maintenance toolkit while syncing guidance"]
-    SP --> SPB["Uses swift build and swift test by default after sync, and may recommend xcode-app-project-workflow for Xcode-managed package work"]
+    SP --> SPB["Uses swift-package-workflow plus swift build and swift test by default after sync, and may recommend xcode-app-project-workflow for Xcode-managed package work"]
     SP --> SPR["Refreshes repo-maintenance toolkit while syncing guidance"]
 ```
 
 ### Branch and Path Notes
 
 - The repo has no Apple router or orchestrator layer.
-- The eight active skills are parallel top-level entry points for different situations.
+- The nine active skills are parallel top-level entry points for different situations.
 - Cross-skill recommendation is decentralized inside each active skill.
 - End-user `AGENTS.md` guidance is recommended from each skill's local snippet copy, not from a router.
 - The active skill surface now uses the intended install-facing names directly.
@@ -93,15 +99,15 @@ flowchart TD
 - Agent behavior:
   - The agent chooses the best matching top-level skill directly and may recommend another top-level skill if the task shifts.
 - User-visible response:
-  - The user sees direct progress inside one of the eight top-level skills, or a direct recommendation to switch to another skill.
+  - The user sees direct progress inside one of the nine top-level skills, or a direct recommendation to switch to another skill.
 - Interaction style:
-  - The repo-level UX is a bundle of eight parallel top-level skills, with plugin packaging layered around them as the install surface.
+  - The repo-level UX is a bundle of nine parallel top-level skills, with plugin packaging layered around them as the install surface.
 
 ## `xcode-app-project-workflow`
 
 ### Purpose
 
-Provide the canonical Apple and Swift execution workflow for existing Xcode-managed or Xcode-adjacent work, with one local runtime-policy entrypoint and one agent-side execution path.
+Provide the canonical execution workflow for existing Xcode-managed or Xcode-adjacent work, with one local runtime-policy entrypoint and one agent-side execution path.
 
 ### Workflow Diagram
 
@@ -137,6 +143,7 @@ flowchart LR
 - `run_workflow.py` is the local runtime entrypoint.
 - Mutation is a guard, not a second top-level workflow.
 - Apple or Swift docs exploration now lives outside this skill in `explore-apple-swift-docs`.
+- Ordinary Swift package execution now lives outside this skill in `swift-package-workflow`.
 - Official CLI execution remains the only documented fallback plan when the primary agent-side MCP path cannot complete.
 
 ### Inputs
@@ -172,7 +179,7 @@ flowchart LR
 ### Agent ↔ User UX
 
 - Entry:
-  - The user asks for Apple or Swift execution, diagnostics, toolchain, or mutation work.
+  - The user asks for Xcode-aware execution, diagnostics, previews, navigator issues, toolchain, or guarded mutation work.
 - Agent behavior:
   - The agent classifies the operation, runs `run_workflow.py` for local policy and fallback planning, then uses MCP tools or the planned fallback path.
 - User-visible response:
@@ -189,6 +196,78 @@ flowchart LR
 - `success` + `fallback`: official CLI fallback completed
 - `handoff`: supporting context passed to a later step or another skill
 - `blocked`: mutation guard failed, context missing, or safe fallback unavailable
+
+## `swift-package-workflow`
+
+### Purpose
+
+Provide the canonical SwiftPM-first execution workflow for existing package repositories whose source of truth is `Package.swift`, especially for terminal-first and editor-first development outside Xcode.
+
+### Workflow Diagram
+
+```mermaid
+flowchart TD
+    I["Operation input"] --> C["Classify operation type"]
+    C --> RW["run_workflow.py"]
+    RW --> DETECT{"Plain Package.swift repo?"}
+    DETECT -->|No package| BL["Blocked"]
+    DETECT -->|Mixed root| HO["Handoff to xcode-app-project-workflow unless explicitly kept SwiftPM-first"]
+    DETECT -->|Yes| CMD["Plan SwiftPM-first path"]
+    CMD --> OUT["Success / primary"]
+```
+
+### Branch and Path Notes
+
+- `run_workflow.py` is the local runtime entrypoint.
+- SwiftPM and ordinary filesystem edits are the default execution surface.
+- Mixed roots hand off by default when Xcode-managed behavior may matter.
+- Repo-guidance sync and new-package bootstrap remain outside this skill.
+
+### Inputs
+
+- Required:
+  - `operation_type`
+- Optional:
+  - `repo_root`
+  - `mixed_root_opt_in`
+- Defaults:
+  - repo-maintainer runtime entrypoint `scripts/run_workflow.py`
+  - `repo_root=.`
+  - SwiftPM-first execution for ordinary package work
+
+### Outputs
+
+- `status`
+  - `success`
+  - `handoff`
+  - `blocked`
+- `path_type`
+  - `primary`
+  - `fallback`
+- Primary output fields:
+  - operation type
+  - repo-shape result
+  - planned commands
+  - next step or handoff payload
+
+### Agent ↔ User UX
+
+- Entry:
+  - The user asks for ordinary Swift package development, manifest work, dependency work, build, test, run, plugin, or terminal-first editor collaboration.
+- Agent behavior:
+  - The agent classifies the operation, runs `run_workflow.py` for repo-shape checks and command planning, then uses SwiftPM-first commands or hands off when Xcode-managed behavior matters.
+- User-visible response:
+  - On success: the user sees the planned or executed SwiftPM-first path.
+  - On handoff: the user sees exactly why the work belongs in `xcode-app-project-workflow`.
+  - On blocked: the user sees the exact repo-shape blocker.
+- Interaction style:
+  - SwiftPM-first execution engine with lightweight repo-shape safety.
+
+### Failure / Fallback / Handoff States
+
+- `success` + `primary`: SwiftPM-first path completed
+- `handoff`: the work belongs to `xcode-app-project-workflow`
+- `blocked`: repo root missing, `Package.swift` missing, or no safe SwiftPM-first path exists
 
 ## `explore-apple-swift-docs`
 
@@ -512,6 +591,7 @@ flowchart TD
 - This skill is bounded to plain Swift package creation.
 - Within the supported `Swift 5.10+` floor, it prefers current `swift package init` testing-selection flags and only relies on the older default XCTest template when `xctest` is requested and the local CLI exposes no testing-selection flags at all.
 - Existing-package guidance sync belongs to `sync-swift-package-guidance`.
+- Ordinary package execution after bootstrap belongs to `swift-package-workflow`.
 - Xcode-specific execution after bootstrap may belong to `xcode-app-project-workflow`.
 
 ### Agent ↔ User UX
@@ -552,6 +632,7 @@ flowchart TD
 
 - This skill is intentionally bounded to repo-guidance alignment for plain Swift packages.
 - New-package creation still belongs to `bootstrap-swift-package`.
+- Ordinary package execution now belongs to `swift-package-workflow`.
 - Xcode-managed package execution may still belong to `xcode-app-project-workflow`.
 
 ### Agent ↔ User UX
@@ -559,7 +640,7 @@ flowchart TD
 - Entry:
   - The user asks to align or add repo guidance in an existing Swift package repo.
 - Agent behavior:
-  - The agent verifies the repo shape, applies the guidance sync script, then hands ordinary package work back to `swift build`, `swift test`, or `xcode-app-project-workflow` when Xcode-managed behavior matters.
+  - The agent verifies the repo shape, applies the guidance sync script, then hands ordinary package work back to `swift-package-workflow`, `swift build`, and `swift test`, or to `xcode-app-project-workflow` when Xcode-managed behavior matters.
 - User-visible response:
   - On success: the user sees that repo guidance is aligned and what to use next.
   - On blocked: the user sees the exact repo-shape blocker.
@@ -567,9 +648,3 @@ flowchart TD
 ### Failure / Fallback / Handoff States
 
 - `success` + `primary`: repo guidance sync completed
-
-## Future Direction Placeholder
-
-- Keep future broader non-Xcode Swift execution expansion explicitly out of the active surface until there is a concrete operational need that differs materially from plain SwiftPM bootstrap, SwiftPM guidance sync, style-tooling setup, and Xcode-managed execution.
-- The current placeholder direction is cross-platform or server-side Swift execution workflows that would not naturally belong to `xcode-app-project-workflow`, `format-swift-sources`, or `structure-swift-sources`.
-- Do not create that skill family speculatively; reactivate it only when the repo needs a clearly separate Swift workflow with different tools, inputs, and validation.

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Swift Package Workflow"
+  short_description: "Guide SwiftPM-first execution, manifest work, and handoffs"
+  default_prompt: "Use $swift-package-workflow to inspect an existing Swift package, plan or run SwiftPM commands, make manifest or dependency changes, and hand off to $xcode-app-project-workflow only when Xcode-managed behavior is actually required."

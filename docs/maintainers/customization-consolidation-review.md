@@ -8,8 +8,8 @@ Record the Milestone 20 audit of the current customization system, decide whethe
 
 ## Current State Summary
 
-- The active skill surface ships `7` separate `references/customization.template.yaml` files.
-- The active skill surface ships `7` separate `scripts/customization_config.py` entrypoints.
+- The active skill surface ships `8` separate `references/customization.template.yaml` files.
+- The active skill surface ships `8` separate `scripts/customization_config.py` entrypoints.
 - Those `customization_config.py` files are functionally identical and exist only because installed skills are expected to keep runtime resources inside the skill directory.
 - The current templates expose `11` knobs total:
   - `10` are documented as `runtime-enforced`
@@ -85,6 +85,8 @@ These are the knobs most likely to reflect real user preference instead of hidde
   - `preferSwiftFormatHostAppExport`
 - `xcode-app-project-workflow`
   - `fallbackCommandMappingProfile`
+- `swift-package-workflow`
+  - no ordinary user-facing knobs
 
 These are now better derived from request wording, available tools, repo shape, explicit CLI input, or fixed workflow defaults than held as broad durable user state.
 

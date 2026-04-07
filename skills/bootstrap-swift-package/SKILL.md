@@ -16,7 +16,8 @@ Create a new Swift package repository with one top-level entry point, a simplici
 - Use this skill when the user wants to customize the documented bootstrap defaults for future runs.
 - Do not use this skill as the default path for normal Xcode app collaboration work.
 - Do not use this skill as the default path for guidance sync inside an already-existing Swift package repo.
-- Recommend `xcode-app-project-workflow` when the user is working in an existing Xcode project or needs Apple-platform execution after bootstrap.
+- Recommend `swift-package-workflow` when the user is doing ordinary package development after bootstrap.
+- Recommend `xcode-app-project-workflow` when the user is working in an existing Xcode project or needs Xcode-managed Apple-platform execution after bootstrap.
 - Recommend `sync-swift-package-guidance` when an existing Swift package repo needs `AGENTS.md` or workflow-guidance alignment rather than fresh bootstrap.
 - Recommend `explore-apple-swift-docs` when the user needs Apple or Swift docs exploration, Dash-compatible lookup, or Dash follow-up work.
 
@@ -63,6 +64,7 @@ Create a new Swift package repository with one top-level entry point, a simplici
 8. Hand off package execution guidance cleanly:
    - use `swift build` and `swift test` by default
    - recommend `sync-swift-package-guidance` when a later repo-guidance refresh or merge is needed for the created package repo
+   - recommend `swift-package-workflow` for ordinary package development after bootstrap
    - recommend `xcode-app-project-workflow` for package builds that need Xcode-managed toolchain behavior, such as package builds that depend on Xcode-provided Metal or other Apple-managed build assets
 9. Return one JSON execution summary with the created path, normalized options, and validation result.
 
@@ -122,7 +124,8 @@ Create a new Swift package repository with one top-level entry point, a simplici
 - Use manual `swift package init` guidance only when the script is unavailable or the user explicitly asks for the manual path.
 - `tool` is an advanced explicit passthrough, not a default branch of the workflow.
 - Within the supported `Swift 5.10+` floor, prefer current `swift package init` testing flags when the active toolchain exposes them; only rely on the older default XCTest template when `xctest` is requested and the active `swift package init` command exposes no testing-selection flags at all.
-- After a successful scaffold, hand off build, test, or Xcode-managed package execution tasks to `xcode-app-project-workflow`.
+- After a successful scaffold, hand off ordinary package execution tasks to `swift-package-workflow`.
+- After a successful scaffold, hand off Xcode-managed package execution tasks to `xcode-app-project-workflow`.
 - After a successful scaffold, use `scripts/repo-maintenance/validate-all.sh` for local maintainer validation and `scripts/repo-maintenance/release.sh` for releases.
 - After a successful scaffold, hand off later repo-guidance alignment work to `sync-swift-package-guidance`.
 - For ordinary package work, prefer `swift build` and `swift test`.

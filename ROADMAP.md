@@ -42,6 +42,7 @@
 - [x] Milestone 27: Customization Surface Simplification Implementation
 - [x] Milestone 28: Repo Maintenance Toolkit Skill
 - [x] Milestone 29: Shared Toolkit Extraction to `productivity-skills`
+- [x] Milestone 31: Swift Package Execution Skill Split
 
 ## Milestone 1: Initial Apple Skill Bundle
 
@@ -640,3 +641,22 @@ Exit criteria:
 - Successful bootstrap and guidance-sync runs install or refresh the managed toolkit in target repos.
 - `apple-dev-skills` no longer presents the toolkit as an active top-level skill, but still keeps the vendored integration snapshot needed for standalone Apple workflows.
 - Completed 2026-04-05 by extracting the shared skill to `productivity-skills`, vendoring the Apple snapshot under `shared/repo-maintenance-toolkit/`, and re-aligning both repos' docs and tests.
+
+## Milestone 31: Swift Package Execution Skill Split
+
+Scope:
+
+- [x] Split ordinary Swift package execution out of the Xcode workflow so plain SwiftPM work has its own terminal-first and editor-first skill boundary.
+
+Tickets:
+
+- [x] Add `swift-package-workflow` as the canonical execution skill for existing Swift package repos whose source of truth is `Package.swift`.
+- [x] Narrow `xcode-app-project-workflow` so it focuses on Xcode-managed and Xcode-adjacent execution concerns instead of general package development.
+- [x] Update package bootstrap, package guidance sync, style-tooling, and structure-cleanup skills so ordinary package work hands off to `swift-package-workflow` instead of defaulting to the Xcode workflow.
+- [x] Update package-facing `AGENTS.md` assets and maintainer docs to reflect the new SwiftPM-first versus Xcode-managed boundary.
+- [x] Replace the old non-Xcode Swift future-direction placeholder in the maintainer atlas with the shipped `swift-package-workflow` surface.
+
+Exit criteria:
+
+- [x] The repo ships a dedicated SwiftPM execution skill, the Xcode workflow is more tightly scoped, and package-facing docs consistently route ordinary package work through the new boundary.
+- [x] Completed 2026-04-07 by adding `swift-package-workflow`, tightening `xcode-app-project-workflow`, and updating package-facing handoffs and maintainer docs.

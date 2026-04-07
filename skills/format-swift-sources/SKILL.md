@@ -25,6 +25,7 @@ Use this skill as the top-level workflow for integrating and maintaining SwiftLi
 - Use this skill first when a later `structure-swift-sources` pass will split files, move files, or normalize section layout and the repo needs a clean formatting baseline before structural edits begin.
 - Recommend `bootstrap-swift-package` when the user is creating a brand new Swift package and style tooling is only one part of that scaffold.
 - Recommend `bootstrap-xcode-app-project` when the user is creating a brand new native Apple app project and style tooling is only one part of that scaffold.
+- Recommend `swift-package-workflow` when the task shifts from style-tooling integration to ordinary SwiftPM package execution or manifest work.
 - Recommend `xcode-app-project-workflow` when the task shifts from style-tooling integration to active Xcode execution, diagnostics, or mutation work in an existing project.
 - Recommend `structure-swift-sources` when the task shifts from formatter or linter setup into file splitting, file moves, declaration grouping, DocC coverage, or TODO/FIXME ledger cleanup.
 - Recommend `sync-xcode-project-guidance` or `sync-swift-package-guidance` when the user is aligning `AGENTS.md` and repo guidance rather than integrating style tooling itself.
@@ -96,6 +97,7 @@ Use this skill as the top-level workflow for integrating and maintaining SwiftLi
 - SwiftLint plugin adoption falls back to an Xcode Run Script Build Phase when plugin constraints conflict with config placement or project layout.
 - SwiftFormat build-phase adoption falls back from package-managed or pinned local binaries to the locally installed CLI path only when shared-version drift is acceptable.
 - For combined cleanup work, use this skill before `structure-swift-sources` to establish the formatting baseline, and run it again after that skill finishes so the post-split or post-move tree is normalized.
+- Recommend `swift-package-workflow` when the task becomes ordinary SwiftPM package execution work.
 - Recommend `xcode-app-project-workflow` when the task becomes Xcode execution or diagnostics work.
 - Recommend `bootstrap-swift-package` or `bootstrap-xcode-app-project` when the user really needs a full project scaffold instead of isolated style-tooling setup.
 - Recommend `structure-swift-sources` directly when the task becomes file splitting, source moves, MARK normalization, DocC coverage, or TODO/FIXME ledger maintenance.

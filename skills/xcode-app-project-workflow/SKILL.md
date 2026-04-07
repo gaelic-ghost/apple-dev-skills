@@ -1,24 +1,26 @@
 ---
 name: xcode-app-project-workflow
-description: Guide Apple and Swift development work in or around Xcode, including workspace inspection, diagnostics, builds, tests, runs, toolchain checks, mutation guard decisions, and official CLI fallback planning. Use for existing Apple or Swift projects when Xcode-aware execution is needed.
+description: Guide development work in or around existing Xcode-managed projects and workspaces, including workspace inspection, diagnostics, builds, tests, runs, previews, navigator issues, Xcode MCP operations, and guarded mutation in Xcode-managed scope. Use when Xcode-aware execution is needed.
 ---
 
 # Xcode App Project Workflow
 
 ## Purpose
 
-Use this skill as the top-level entry point for Apple and Swift execution work in or around Xcode. The skill guides agent-side tool use and applies the shared simplicity-first Swift policy, while `scripts/run_workflow.py` enforces local policy, mutation guards, advisory cooldown behavior, and structured fallback planning. New layers and dependencies are often unnecessary and need extra review; keep this workflow focused on execution rather than broadening it back into docs-management or repo-sync responsibilities. Codex Plugin and Claude Code Plugin installs for the bundled Apple skill set are now the preferred install path going forward.
+Use this skill as the top-level entry point for execution work in or around Xcode-managed projects and workspaces. The skill guides agent-side tool use and applies the shared simplicity-first Swift policy, while `scripts/run_workflow.py` enforces local policy, mutation guards, advisory cooldown behavior, and structured fallback planning. Keep this workflow focused on Xcode-aware execution instead of stretching it into docs-management, package-first execution, or repo-sync responsibilities. Codex Plugin and Claude Code Plugin installs for the bundled Apple skill set are now the preferred install path going forward.
 
 ## When To Use
 
-- Use this skill for Xcode workspace inspection, read or search, diagnostics, build, test, and run tasks.
-- Use this skill for Swift toolchain checks and official Apple CLI fallback.
+- Use this skill for Xcode workspace inspection, read or search, diagnostics, build, test, run, preview, and navigator-issue tasks.
+- Use this skill for Xcode MCP operations, scheme-aware execution, and official Apple CLI fallback.
 - Use this skill when direct filesystem mutation in an Xcode-managed scope may be required.
-- Use this skill after Apple or Swift docs have already been gathered through `explore-apple-swift-docs` and the work has shifted into execution or implementation.
+- Use this skill after Apple or Swift docs have already been gathered through `explore-apple-swift-docs` and the work has shifted into Xcode-aware execution or implementation.
+- Do not use this skill as the default path for ordinary Swift package development when `Package.swift` is the source of truth and Xcode-managed behavior is not the main concern.
 - Recommend `explore-apple-swift-docs` when the user needs Apple or Swift documentation lookup, source selection, Dash compatibility, or docs install follow-up rather than execution work.
 - Recommend `format-swift-sources` when the user needs to integrate or maintain SwiftLint or SwiftFormat across CLI, Xcode, SwiftPM, Git hooks, GitHub Actions, or SwiftFormat config export rather than active Xcode execution work.
 - Recommend `structure-swift-sources` when the user needs file splitting, source-tree cleanup, DocC coverage, or TODO/FIXME ledger normalization rather than active Xcode execution work.
 - Recommend `bootstrap-swift-package` when the user needs to create a brand new Swift package rather than work inside an existing Xcode or Swift project.
+- Recommend `swift-package-workflow` when the task is ordinary SwiftPM package development, manifest work, dependency work, build, test, run, plugin, or terminal-first editor collaboration.
 - Recommend `sync-xcode-project-guidance` when an existing Xcode app repo needs `AGENTS.md` or workflow-guidance alignment rather than active engineering work.
 - Mention that older references to `apple-xcode-workflow` now map to `xcode-app-project-workflow`.
 - Mention that Codex Plugin or Claude Code Plugin installs are the preferred install path going forward.
@@ -88,6 +90,7 @@ Use this skill as the top-level entry point for Apple and Swift execution work i
 - Use `references/mcp-failure-handoff.md` for the canonical fallback and handoff payload.
 - Use `references/allowlist-guidance.md` when a safe official CLI fallback is blocked by local rules.
 - Recommend `explore-apple-swift-docs` directly when the task becomes Apple or Swift docs exploration work.
+- Recommend `swift-package-workflow` directly when the task becomes ordinary SwiftPM package execution or manifest work.
 - Recommend `format-swift-sources` directly when the task becomes SwiftLint or SwiftFormat setup, config export, or style-tooling maintenance work.
 - Recommend `structure-swift-sources` directly when the task becomes structural source cleanup work.
 - Recommend `bootstrap-swift-package` directly when the task becomes new-package scaffolding.
