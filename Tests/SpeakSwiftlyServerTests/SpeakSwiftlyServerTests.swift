@@ -7,7 +7,7 @@ import NIOCore
 import SpeakSwiftlyCore
 import Testing
 import TextForSpeech
-@testable import SpeakSwiftlyServerCore
+@testable import SpeakSwiftlyServer
 
 // MARK: - Mock Runtime
 

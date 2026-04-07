@@ -100,44 +100,44 @@ swift test
 Run the server locally:
 
 ```bash
-swift run SpeakSwiftlyServer
+swift run SpeakSwiftlyServerTool
 ```
 
 The shared server binds to `127.0.0.1:7337` by default.
 
-The package now also ships a separate operator-facing CLI product:
+The package now ships one operator-facing executable product with both the foreground server entrypoint and the LaunchAgent maintenance surface:
 
 ```bash
-swift run SpeakSwiftlyServerCli help
+swift run SpeakSwiftlyServerTool help
 ```
 
-That CLI currently owns LaunchAgent support so the standalone server binary can stay focused on one foreground service process while the CLI grows into the install, inspection, and maintenance surface around it.
+Running the tool without subcommands defaults to `serve`, and the same binary also exposes `launch-agent` subcommands for install, inspection, and maintenance work.
 
 To render the current per-user LaunchAgent property list without installing it:
 
 ```bash
-swift run SpeakSwiftlyServerCli launch-agent print-plist
+swift run SpeakSwiftlyServerTool launch-agent print-plist
 ```
 
 To install or refresh the current user's LaunchAgent with a config file:
 
 ```bash
-swift run SpeakSwiftlyServerCli launch-agent install \
+swift run SpeakSwiftlyServerTool launch-agent install \
   --config-file ./server.yaml
 ```
 
-That command writes a user-owned property list into `~/Library/LaunchAgents`, points `ProgramArguments` at the `SpeakSwiftlyServer` executable rather than the CLI, and uses `launchctl bootstrap` / `bootout` against the current `gui/<uid>` domain. If your server binary lives somewhere other than the sibling executable next to `SpeakSwiftlyServerCli`, pass `--server-executable-path /absolute/path/to/SpeakSwiftlyServer`.
+That command writes a user-owned property list into `~/Library/LaunchAgents`, points `ProgramArguments` at `SpeakSwiftlyServerTool serve`, and uses `launchctl bootstrap` / `bootout` against the current `gui/<uid>` domain. If your tool binary lives somewhere other than the current executable path, pass `--tool-executable-path /absolute/path/to/SpeakSwiftlyServerTool`.
 
 To inspect or remove the installed LaunchAgent:
 
 ```bash
-swift run SpeakSwiftlyServerCli launch-agent status
-swift run SpeakSwiftlyServerCli launch-agent uninstall
+swift run SpeakSwiftlyServerTool launch-agent status
+swift run SpeakSwiftlyServerTool launch-agent uninstall
 ```
 
 ## Embedding
 
-`SpeakSwiftlyServerCore` now exposes a small app-facing embedding surface for SwiftUI and other Apple-platform app code:
+`SpeakSwiftlyServer` now exposes a small app-facing embedding surface for SwiftUI and other Apple-platform app code:
 
 - [`EmbeddedServerSession.swift`](https://github.com/gaelic-ghost/SpeakSwiftlyServer/blob/main/Sources/SpeakSwiftlyServer/EmbeddedServerSession.swift) is the supported public lifecycle wrapper for starting and stopping an embedded shared server session.
 - [`ServerState.swift`](https://github.com/gaelic-ghost/SpeakSwiftlyServer/blob/main/Sources/SpeakSwiftlyServer/Host/ServerState.swift) is the supported public `@Observable` projection that app UI can read directly.
@@ -148,7 +148,7 @@ That public surface is intentionally small. `ServerHost` remains internal so app
 Start an embedded session from app code like this:
 
 ```swift
-import SpeakSwiftlyServerCore
+import SpeakSwiftlyServer
 import SwiftUI
 
 @main
@@ -365,7 +365,7 @@ The current HTTP SSE route remains intentionally job-specific at the route bound
 
 ## Development
 
-The shared runtime entrypoint now lives in [`Sources/SpeakSwiftlyServer/SpeakSwiftlyServer.swift`](https://github.com/gaelic-ghost/SpeakSwiftlyServer/blob/main/Sources/SpeakSwiftlyServer/SpeakSwiftlyServer.swift) inside the `SpeakSwiftlyServerCore` module, with thin executable wrappers in [`Sources/SpeakSwiftlyServerExecutable/main.swift`](https://github.com/gaelic-ghost/SpeakSwiftlyServer/blob/main/Sources/SpeakSwiftlyServerExecutable/main.swift) for the `SpeakSwiftlyServer` executable target and [`Sources/SpeakSwiftlyServerCli/main.swift`](https://github.com/gaelic-ghost/SpeakSwiftlyServer/blob/main/Sources/SpeakSwiftlyServerCli/main.swift) for the CLI. The shared host process stays intentionally small:
+The shared runtime entrypoint now lives in [`Sources/SpeakSwiftlyServer/SpeakSwiftlyServer.swift`](https://github.com/gaelic-ghost/SpeakSwiftlyServer/blob/main/Sources/SpeakSwiftlyServer/SpeakSwiftlyServer.swift) inside the `SpeakSwiftlyServer` module, with a thin executable wrapper in [`Sources/SpeakSwiftlyServerTool/SpeakSwiftlyServerToolMain.swift`](https://github.com/gaelic-ghost/SpeakSwiftlyServer/blob/main/Sources/SpeakSwiftlyServerTool/SpeakSwiftlyServerToolMain.swift) for the unified `SpeakSwiftlyServerTool` executable target. The shared host process stays intentionally small:
 
 - [`HTTPSurface.swift`](https://github.com/gaelic-ghost/SpeakSwiftlyServer/blob/main/Sources/SpeakSwiftlyServer/HTTP/HTTPSurface.swift) assembles and conditionally mounts the HTTP surface on the shared Hummingbird server.
 - [`MCPSurface.swift`](https://github.com/gaelic-ghost/SpeakSwiftlyServer/blob/main/Sources/SpeakSwiftlyServer/MCP/MCPSurface.swift) mounts the embedded MCP transport on that same shared process and registers tools and resources against `ServerHost`.
@@ -379,7 +379,7 @@ The shared runtime entrypoint now lives in [`Sources/SpeakSwiftlyServer/SpeakSwi
 
 The design is deliberately direct. Adding extra wrappers, managers, or intermediate layers here would be easy, but it would also be the kind of unnecessary complexity that makes a small localhost service harder to reason about, so the server is kept close to the typed runtime API on purpose. That means the service talks to the public `SpeakSwiftly.Runtime` surface, its public text normalizer, and its public event and summary types instead of reaching through the library boundary to construct raw worker requests itself.
 
-The separate CLI target is the one intentional widening of that model. It earns its keep because it unlocks LaunchAgent installation, status inspection, and future operator workflows without turning the server binary itself into a mixed control-and-serve tool.
+The unified tool target is the one intentional widening of that model. It earns its keep because it unlocks LaunchAgent installation, status inspection, and future operator workflows while keeping the reusable `SpeakSwiftlyServer` module focused on embedding and host logic.
 
 For repository maintenance, treat this standalone repository as the source of truth for package development, tags, and releases. When the `speak-to-user` monorepo adopts a new server version, prefer bumping that submodule pointer to a tagged `SpeakSwiftlyServer` release rather than a floating branch tip.
 
@@ -387,9 +387,8 @@ The repo-maintenance toolkit is now the maintainer-facing wrapper around that re
 
 ## Repository Layout
 
-- `Sources/SpeakSwiftlyServer/` contains the reusable `SpeakSwiftlyServerCore` library target with the HTTP, MCP, host, config, and LaunchAgent support code.
-- `Sources/SpeakSwiftlyServerExecutable/` contains the thin `SpeakSwiftlyServer` executable wrapper.
-- `Sources/SpeakSwiftlyServerCli/` contains the thin operator CLI wrapper.
+- `Sources/SpeakSwiftlyServer/` contains the reusable `SpeakSwiftlyServer` library target with the HTTP, MCP, host, config, and LaunchAgent support code.
+- `Sources/SpeakSwiftlyServerTool/` contains the unified `SpeakSwiftlyServerTool` executable wrapper and command entrypoint.
 - `Tests/` contains the package test suite, including the opt-in end-to-end coverage paths and the dedicated CLI tests.
 - `docs/` holds repo-local supporting documentation.
 - `plugins/apple-dev-skills/` is the in-development plugin copy that this repository publishes through the local marketplace file.
@@ -409,11 +408,11 @@ The package-level verification path that toolkit wraps is still:
 swift test
 ```
 
-If you want to check the split executable surfaces explicitly, these are the direct smoke-test commands:
+If you want to check the unified tool surface explicitly, these are the direct smoke-test commands:
 
 ```bash
-swift run SpeakSwiftlyServerCli help
-swift run SpeakSwiftlyServerCli launch-agent print-plist
+swift run SpeakSwiftlyServerTool help
+swift run SpeakSwiftlyServerTool launch-agent print-plist
 ```
 
 The current automated suite covers configuration parsing, queued live speech job completion semantics, generation and playback queue inspection, playback control routes, queue cancellation routes, startup failure before readiness, runtime degradation while active and queued speech jobs are in flight, in-memory retention and pruning, SSE replay and heartbeat behavior, route-level health, profile, clone, text-profile, and job lifecycle responses against a controlled typed runtime, the embedded MCP tool, prompt, and resource surface, the shared host snapshot stream and typed host event stream, plus an opt-in live end-to-end suite against a real `SpeakSwiftly` runtime:

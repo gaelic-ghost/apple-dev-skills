@@ -1,23 +1,20 @@
 import Foundation
 import Testing
-@testable import SpeakSwiftlyServerCore
+@testable import SpeakSwiftlyServer
 
-// MARK: - CLI Tests
+// MARK: - Tool Tests
 
-@Test func cliParsesLaunchAgentInstallAndDefaultsToSiblingServerExecutable() throws {
+@Test func toolParsesLaunchAgentInstallAndDefaultsToCurrentToolExecutable() throws {
     let tempDirectory = try makeTemporaryDirectory()
     let currentDirectory = tempDirectory.path
     let debugDirectory = tempDirectory.appendingPathComponent("bin", isDirectory: true)
     try FileManager.default.createDirectory(at: debugDirectory, withIntermediateDirectories: true)
 
-    let serverURL = debugDirectory.appendingPathComponent("SpeakSwiftlyServer")
-    let cliURL = debugDirectory.appendingPathComponent("SpeakSwiftlyServerCli")
-    try "#!/bin/sh\nexit 0\n".write(to: serverURL, atomically: true, encoding: .utf8)
-    try "#!/bin/sh\nexit 0\n".write(to: cliURL, atomically: true, encoding: .utf8)
-    try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: serverURL.path)
-    try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: cliURL.path)
+    let toolURL = debugDirectory.appendingPathComponent("SpeakSwiftlyServerTool")
+    try "#!/bin/sh\nexit 0\n".write(to: toolURL, atomically: true, encoding: .utf8)
+    try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: toolURL.path)
 
-    let command = try SpeakSwiftlyServerCliCommand.parse(
+    let command = try SpeakSwiftlyServerToolCommand.parse(
         arguments: [
             "launch-agent",
             "install",
@@ -25,28 +22,28 @@ import Testing
             "--reload-interval-seconds", "2",
         ],
         currentDirectoryPath: currentDirectory,
-        currentExecutablePath: cliURL.path
+        currentExecutablePath: toolURL.path
     )
 
     guard case .launchAgent(let launchAgentCommand) = command,
           case .install(let options) = launchAgentCommand.action else {
-        Issue.record("Expected the CLI parser to produce a launch-agent install command.")
+        Issue.record("Expected the tool parser to produce a launch-agent install command.")
         return
     }
 
-    #expect(options.serverExecutablePath == serverURL.path)
+    #expect(options.toolExecutablePath == toolURL.path)
     #expect(options.configFilePath == tempDirectory.appendingPathComponent("server.yaml").path)
     #expect(options.reloadIntervalSeconds == "2")
 }
 
-@Test func launchAgentPropertyListIncludesServerExecutableAndEnvironmentOverrides() throws {
+@Test func launchAgentPropertyListIncludesServeCommandAndEnvironmentOverrides() throws {
     let tempDirectory = try makeTemporaryDirectory()
-    let executableURL = tempDirectory.appendingPathComponent("SpeakSwiftlyServer")
+    let executableURL = tempDirectory.appendingPathComponent("SpeakSwiftlyServerTool")
     try "#!/bin/sh\nexit 0\n".write(to: executableURL, atomically: true, encoding: .utf8)
     try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: executableURL.path)
 
     let options = try LaunchAgentOptions(
-        serverExecutablePath: executableURL.path,
+        toolExecutablePath: executableURL.path,
         plistPath: tempDirectory.appendingPathComponent("agent.plist").path,
         configFilePath: tempDirectory.appendingPathComponent("config/server.yaml").path,
         reloadIntervalSeconds: "0.5",
@@ -59,7 +56,7 @@ import Testing
     let arguments = try #require(propertyList["ProgramArguments"] as? [String])
     let environment = try #require(propertyList["EnvironmentVariables"] as? [String: String])
 
-    #expect(arguments == [executableURL.path])
+    #expect(arguments == [executableURL.path, "serve"])
     #expect(propertyList["RunAtLoad"] as? Bool == true)
     #expect(propertyList["KeepAlive"] as? Bool == true)
     #expect(environment["APP_CONFIG_FILE"] == tempDirectory.appendingPathComponent("config/server.yaml").path)
@@ -68,7 +65,7 @@ import Testing
 
 @Test func launchAgentInstallWritesPlistAndBootstrapsService() throws {
     let tempDirectory = try makeTemporaryDirectory()
-    let executableURL = tempDirectory.appendingPathComponent("SpeakSwiftlyServer")
+    let executableURL = tempDirectory.appendingPathComponent("SpeakSwiftlyServerTool")
     let plistURL = tempDirectory.appendingPathComponent("LaunchAgents/com.example.test.plist")
     let logURL = tempDirectory.appendingPathComponent("launchctl.log")
     let stateURL = tempDirectory.appendingPathComponent("launchctl.state")
@@ -107,7 +104,7 @@ import Testing
 
     let options = try LaunchAgentOptions(
         label: "com.example.test",
-        serverExecutablePath: executableURL.path,
+        toolExecutablePath: executableURL.path,
         plistPath: plistURL.path,
         workingDirectory: tempDirectory.path,
         standardOutPath: tempDirectory.appendingPathComponent("logs/stdout.log").path,

@@ -18,8 +18,8 @@
     "performanceAntipatternCheckerEnabled" : true,
     "targetForVariableExpansion" : {
       "containerPath" : "container:",
-      "identifier" : "SpeakSwiftlyServer",
-      "name" : "SpeakSwiftlyServer"
+      "identifier" : "SpeakSwiftlyServerTool",
+      "name" : "SpeakSwiftlyServerTool"
     }
   },
   "testTargets" : [
@@ -33,8 +33,8 @@
     {
       "target" : {
         "containerPath" : "container:",
-        "identifier" : "SpeakSwiftlyServerCliTests",
-        "name" : "SpeakSwiftlyServerCliTests"
+        "identifier" : "SpeakSwiftlyServerToolTests",
+        "name" : "SpeakSwiftlyServerToolTests"
       }
     }
   ],

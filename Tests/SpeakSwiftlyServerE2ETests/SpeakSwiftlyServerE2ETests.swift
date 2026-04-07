@@ -777,17 +777,17 @@ struct SpeakSwiftlyServerE2ETests {
         return productsURL
     }
 
-    private static func serverExecutableURL() throws -> URL {
+    private static func serverToolExecutableURL() throws -> URL {
         let serverRootURL = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()
             .deletingLastPathComponent()
             .deletingLastPathComponent()
         let executableURL = serverRootURL
-            .appendingPathComponent(".build/arm64-apple-macosx/debug/SpeakSwiftlyServer", isDirectory: false)
+            .appendingPathComponent(".build/arm64-apple-macosx/debug/SpeakSwiftlyServerTool", isDirectory: false)
 
         guard FileManager.default.isExecutableFile(atPath: executableURL.path) else {
             throw SpeakSwiftlyBuildError(
-                "The SpeakSwiftlyServer executable was expected at '\(executableURL.path)', but it was not present. Run `swift build` before the live end-to-end suite."
+                "The SpeakSwiftlyServerTool executable was expected at '\(executableURL.path)', but it was not present. Run `swift build` before the live end-to-end suite."
             )
         }
         return executableURL
@@ -819,7 +819,7 @@ struct SpeakSwiftlyServerE2ETests {
         mcpEnabled: Bool
     ) throws -> ServerProcess {
         let dependencyProductsURL = try speakSwiftlyProductsURL()
-        let executableURL = try serverExecutableURL()
+        let executableURL = try serverToolExecutableURL()
         try stageMetallibForServerBinary(
             from: dependencyProductsURL,
             serverExecutableURL: executableURL

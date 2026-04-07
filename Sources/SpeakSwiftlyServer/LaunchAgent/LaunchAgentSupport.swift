@@ -1,9 +1,12 @@
 import Darwin
 import Foundation
 
+private let speakSwiftlyServerToolName = "SpeakSwiftlyServerTool"
+
 // MARK: - CLI Command
 
-public enum SpeakSwiftlyServerCliCommand {
+public enum SpeakSwiftlyServerToolCommand {
+    case serve
     case launchAgent(LaunchAgentCommand)
 
     // MARK: - Parsing
@@ -12,12 +15,15 @@ public enum SpeakSwiftlyServerCliCommand {
         arguments: [String],
         currentDirectoryPath: String = FileManager.default.currentDirectoryPath,
         currentExecutablePath: String = CommandLine.arguments[0]
-    ) throws -> SpeakSwiftlyServerCliCommand {
+    ) throws -> SpeakSwiftlyServerToolCommand {
         guard let first = arguments.first else {
-            throw SpeakSwiftlyServerCliCommandError(helpText)
+            return .serve
         }
 
         switch first {
+        case "serve":
+            return .serve
+
         case "launch-agent":
             return .launchAgent(
                 try LaunchAgentCommand.parse(
@@ -28,19 +34,22 @@ public enum SpeakSwiftlyServerCliCommand {
             )
 
         case "-h", "--help", "help":
-            throw SpeakSwiftlyServerCliCommandError(helpText)
+            throw SpeakSwiftlyServerToolCommandError(helpText)
 
         default:
-            throw SpeakSwiftlyServerCliCommandError(
-                "SpeakSwiftlyServerCli did not recognize command '\(first)'. Supported commands currently start with `launch-agent`."
+            throw SpeakSwiftlyServerToolCommandError(
+                "\(speakSwiftlyServerToolName) did not recognize command '\(first)'. Supported commands are `serve` and `launch-agent`."
             )
         }
     }
 
     // MARK: - Running
 
-    public func run() throws {
+    public func run() async throws {
         switch self {
+        case .serve:
+            try await ServerRuntimeEntrypoint.run()
+
         case .launchAgent(let command):
             try command.run()
         }
@@ -50,24 +59,27 @@ public enum SpeakSwiftlyServerCliCommand {
 
     static let helpText = """
     Usage:
-      SpeakSwiftlyServerCli launch-agent print-plist [options]
-      SpeakSwiftlyServerCli launch-agent install [options]
-      SpeakSwiftlyServerCli launch-agent uninstall [options]
-      SpeakSwiftlyServerCli launch-agent status [options]
+      \(speakSwiftlyServerToolName) serve
+      \(speakSwiftlyServerToolName) launch-agent print-plist [options]
+      \(speakSwiftlyServerToolName) launch-agent install [options]
+      \(speakSwiftlyServerToolName) launch-agent uninstall [options]
+      \(speakSwiftlyServerToolName) launch-agent status [options]
 
     Launch-agent options:
       --label <label>
-      --server-executable-path <path>
+      --tool-executable-path <path>
       --plist-path <path>
       --config-file <path>
       --reload-interval-seconds <seconds>
       --working-directory <path>
       --stdout-path <path>
       --stderr-path <path>
+
+      Without arguments, \(speakSwiftlyServerToolName) defaults to `serve`.
     """
 }
 
-public struct SpeakSwiftlyServerCliCommandError: Error, CustomStringConvertible {
+public struct SpeakSwiftlyServerToolCommandError: Error, CustomStringConvertible {
     public let message: String
 
     public init(_ message: String) {
@@ -112,11 +124,11 @@ public struct LaunchAgentCommand {
             return .init(action: .status(try LaunchAgentStatusOptions.parse(arguments: Array(arguments.dropFirst()), currentDirectoryPath: currentDirectoryPath)))
 
         case "-h", "--help", "help":
-            throw LaunchAgentCommandError(SpeakSwiftlyServerCliCommand.helpText)
+            throw LaunchAgentCommandError(SpeakSwiftlyServerToolCommand.helpText)
 
         default:
             throw LaunchAgentCommandError(
-                "SpeakSwiftlyServerCli did not recognize launch-agent subcommand '\(subcommand)'. Supported subcommands are `print-plist`, `install`, `uninstall`, and `status`."
+                "\(speakSwiftlyServerToolName) did not recognize launch-agent subcommand '\(subcommand)'. Supported subcommands are `print-plist`, `install`, `uninstall`, and `status`."
             )
         }
     }
@@ -129,7 +141,7 @@ public struct LaunchAgentCommand {
             let data = try options.propertyListData()
             guard let xml = String(data: data, encoding: .utf8) else {
                 throw LaunchAgentCommandError(
-                    "SpeakSwiftlyServerCli rendered a LaunchAgent property list, but it could not be decoded back into UTF-8 text for printing."
+                    "\(speakSwiftlyServerToolName) rendered a LaunchAgent property list, but it could not be decoded back into UTF-8 text for printing."
                 )
             }
             print(xml, terminator: "")
@@ -160,7 +172,7 @@ public struct LaunchAgentCommandError: Error, CustomStringConvertible {
 
 struct LaunchAgentOptions {
     let label: String
-    let serverExecutablePath: String
+    let toolExecutablePath: String
     let plistPath: String
     let configFilePath: String?
     let reloadIntervalSeconds: String?
@@ -174,7 +186,7 @@ struct LaunchAgentOptions {
 
     static func parse(arguments: [String], currentDirectoryPath: String, currentExecutablePath: String) throws -> LaunchAgentOptions {
         var label = LaunchAgentDefaults.label
-        var serverExecutablePath = resolveDefaultServerExecutablePath(
+        var toolExecutablePath = resolveDefaultToolExecutablePath(
             currentDirectoryPath: currentDirectoryPath,
             currentExecutablePath: currentExecutablePath
         )
@@ -193,8 +205,8 @@ struct LaunchAgentOptions {
                 plistPath = LaunchAgentDefaults.plistPath(for: label)
                 index += 2
 
-            case "--server-executable-path", "--executable-path":
-                serverExecutablePath = try requireValue(after: arguments, index: index, option: arguments[index])
+            case "--tool-executable-path", "--executable-path":
+                toolExecutablePath = try requireValue(after: arguments, index: index, option: arguments[index])
                 index += 2
 
             case "--plist-path":
@@ -223,14 +235,14 @@ struct LaunchAgentOptions {
 
             default:
                 throw LaunchAgentCommandError(
-                    "SpeakSwiftlyServerCli did not recognize launch-agent option '\(arguments[index])'. Run `SpeakSwiftlyServerCli help` for supported flags."
+                    "\(speakSwiftlyServerToolName) did not recognize launch-agent option '\(arguments[index])'. Run `\(speakSwiftlyServerToolName) help` for supported flags."
                 )
             }
         }
 
         return try .init(
             label: label,
-            serverExecutablePath: resolvePath(serverExecutablePath, relativeTo: currentDirectoryPath),
+            toolExecutablePath: resolvePath(toolExecutablePath, relativeTo: currentDirectoryPath),
             plistPath: resolvePath(plistPath, relativeTo: currentDirectoryPath),
             configFilePath: configFilePath.map { resolvePath($0, relativeTo: currentDirectoryPath) },
             reloadIntervalSeconds: reloadIntervalSeconds,
@@ -244,7 +256,7 @@ struct LaunchAgentOptions {
 
     init(
         label: String = LaunchAgentDefaults.label,
-        serverExecutablePath: String,
+        toolExecutablePath: String,
         plistPath: String? = nil,
         configFilePath: String? = nil,
         reloadIntervalSeconds: String? = nil,
@@ -255,23 +267,23 @@ struct LaunchAgentOptions {
         userDomain: String = LaunchAgentDefaults.userDomain
     ) throws {
         guard !label.isEmpty else {
-            throw LaunchAgentCommandError("SpeakSwiftlyServerCli launch-agent support requires a non-empty launchd label.")
+            throw LaunchAgentCommandError("\(speakSwiftlyServerToolName) launch-agent support requires a non-empty launchd label.")
         }
 
-        let resolvedServerExecutablePath = Self.resolvePath(serverExecutablePath)
-        guard FileManager.default.fileExists(atPath: resolvedServerExecutablePath) else {
+        let resolvedToolExecutablePath = Self.resolvePath(toolExecutablePath)
+        guard FileManager.default.fileExists(atPath: resolvedToolExecutablePath) else {
             throw LaunchAgentCommandError(
-                "SpeakSwiftlyServerCli could not install a LaunchAgent because the server executable path '\(resolvedServerExecutablePath)' does not exist."
+                "\(speakSwiftlyServerToolName) could not install a LaunchAgent because the tool executable path '\(resolvedToolExecutablePath)' does not exist."
             )
         }
-        guard FileManager.default.isExecutableFile(atPath: resolvedServerExecutablePath) else {
+        guard FileManager.default.isExecutableFile(atPath: resolvedToolExecutablePath) else {
             throw LaunchAgentCommandError(
-                "SpeakSwiftlyServerCli could not install a LaunchAgent because '\(resolvedServerExecutablePath)' is not executable."
+                "\(speakSwiftlyServerToolName) could not install a LaunchAgent because '\(resolvedToolExecutablePath)' is not executable."
             )
         }
 
         self.label = label
-        self.serverExecutablePath = resolvedServerExecutablePath
+        self.toolExecutablePath = resolvedToolExecutablePath
         self.plistPath = Self.resolvePath(plistPath ?? LaunchAgentDefaults.plistPath(for: label))
         self.configFilePath = configFilePath.map { Self.resolvePath($0) }
         self.reloadIntervalSeconds = reloadIntervalSeconds
@@ -287,7 +299,7 @@ struct LaunchAgentOptions {
     func propertyList() -> [String: Any] {
         var propertyList: [String: Any] = [
             "Label": label,
-            "ProgramArguments": [serverExecutablePath],
+            "ProgramArguments": [toolExecutablePath, "serve"],
             "RunAtLoad": true,
             "KeepAlive": true,
             "WorkingDirectory": workingDirectory,
@@ -318,7 +330,7 @@ struct LaunchAgentOptions {
             )
         } catch {
             throw LaunchAgentCommandError(
-                "SpeakSwiftlyServerCli could not encode the LaunchAgent property list for label '\(label)'. Likely cause: \(error.localizedDescription)"
+                "\(speakSwiftlyServerToolName) could not encode the LaunchAgent property list for label '\(label)'. Likely cause: \(error.localizedDescription)"
             )
         }
     }
@@ -352,17 +364,8 @@ struct LaunchAgentOptions {
 
     // MARK: - Helpers
 
-    static func resolveDefaultServerExecutablePath(currentDirectoryPath: String, currentExecutablePath: String) -> String {
-        let currentExecutableURL = URL(
-            fileURLWithPath: resolvePath(currentExecutablePath, relativeTo: currentDirectoryPath)
-        )
-        if currentExecutableURL.lastPathComponent == "SpeakSwiftlyServerCli" {
-            let siblingServerURL = currentExecutableURL.deletingLastPathComponent().appendingPathComponent("SpeakSwiftlyServer")
-            if FileManager.default.fileExists(atPath: siblingServerURL.path) {
-                return siblingServerURL.path
-            }
-        }
-        return currentExecutablePath
+    static func resolveDefaultToolExecutablePath(currentDirectoryPath: String, currentExecutablePath: String) -> String {
+        resolvePath(currentExecutablePath, relativeTo: currentDirectoryPath)
     }
 
     static func resolvePath(_ rawPath: String, relativeTo basePath: String = FileManager.default.currentDirectoryPath) -> String {
@@ -372,7 +375,7 @@ struct LaunchAgentOptions {
 
     static func requireValue(after arguments: [String], index: Int, option: String) throws -> String {
         guard arguments.indices.contains(index + 1) else {
-            throw LaunchAgentCommandError("SpeakSwiftlyServerCli expected a value after '\(option)'.")
+            throw LaunchAgentCommandError("\(speakSwiftlyServerToolName) expected a value after '\(option)'.")
         }
         return arguments[index + 1]
     }
@@ -383,7 +386,7 @@ struct LaunchAgentOptions {
             try FileManager.default.createDirectory(at: directoryURL, withIntermediateDirectories: true)
         } catch {
             throw LaunchAgentCommandError(
-                "SpeakSwiftlyServerCli could not create the directory '\(directoryURL.path)' needed for LaunchAgent support. Likely cause: \(error.localizedDescription)"
+                "\(speakSwiftlyServerToolName) could not create the directory '\(directoryURL.path)' needed for LaunchAgent support. Likely cause: \(error.localizedDescription)"
             )
         }
     }
@@ -415,7 +418,7 @@ struct LaunchAgentStatusOptions {
 
             default:
                 throw LaunchAgentCommandError(
-                    "SpeakSwiftlyServerCli did not recognize launch-agent option '\(arguments[index])'. The `status` and `uninstall` commands support `--label` and `--plist-path`."
+                    "\(speakSwiftlyServerToolName) did not recognize launch-agent option '\(arguments[index])'. The `status` and `uninstall` commands support `--label` and `--plist-path`."
                 )
             }
         }
@@ -461,7 +464,7 @@ struct LaunchAgentStatusOptions {
                 try FileManager.default.removeItem(atPath: plistPath)
             } catch {
                 throw LaunchAgentCommandError(
-                    "SpeakSwiftlyServerCli could not remove LaunchAgent plist '\(plistPath)'. Likely cause: \(error.localizedDescription)"
+                    "\(speakSwiftlyServerToolName) could not remove LaunchAgent plist '\(plistPath)'. Likely cause: \(error.localizedDescription)"
                 )
             }
             print("Removed LaunchAgent plist '\(plistPath)' for label '\(label)'.")
@@ -478,7 +481,7 @@ struct LaunchAgentStatusOptions {
         )
         guard result.exitCode == 0 else {
             throw LaunchAgentCommandError(
-                "SpeakSwiftlyServerCli asked launchctl to unload '\(userDomain)/\(label)', but launchctl exited with status \(result.exitCode). stderr: \(result.standardError)"
+                "\(speakSwiftlyServerToolName) asked launchctl to unload '\(userDomain)/\(label)', but launchctl exited with status \(result.exitCode). stderr: \(result.standardError)"
             )
         }
     }
@@ -533,7 +536,7 @@ func runLaunchctl(
         process.waitUntilExit()
     } catch {
         throw LaunchAgentCommandError(
-            "SpeakSwiftlyServerCli could not run launchctl at '\(launchctlPath)'. Likely cause: \(error.localizedDescription)"
+            "\(speakSwiftlyServerToolName) could not run launchctl at '\(launchctlPath)'. Likely cause: \(error.localizedDescription)"
         )
     }
 
@@ -547,7 +550,7 @@ func runLaunchctl(
 
     if !allowNonZeroExit, result.exitCode != 0 {
         throw LaunchAgentCommandError(
-            "SpeakSwiftlyServerCli asked launchctl to run `\(arguments.joined(separator: " "))`, but launchctl exited with status \(result.exitCode). stderr: \(result.standardError)"
+            "\(speakSwiftlyServerToolName) asked launchctl to run `\(arguments.joined(separator: " "))`, but launchctl exited with status \(result.exitCode). stderr: \(result.standardError)"
         )
     }
 

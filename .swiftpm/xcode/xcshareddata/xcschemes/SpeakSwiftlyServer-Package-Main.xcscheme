@@ -15,20 +15,6 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "SpeakSwiftlyServerCore"
-               BuildableName = "SpeakSwiftlyServerCore"
-               BlueprintName = "SpeakSwiftlyServerCore"
-               ReferencedContainer = "container:">
-            </BuildableReference>
-         </BuildActionEntry>
-         <BuildActionEntry
-            buildForTesting = "YES"
-            buildForRunning = "YES"
-            buildForProfiling = "YES"
-            buildForArchiving = "YES"
-            buildForAnalyzing = "YES">
-            <BuildableReference
-               BuildableIdentifier = "primary"
                BlueprintIdentifier = "SpeakSwiftlyServer"
                BuildableName = "SpeakSwiftlyServer"
                BlueprintName = "SpeakSwiftlyServer"
@@ -43,9 +29,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "SpeakSwiftlyServerCli"
-               BuildableName = "SpeakSwiftlyServerCli"
-               BlueprintName = "SpeakSwiftlyServerCli"
+               BlueprintIdentifier = "SpeakSwiftlyServerTool"
+               BuildableName = "SpeakSwiftlyServerTool"
+               BlueprintName = "SpeakSwiftlyServerTool"
                ReferencedContainer = "container:">
             </BuildableReference>
          </BuildActionEntry>
@@ -67,9 +53,9 @@
             skipped = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "SpeakSwiftlyServerCliTests"
-               BuildableName = "SpeakSwiftlyServerCliTests"
-               BlueprintName = "SpeakSwiftlyServerCliTests"
+               BlueprintIdentifier = "SpeakSwiftlyServerTests"
+               BuildableName = "SpeakSwiftlyServerTests"
+               BlueprintName = "SpeakSwiftlyServerTests"
                ReferencedContainer = "container:">
             </BuildableReference>
          </TestableReference>
@@ -77,9 +63,9 @@
             skipped = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "SpeakSwiftlyServerTests"
-               BuildableName = "SpeakSwiftlyServerTests"
-               BlueprintName = "SpeakSwiftlyServerTests"
+               BlueprintIdentifier = "SpeakSwiftlyServerToolTests"
+               BuildableName = "SpeakSwiftlyServerToolTests"
+               BlueprintName = "SpeakSwiftlyServerToolTests"
                ReferencedContainer = "container:">
             </BuildableReference>
          </TestableReference>
@@ -88,7 +74,7 @@
    <LaunchAction
       buildConfiguration = "Debug"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
-      selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Debugger.Launcher.LLDB"
+      selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       launchStyle = "0"
       useCustomWorkingDirectory = "NO"
       ignoresPersistentStateOnLaunch = "NO"
@@ -96,12 +82,22 @@
       debugServiceExtension = "internal"
       allowLocationSimulation = "YES"
       queueDebuggingEnableBacktraceRecording = "Yes">
+      <BuildableProductRunnable
+         runnableDebuggingMode = "0">
+         <BuildableReference
+            BuildableIdentifier = "primary"
+            BlueprintIdentifier = "SpeakSwiftlyServerTool"
+            BuildableName = "SpeakSwiftlyServerTool"
+            BlueprintName = "SpeakSwiftlyServerTool"
+            ReferencedContainer = "container:">
+         </BuildableReference>
+      </BuildableProductRunnable>
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "SpeakSwiftlyServer"
-            BuildableName = "SpeakSwiftlyServer"
-            BlueprintName = "SpeakSwiftlyServer"
+            BlueprintIdentifier = "SpeakSwiftlyServerTool"
+            BuildableName = "SpeakSwiftlyServerTool"
+            BlueprintName = "SpeakSwiftlyServerTool"
             ReferencedContainer = "container:">
          </BuildableReference>
       </MacroExpansion>
@@ -112,15 +108,16 @@
       savedToolIdentifier = ""
       useCustomWorkingDirectory = "NO"
       debugDocumentVersioning = "YES">
-      <MacroExpansion>
+      <BuildableProductRunnable
+         runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "SpeakSwiftlyServerCli"
-            BuildableName = "SpeakSwiftlyServerCli"
-            BlueprintName = "SpeakSwiftlyServerCli"
+            BlueprintIdentifier = "SpeakSwiftlyServerTool"
+            BuildableName = "SpeakSwiftlyServerTool"
+            BlueprintName = "SpeakSwiftlyServerTool"
             ReferencedContainer = "container:">
          </BuildableReference>
-      </MacroExpansion>
+      </BuildableProductRunnable>
    </ProfileAction>
    <AnalyzeAction
       buildConfiguration = "Debug">
