@@ -4,8 +4,6 @@ Canonical Apple development skills with a plugin-first packaging layout for Code
 
 ## Active Skills
 
-- `xcode-app-project-workflow`
-  - Compatibility surface for older broad Xcode workflow references that now route into the narrower Xcode build/run or testing skills.
 - `xcode-build-run-workflow`
   - Top-level Apple and Swift execution skill for Xcode build, run, diagnostics, previews, toolchains, file membership, and `.pbxproj`-aware mutation decisions.
 - `xcode-testing-workflow`
@@ -14,8 +12,6 @@ Canonical Apple development skills with a plugin-first packaging layout for Code
   - Top-level SwiftPM-first skill for existing package repos when the work is primarily about manifest changes, dependencies, package resources, Metal distribution, builds, runs, plugins, and Debug-versus-Release validation.
 - `swift-package-testing-workflow`
   - Top-level SwiftPM-first skill for existing package repos when the work is primarily about Swift Testing, XCTest holdouts, `.xctestplan`, fixtures, async tests, and test diagnosis.
-- `swift-package-workflow`
-  - Compatibility surface for older broad package-workflow references that now route into the narrower package build/run or testing skills.
 - `explore-apple-swift-docs`
   - Top-level docs skill for Apple and Swift docs exploration across Xcode MCP docs, Dash, and official web docs, with optional Dash follow-up when needed.
 - `format-swift-sources`
@@ -30,6 +26,13 @@ Canonical Apple development skills with a plugin-first packaging layout for Code
   - Top-level skill for bringing an existing Xcode app repo's `AGENTS.md` and workflow guidance up to baseline.
 - `sync-swift-package-guidance`
   - Top-level skill for bringing an existing Swift package repo's `AGENTS.md` and workflow guidance up to baseline.
+
+## Legacy Compatibility Skills
+
+- `xcode-app-project-workflow`
+  - Legacy compatibility entrypoint for older broad Xcode workflow references. Prefer `xcode-build-run-workflow` or `xcode-testing-workflow` for new installs, docs, and prompts.
+- `swift-package-workflow`
+  - Legacy compatibility entrypoint for older broad package-workflow references. Prefer `swift-package-build-run-workflow` or `swift-package-testing-workflow` for new installs, docs, and prompts.
 
 Every active skill now follows the same documentation contract:
 
@@ -64,6 +67,8 @@ Current plugin scaffolding lives under:
 
 For local Codex plugin development, treat `plugins/apple-dev-skills/` as the installable plugin root and use the official marketplace-based plugin install flow documented by Codex.
 For local Claude development, point `claude --plugin-dir /absolute/path/to/plugins/apple-dev-skills` at the tracked plugin source root.
+
+For new installs, prompts, and examples, prefer the narrower execution-skill names over the legacy compatibility entrypoints.
 
 Maintainer guidance for those adjacent surfaces now exists in [AGENTS.md](./AGENTS.md):
 
@@ -206,10 +211,12 @@ This repo previously experimented with a router layer and later removed it.
 | --- | --- |
 | `apple-skills-router-advise-install` | removed |
 | `apple-skills-router` | removed |
-| `apple-xcode-workflow-execute` | `xcode-app-project-workflow` compatibility surface, then `xcode-build-run-workflow` or `xcode-testing-workflow` |
+| `apple-xcode-workflow-execute` | legacy compatibility flow through `xcode-app-project-workflow`, then `xcode-build-run-workflow` or `xcode-testing-workflow` |
 | `apple-dash-docset-manage` | `explore-apple-swift-docs` |
 | `apple-dash-docsets` | removed in `v4.0.0`; use `explore-apple-swift-docs` |
 | `apple-swift-package-bootstrap` | removed in `v4.0.0`; use `bootstrap-swift-package` |
+
+New install-facing names should prefer the narrower execution skills directly instead of the legacy compatibility surfaces.
 
 The canonical shared repo-maintenance toolkit now lives in `../productivity-skills`. This repository keeps a mirrored consumer snapshot under `shared/repo-maintenance-toolkit/` only so the Apple bootstrap and guidance-sync skills can still install or refresh the same managed file set without depending on a second repo at runtime. That local mirror is intentionally not the contract owner; toolkit feature work should land in `productivity-skills` first and then be mirrored here only as needed for standalone Apple workflow installs. The mirrored installer is profile-aware and writes `scripts/repo-maintenance/config/profile.env` so downstream repos can tell whether they are on the `swift-package` or `xcode-app` profile.
 

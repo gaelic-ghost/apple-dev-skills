@@ -21,10 +21,10 @@ flowchart TD
     U["User request"] --> A["Agent classifies request"]
     A --> XBR["xcode-build-run-workflow"]
     A --> XT["xcode-testing-workflow"]
-    A --> X["xcode-app-project-workflow"]
+    A --> X["xcode-app-project-workflow (legacy compatibility)"]
     A --> WPBR["swift-package-build-run-workflow"]
     A --> WPT["swift-package-testing-workflow"]
-    A --> WP["swift-package-workflow"]
+    A --> WP["swift-package-workflow (legacy compatibility)"]
     A --> D["explore-apple-swift-docs"]
     A --> ST["format-swift-sources"]
     A --> SS["structure-swift-sources"]
@@ -71,14 +71,14 @@ flowchart TD
 ### Branch and Path Notes
 
 - The repo has no Apple router or orchestrator layer.
-- The active surface now has thirteen skills, including two narrower Swift package execution skills, two narrower Xcode execution skills, and two compatibility-routing execution surfaces.
+- The active surface now has thirteen skills, including four primary execution skills and two legacy compatibility-routing execution surfaces.
 - Cross-skill recommendation is decentralized inside each active skill.
 - End-user `AGENTS.md` guidance is recommended from each skill's local snippet copy, not from a router.
 - The active skill surface now uses the intended install-facing names directly.
 - The shared repo-maintenance toolkit is now external to the active Apple skill surface and is mirrored locally under `shared/repo-maintenance-toolkit/` only so bootstrap and sync skills can keep installing the same managed file set without a cross-repo runtime dependency.
 - The canonical toolkit contract now lives in `../productivity-skills`, while the Apple-local mirror stays intentionally consumer-shaped and profile-aware, with downstream repos getting `scripts/repo-maintenance/config/profile.env` and Apple workflows choosing either the `swift-package` or `xcode-app` profile explicitly.
-- The Swift package side of the execution split is now in place, with build-run and testing split into separate skills while `swift-package-workflow` remains as a compatibility-routing surface.
-- The Xcode side of the execution split is now in place too, with `xcode-build-run-workflow` and `xcode-testing-workflow` as the real owners while `xcode-app-project-workflow` remains as a compatibility-routing surface.
+- The Swift package side of the execution split is now in place, with build-run and testing split into separate primary skills while `swift-package-workflow` remains only as a legacy compatibility-routing surface.
+- The Xcode side of the execution split is now in place too, with `xcode-build-run-workflow` and `xcode-testing-workflow` as the real owners while `xcode-app-project-workflow` remains only as a legacy compatibility-routing surface.
 
 ## Planned Execution Split
 
@@ -90,11 +90,11 @@ flowchart TD
 - The Swift package side has started landing now:
   - `swift-package-build-run-workflow`
   - `swift-package-testing-workflow`
-  - `swift-package-workflow` as a compatibility surface
+  - `swift-package-workflow` as a legacy compatibility surface
 - The Xcode side has now landed:
   - `xcode-build-run-workflow`
   - `xcode-testing-workflow`
-  - `xcode-app-project-workflow` as a compatibility surface
+  - `xcode-app-project-workflow` as a legacy compatibility surface
 - The split must preserve all current execution guidance, either directly in the narrower replacement skills, in shared references, or in synced and bootstrapped `AGENTS.md` output where the guidance is really durable repo policy.
 - The active planning source for that work is `docs/maintainers/execution-split-and-inference-plan.md`.
 
