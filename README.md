@@ -433,7 +433,7 @@ For repository maintenance, treat this standalone repository as the source of tr
 
 The repo-maintenance toolkit is now the maintainer-facing wrapper around that release flow. Use `scripts/repo-maintenance/validate-all.sh` for local validation, `scripts/repo-maintenance/sync-shared.sh` for deterministic repo-local sync hooks, and `scripts/repo-maintenance/release.sh` for the tagged release path after verification passes.
 
-That tagged release path now also builds `SpeakSwiftlyServerTool` in `release` mode and stages the resulting binary under `.release-artifacts/<tag>/SpeakSwiftlyServerTool`, copies the required adjacent `Resources/default.metallib` into that same staged artifact directory, and then refreshes `.release-artifacts/current` to that tagged build. The live LaunchAgent install path is expected to consume that staged release artifact by default.
+That tagged release path now also builds `SpeakSwiftlyServerTool` in `release` mode and stages the resulting binary under `.release-artifacts/<tag>/SpeakSwiftlyServerTool`, copies the required adjacent `Resources/default.metallib` into that same staged artifact directory from the sibling published `SpeakSwiftly` release-runtime metadata, and then refreshes `.release-artifacts/current` to that tagged build. The live LaunchAgent install path is expected to consume that staged release artifact by default.
 
 ## Repository Layout
 
@@ -479,7 +479,7 @@ That serialized live suite now mirrors the main `SpeakSwiftly` sequential workfl
 
 If you want the underlying playback trace logs too, add `SPEAKSWIFTLY_PLAYBACK_TRACE=1` to that same command.
 
-That live path currently expects a local Xcode-built [`SpeakSwiftly`](https://github.com/gaelic-ghost/SpeakSwiftly) checkout only as the source for `default.metallib`, so `../SpeakSwiftly/.derived/Build/Products/Debug/mlx-swift_Cmlx.bundle/Contents/Resources/default.metallib` must exist for the server process. That runtime-artifact requirement is separate from SwiftPM dependency resolution, which still comes from `Package.swift` and `Package.resolved`.
+That live path currently expects a sibling published [`SpeakSwiftly`](https://github.com/gaelic-ghost/SpeakSwiftly) runtime as the source of truth for `default.metallib`, so `../SpeakSwiftly/.local/xcode/SpeakSwiftly.debug.json` and the published `current-debug` alias must exist before the server suite runs. That runtime-artifact requirement is separate from SwiftPM dependency resolution, which still comes from `Package.swift` and `Package.resolved`.
 
 After the live suite passes, use `scripts/repo-maintenance/release.sh` for the tagged release flow so local validation, release artifact staging, tag creation, push, and GitHub release creation stay on the same documented path.
 

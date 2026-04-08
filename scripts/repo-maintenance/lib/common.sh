@@ -57,22 +57,30 @@ release_artifact_resources_dir() {
 }
 
 find_speak_swiftly_metallib() {
-  speak_swiftly_root="$REPO_ROOT/../SpeakSwiftly"
+  metadata_path="$(speak_swiftly_runtime_metadata_path Release)"
+  runtime_metallib_path="$(speak_swiftly_runtime_metadata_value "$metadata_path" metallib_path)"
+  [ -n "$runtime_metallib_path" ] || die "SpeakSwiftly runtime metadata at $metadata_path did not include a metallib_path value."
+  [ -f "$runtime_metallib_path" ] || die "SpeakSwiftly runtime metadata at $metadata_path pointed at a missing metallib path: $runtime_metallib_path"
+  printf '%s\n' "$runtime_metallib_path"
+}
 
-  for candidate in \
-    "$speak_swiftly_root/.local/xcode/derived-data/Release/Build/Products/Release/mlx-swift_Cmlx.bundle/Contents/Resources/default.metallib" \
-    "$speak_swiftly_root/.local/xcode/Release/mlx-swift_Cmlx.bundle/Contents/Resources/default.metallib" \
-    "$speak_swiftly_root/.derived/Build/Products/Debug/mlx-swift_Cmlx.bundle/Contents/Resources/default.metallib" \
-    "$speak_swiftly_root/.local/xcode/derived-data/Debug/Build/Products/Debug/mlx-swift_Cmlx.bundle/Contents/Resources/default.metallib" \
-    "$speak_swiftly_root/.local/xcode/Debug/mlx-swift_Cmlx.bundle/Contents/Resources/default.metallib"
-  do
-    if [ -f "$candidate" ]; then
-      printf '%s\n' "$candidate"
-      return 0
-    fi
-  done
+speak_swiftly_runtime_root() {
+  printf '%s\n' "$REPO_ROOT/../SpeakSwiftly/.local/xcode"
+}
 
-  die "Could not find SpeakSwiftly's default.metallib in the expected local Xcode build locations under $speak_swiftly_root. This metallib lookup is only for staging runtime resources; this repository's SwiftPM dependency still resolves from Package.swift and Package.resolved."
+speak_swiftly_runtime_metadata_path() {
+  configuration="$1"
+  lower_configuration=$(printf '%s' "$configuration" | tr '[:upper:]' '[:lower:]')
+  metadata_path="$(speak_swiftly_runtime_root)/SpeakSwiftly.$lower_configuration.json"
+  [ -f "$metadata_path" ] || die "Could not find SpeakSwiftly's published $configuration runtime metadata at $metadata_path. Publish and verify the sibling runtime first."
+  printf '%s\n' "$metadata_path"
+}
+
+speak_swiftly_runtime_metadata_value() {
+  metadata_path="$1"
+  key="$2"
+  value=$(sed -n "s/^[[:space:]]*\"$key\"[[:space:]]*:[[:space:]]*\"\\(.*\\)\"[[:space:]]*,\{0,1\}[[:space:]]*$/\\1/p" "$metadata_path" | head -n 1)
+  printf '%s\n' "$value"
 }
 
 run_dispatch_dir() {

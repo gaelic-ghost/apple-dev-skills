@@ -1857,23 +1857,75 @@ struct SpeakSwiftlyServerE2ETests {
 
     // MARK: Build Artifacts
 
-    private static func speakSwiftlyProductsURL() throws -> URL {
+    private struct SpeakSwiftlyPublishedRuntimeMetadata: Decodable {
+        let buildConfiguration: String
+        let productsPath: String
+        let executablePath: String
+        let launcherPath: String
+        let metallibPath: String
+        let aliasPath: String
+
+        enum CodingKeys: String, CodingKey {
+            case buildConfiguration = "build_configuration"
+            case productsPath = "products_path"
+            case executablePath = "executable_path"
+            case launcherPath = "launcher_path"
+            case metallibPath = "metallib_path"
+            case aliasPath = "alias_path"
+        }
+    }
+
+    private static func speakSwiftlyPublishedRuntimeMetadata(configuration: String) throws -> SpeakSwiftlyPublishedRuntimeMetadata {
         let serverRootURL = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()
             .deletingLastPathComponent()
             .deletingLastPathComponent()
-        let productsURL = serverRootURL
+        let metadataURL = serverRootURL
             .deletingLastPathComponent()
-            .appendingPathComponent("SpeakSwiftly/.derived/Build/Products/Debug", isDirectory: true)
-
-        let metallibURL = productsURL
-            .appendingPathComponent("mlx-swift_Cmlx.bundle/Contents/Resources/default.metallib", isDirectory: false)
-        guard FileManager.default.fileExists(atPath: metallibURL.path) else {
+            .appendingPathComponent("SpeakSwiftly/.local/xcode/SpeakSwiftly.\(configuration.lowercased()).json", isDirectory: false)
+        guard FileManager.default.fileExists(atPath: metadataURL.path) else {
             throw SpeakSwiftlyBuildError(
-                "The live SpeakSwiftlyServer end-to-end suite requires the Xcode-built SpeakSwiftly products at '\(productsURL.path)' so `default.metallib` is available at runtime. That local build is only an artifact source for the live suite, not this repository's SwiftPM dependency source."
+                "The live SpeakSwiftlyServer end-to-end suite requires the sibling SpeakSwiftly published runtime metadata at '\(metadataURL.path)'. Publish and verify the sibling \(configuration) runtime first."
             )
         }
-        return productsURL
+
+        let metadata = try decode(
+            SpeakSwiftlyPublishedRuntimeMetadata.self,
+            from: Data(contentsOf: metadataURL)
+        )
+        guard metadata.buildConfiguration == configuration else {
+            throw SpeakSwiftlyBuildError(
+                "The sibling SpeakSwiftly published runtime metadata at '\(metadataURL.path)' reported build configuration '\(metadata.buildConfiguration)' instead of the expected '\(configuration)'."
+            )
+        }
+
+        let aliasURL = URL(fileURLWithPath: metadata.aliasPath, isDirectory: true)
+        let metallibURL = URL(fileURLWithPath: metadata.metallibPath, isDirectory: false)
+        let launcherURL = URL(fileURLWithPath: metadata.launcherPath, isDirectory: false)
+        let executableURL = URL(fileURLWithPath: metadata.executablePath, isDirectory: false)
+
+        guard FileManager.default.fileExists(atPath: metallibURL.path) else {
+            throw SpeakSwiftlyBuildError(
+                "The sibling SpeakSwiftly published runtime metadata pointed at a missing metallib path '\(metallibURL.path)'. Re-publish and verify the sibling \(configuration) runtime before running the live server suite."
+            )
+        }
+        guard FileManager.default.isExecutableFile(atPath: launcherURL.path) else {
+            throw SpeakSwiftlyBuildError(
+                "The sibling SpeakSwiftly published runtime metadata pointed at a missing runtime launcher '\(launcherURL.path)'. Re-publish and verify the sibling \(configuration) runtime before running the live server suite."
+            )
+        }
+        guard FileManager.default.isExecutableFile(atPath: executableURL.path) else {
+            throw SpeakSwiftlyBuildError(
+                "The sibling SpeakSwiftly published runtime metadata pointed at a missing executable '\(executableURL.path)'. Re-publish and verify the sibling \(configuration) runtime before running the live server suite."
+            )
+        }
+        guard FileManager.default.fileExists(atPath: aliasURL.path) else {
+            throw SpeakSwiftlyBuildError(
+                "The sibling SpeakSwiftly published runtime metadata pointed at a missing stable alias '\(aliasURL.path)'. Re-publish and verify the sibling \(configuration) runtime before running the live server suite."
+            )
+        }
+
+        return metadata
     }
 
     private static func serverToolExecutableURL() throws -> URL {
@@ -1893,11 +1945,10 @@ struct SpeakSwiftlyServerE2ETests {
     }
 
     private static func stageMetallibForServerBinary(
-        from dependencyProductsURL: URL,
+        from publishedRuntimeMetadata: SpeakSwiftlyPublishedRuntimeMetadata,
         serverExecutableURL: URL
     ) throws {
-        let sourceURL = dependencyProductsURL
-            .appendingPathComponent("mlx-swift_Cmlx.bundle/Contents/Resources/default.metallib", isDirectory: false)
+        let sourceURL = URL(fileURLWithPath: publishedRuntimeMetadata.metallibPath, isDirectory: false)
         let targetDirectoryURL = serverExecutableURL
             .deletingLastPathComponent()
             .appendingPathComponent("Resources", isDirectory: true)
@@ -1918,10 +1969,10 @@ struct SpeakSwiftlyServerE2ETests {
         mcpEnabled: Bool,
         speechBackend: String? = nil
     ) throws -> ServerProcess {
-        let dependencyProductsURL = try speakSwiftlyProductsURL()
+        let publishedRuntimeMetadata = try speakSwiftlyPublishedRuntimeMetadata(configuration: "Debug")
         let executableURL = try serverToolExecutableURL()
         try stageMetallibForServerBinary(
-            from: dependencyProductsURL,
+            from: publishedRuntimeMetadata,
             serverExecutableURL: executableURL
         )
 
