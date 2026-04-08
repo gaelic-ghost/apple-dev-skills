@@ -680,7 +680,7 @@ Tickets:
 - [x] Add `xcode-build-run-workflow`.
 - [x] Add `xcode-testing-workflow`.
 - [x] Convert `xcode-app-project-workflow` and `swift-package-workflow` into compatibility surfaces for one release cycle after the narrower skills land.
-- [ ] Strengthen repo-root, workspace, scheme, target, and test-surface inference in the new runtime wrappers.
+- [x] Strengthen repo-root, workspace, scheme, target, and test-surface inference in the new runtime wrappers.
 - [ ] Add specialized fallback inference for `.xctestplan`, package resources, and Metal-related signals.
 - [x] Update docs, validators, and tests so the narrower execution matrix becomes the active long-term surface.
 
@@ -689,6 +689,7 @@ Exit criteria:
 - [ ] The repo ships narrower execution skills with stronger inference, and the old monolithic execution skills are no longer the primary long-term workflow surfaces.
 - [x] Completed 2026-04-07 package-side by adding the narrower Swift package build/run and testing skills, converting `swift-package-workflow` into a compatibility surface, and updating package-facing docs, validators, and tests.
 - [x] Continued 2026-04-07 Xcode-side by adding `xcode-build-run-workflow` and `xcode-testing-workflow`, converting `xcode-app-project-workflow` into a compatibility surface, and updating the surrounding docs, sync assets, validators, and tests.
+- [x] Continued 2026-04-08 by teaching the narrower wrappers to infer nested package and Xcode roots, scheme and target hints, test-plan context, UI-test surfaces, and Metal-related signals, with richer payload context and fallback commands.
 
 ## Milestone 33: Swift/Xcode Repo-Maintenance Toolkit Profiles
 

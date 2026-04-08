@@ -96,6 +96,27 @@ class XcodeBuildRunWorkflowTests(unittest.TestCase):
             self.assertEqual(payload["status"], "blocked")
             self.assertTrue(payload["output"]["guard_result"]["direct_pbxproj_edit_warning_required"])
 
+    def test_infers_workspace_state_and_scheme_hint_from_nested_path(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            (repo_root / "App" / "Demo.xcodeproj").mkdir(parents=True)
+            (repo_root / "App" / "Demo.xctestplan").write_text("{}", encoding="utf-8")
+            code, payload = self.run_script(
+                "--operation-type",
+                "build",
+                "--workspace-path",
+                str(repo_root / "App" / "Sources"),
+                "--mcp-failure-reason",
+                "timeout",
+            )
+            self.assertEqual(code, 0)
+            self.assertEqual(payload["path_type"], "fallback")
+            self.assertEqual(payload["output"]["inferred_context"]["scheme_hint"], "Demo")
+            self.assertTrue(payload["output"]["inferred_context"]["has_xcode_test_plan"])
+            self.assertTrue(payload["output"]["workspace_state"]["project"].endswith("Demo.xcodeproj"))
+            joined = "\n".join(payload["output"]["fallback_commands"])
+            self.assertIn("-scheme Demo", joined)
+
 
 if __name__ == "__main__":
     unittest.main()

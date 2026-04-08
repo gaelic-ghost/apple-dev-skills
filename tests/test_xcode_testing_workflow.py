@@ -65,6 +65,29 @@ class XcodeTestingWorkflowTests(unittest.TestCase):
             self.assertEqual(payload["status"], "blocked")
             self.assertTrue(payload["output"]["guard_result"]["direct_pbxproj_edit_warning_required"])
 
+    def test_infers_test_plan_and_ui_test_context_from_workspace(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            (repo_root / "Demo.xcworkspace").mkdir()
+            (repo_root / "Demo.xctestplan").write_text("{}", encoding="utf-8")
+            (repo_root / "Tests" / "DemoUITests").mkdir(parents=True)
+            code, payload = self.run_script(
+                "--operation-type",
+                "test",
+                "--workspace-path",
+                tmpdir,
+                "--mcp-failure-reason",
+                "timeout",
+            )
+            self.assertEqual(code, 0)
+            self.assertEqual(payload["path_type"], "fallback")
+            self.assertEqual(payload["output"]["inferred_context"]["scheme_hint"], "Demo")
+            self.assertTrue(payload["output"]["inferred_context"]["has_xcode_test_plan"])
+            self.assertIn("DemoUITests", payload["output"]["inferred_context"]["ui_test_targets"])
+            joined = "\n".join(payload["output"]["fallback_commands"])
+            self.assertIn("-testPlan Demo", joined)
+            self.assertIn("-scheme Demo", joined)
+
 
 if __name__ == "__main__":
     unittest.main()

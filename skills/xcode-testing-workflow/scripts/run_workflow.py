@@ -108,19 +108,95 @@ def detect_managed_scope(workspace_path: str | None) -> dict:
 
 def discover_workspace_state(workspace_path: str | None) -> dict:
     if not workspace_path:
-        return {"workspace": None, "project": None, "swift_package": False}
+        return {
+            "workspace": None,
+            "project": None,
+            "swift_package": False,
+            "requested_root": None,
+            "resolved_root": None,
+            "xctestplans": [],
+            "scheme_hints": [],
+            "test_targets": [],
+            "ui_test_targets": [],
+        }
 
-    root = Path(workspace_path).expanduser()
-    if not root.exists():
-        return {"workspace": None, "project": None, "swift_package": False}
+    requested = Path(workspace_path).expanduser().resolve()
+    existing = requested
+    while not existing.exists() and existing != existing.parent:
+        existing = existing.parent
+    if not existing.exists():
+        return {
+            "workspace": None,
+            "project": None,
+            "swift_package": False,
+            "requested_root": str(requested),
+            "resolved_root": None,
+            "xctestplans": [],
+            "scheme_hints": [],
+            "test_targets": [],
+            "ui_test_targets": [],
+        }
 
-    workspaces = sorted(str(path) for path in root.rglob("*.xcworkspace"))
-    projects = sorted(str(path) for path in root.rglob("*.xcodeproj"))
-    swift_package = (root / "Package.swift").exists()
+    candidate = existing if existing.is_dir() else existing.parent
+    direct_workspace = requested if requested.suffix == ".xcworkspace" else None
+    direct_project = requested if requested.suffix == ".xcodeproj" else None
+
+    parent_workspace = None
+    parent_project = None
+    for current in (candidate, *candidate.parents):
+        if not parent_workspace:
+            matches = sorted(current.glob("*.xcworkspace"))
+            if matches:
+                parent_workspace = matches[0]
+        if not parent_project:
+            matches = sorted(current.glob("*.xcodeproj"))
+            if matches:
+                parent_project = matches[0]
+        if parent_workspace or parent_project:
+            break
+
+    scan_root = candidate
+    workspace = direct_workspace or parent_workspace
+    project = direct_project or parent_project
+    if workspace:
+        scan_root = workspace.parent
+    elif project:
+        scan_root = project.parent
+
+    if not workspace:
+        descendants = sorted(scan_root.rglob("*.xcworkspace"), key=str)
+        if descendants:
+            workspace = descendants[0]
+            scan_root = workspace.parent
+    if not project:
+        descendants = sorted(scan_root.rglob("*.xcodeproj"), key=str)
+        if descendants:
+            project = descendants[0]
+            if not workspace:
+                scan_root = project.parent
+
+    xctestplans = sorted(str(path) for path in scan_root.rglob("*.xctestplan"))
+    test_root = scan_root / "Tests"
+    test_targets = sorted(path.name for path in test_root.iterdir() if path.is_dir()) if test_root.exists() else []
+    ui_test_targets = sorted(name for name in test_targets if "UI" in name or "UITest" in name)
+    scheme_hints = []
+    if workspace:
+        scheme_hints.append(workspace.stem)
+    if project:
+        scheme_hints.append(project.stem)
+    scheme_hints.extend(Path(path).stem for path in xctestplans)
+    scheme_hints = sorted(dict.fromkeys(scheme_hints))
+    swift_package = any((current / "Package.swift").exists() for current in (scan_root, *scan_root.parents))
     return {
-        "workspace": workspaces[0] if workspaces else None,
-        "project": projects[0] if projects else None,
+        "requested_root": str(requested),
+        "resolved_root": str(scan_root),
+        "workspace": str(workspace) if workspace else None,
+        "project": str(project) if project else None,
         "swift_package": swift_package,
+        "xctestplans": xctestplans,
+        "scheme_hints": scheme_hints,
+        "test_targets": test_targets,
+        "ui_test_targets": ui_test_targets,
     }
 
 
@@ -128,22 +204,28 @@ def shell_join(parts: list[str]) -> str:
     return " ".join(shlex.quote(part) for part in parts)
 
 
+def inferred_scheme(state: dict) -> str:
+    hints = state.get("scheme_hints", [])
+    return hints[0] if hints else "<scheme>"
+
+
 def build_fallback_commands(operation_type: str, workspace_path: str | None, mapping_profile: str) -> list[str]:
     state = discover_workspace_state(workspace_path)
     commands: list[str] = []
     include_swift_package = mapping_profile != "xcode-only"
+    scheme = inferred_scheme(state)
 
     if operation_type in {"workspace-inspection", "session-inspection", "read-search-diagnostics"}:
         if state["workspace"]:
             commands.append(shell_join(["xcodebuild", "-workspace", state["workspace"], "-list"]))
-            commands.append(shell_join(["xcodebuild", "-workspace", state["workspace"], "-showTestPlans", "-scheme", "<scheme>"]))
+            commands.append(shell_join(["xcodebuild", "-workspace", state["workspace"], "-showTestPlans", "-scheme", scheme]))
         if state["project"]:
             commands.append(shell_join(["xcodebuild", "-project", state["project"], "-list"]))
         if include_swift_package and state["swift_package"]:
             commands.append("swift package describe")
     elif operation_type == "test":
         if state["workspace"]:
-            commands.append(shell_join(["xcodebuild", "-workspace", state["workspace"], "-showTestPlans", "-scheme", "<scheme>"]))
+            commands.append(shell_join(["xcodebuild", "-workspace", state["workspace"], "-showTestPlans", "-scheme", scheme]))
             commands.append(
                 shell_join(
                     [
@@ -152,28 +234,29 @@ def build_fallback_commands(operation_type: str, workspace_path: str | None, map
                         "-workspace",
                         state["workspace"],
                         "-scheme",
-                        "<scheme>",
+                        scheme,
                         "-destination",
                         "<destination>",
                     ]
                 )
             )
-            commands.append(
-                shell_join(
-                    [
-                        "xcodebuild",
-                        "test",
-                        "-workspace",
-                        state["workspace"],
-                        "-scheme",
-                        "<scheme>",
-                        "-testPlan",
-                        "<plan>",
-                        "-destination",
-                        "<destination>",
-                    ]
+            if state["xctestplans"]:
+                commands.append(
+                    shell_join(
+                        [
+                            "xcodebuild",
+                            "test",
+                            "-workspace",
+                            state["workspace"],
+                            "-scheme",
+                            scheme,
+                            "-testPlan",
+                            Path(state["xctestplans"][0]).stem,
+                            "-destination",
+                            "<destination>",
+                        ]
+                    )
                 )
-            )
         if state["project"]:
             commands.append(
                 shell_join(
@@ -183,7 +266,7 @@ def build_fallback_commands(operation_type: str, workspace_path: str | None, map
                         "-project",
                         state["project"],
                         "-scheme",
-                        "<scheme>",
+                        scheme,
                         "-destination",
                         "<destination>",
                     ]
@@ -202,7 +285,7 @@ def build_fallback_commands(operation_type: str, workspace_path: str | None, map
                         "-workspace",
                         state["workspace"],
                         "-scheme",
-                        "<scheme>",
+                        scheme,
                         "-destination",
                         "<destination>",
                     ]
@@ -277,6 +360,7 @@ def main() -> int:
         print(json.dumps(payload, indent=2, sort_keys=True))
         return 0
 
+    workspace_state = discover_workspace_state(args.workspace_path)
     fallback_commands = build_fallback_commands(
         operation_type,
         args.workspace_path,
@@ -328,10 +412,21 @@ def main() -> int:
             "operation_type": operation_type,
             "operation_type_source": "explicit" if args.operation_type else "inferred",
             "workspace_path": args.workspace_path,
+            "workspace_state": workspace_state,
             "tab_identifier": args.tab_identifier,
             "mcp_failure_reason": args.mcp_failure_reason,
             "guard_result": guard_result,
             "fallback_commands": fallback_commands,
+            "inferred_context": {
+                "scheme_hint": inferred_scheme(workspace_state),
+                "has_xcode_test_plan": bool(workspace_state.get("xctestplans")),
+                "ui_test_targets": workspace_state.get("ui_test_targets"),
+                "primary_test_target": (
+                    workspace_state.get("test_targets", [None])[0]
+                    if len(workspace_state.get("test_targets", [])) == 1
+                    else None
+                ),
+            },
             "retry_count": int(settings.get("mcpRetryCount", 1)),
             "next_step": next_step,
         },

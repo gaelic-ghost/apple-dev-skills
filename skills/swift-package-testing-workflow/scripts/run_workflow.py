@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import re
 import shlex
 import sys
 from pathlib import Path
@@ -90,45 +89,102 @@ def shell_join(parts: list[str]) -> str:
     return " ".join(shlex.quote(part) for part in parts)
 
 
+def first_matching_file(root: Path, pattern: str) -> list[str]:
+    return sorted(str(path) for path in root.rglob(pattern))
+
+
+def infer_package_root(repo_root: str | None) -> tuple[Path, Path | None]:
+    requested = Path(repo_root or ".").expanduser().resolve()
+    candidate = requested if requested.is_dir() else requested.parent
+
+    for current in (candidate, *candidate.parents):
+        if (current / "Package.swift").exists():
+            return requested, current
+
+    descendants = sorted(
+        requested.rglob("Package.swift"),
+        key=lambda path: (len(path.relative_to(requested).parts), str(path)),
+    )
+    if descendants:
+        return requested, descendants[0].parent
+    return requested, None
+
+
 def discover_repo_shape(repo_root: str | None) -> dict:
-    root = Path(repo_root or ".").expanduser().resolve()
-    if not root.exists():
+    requested_root, package_root = infer_package_root(repo_root)
+    if not requested_root.exists():
         return {
-            "repo_root": str(root),
+            "requested_root": str(requested_root),
+            "repo_root": str(requested_root),
             "exists": False,
             "has_package": False,
             "xcode_markers": [],
+            "xctestplans": [],
+            "test_targets": [],
+            "ui_test_targets": [],
+            "metal_sources": [],
             "mixed_root": False,
             "reason": "repo-root-missing",
         }
 
-    has_package = (root / "Package.swift").exists()
-    markers = []
+    scan_root = package_root or requested_root
+    has_package = package_root is not None
+    markers: list[str] = []
     for suffix in ("*.xcodeproj", "*.xcworkspace", "*.pbxproj"):
-        markers.extend(str(path) for path in root.glob(suffix))
-    markers = sorted(markers)
+        markers.extend(first_matching_file(scan_root, suffix))
+    tests_dir = scan_root / "Tests"
+    test_targets = sorted(path.name for path in tests_dir.iterdir() if path.is_dir()) if tests_dir.exists() else []
+    ui_test_targets = sorted(name for name in test_targets if "UI" in name or "UITest" in name)
+    xctestplans = first_matching_file(scan_root, "*.xctestplan")
+    metal_sources = first_matching_file(scan_root, "*.metal")
 
     return {
-        "repo_root": str(root),
+        "requested_root": str(requested_root),
+        "repo_root": str(scan_root),
         "exists": True,
         "has_package": has_package,
         "xcode_markers": markers,
+        "xctestplans": xctestplans,
+        "test_targets": test_targets,
+        "ui_test_targets": ui_test_targets,
+        "metal_sources": metal_sources,
         "mixed_root": has_package and bool(markers),
-        "reason": "ok" if has_package else "package-swift-missing",
+        "reason": (
+            "package-root-inferred"
+            if has_package and scan_root != requested_root
+            else "ok"
+            if has_package
+            else "package-swift-missing"
+        ),
     }
 
 
-def build_commands(operation_type: str) -> list[str]:
+def inferred_package_name(repo_shape: dict) -> str | None:
+    root = repo_shape.get("repo_root")
+    return Path(root).name if root else None
+
+
+def inferred_xcode_scheme(repo_shape: dict) -> str:
+    plans = repo_shape.get("xctestplans", [])
+    if len(plans) == 1:
+        return Path(plans[0]).stem
+    package_name = inferred_package_name(repo_shape)
+    return package_name or "<package-scheme>"
+
+
+def build_commands(operation_type: str, repo_shape: dict) -> list[str]:
     if operation_type == "package-inspection":
         return ["swift package describe", "swift package dump-package"]
     if operation_type == "read-search":
         return ["swift package describe"]
     if operation_type == "test":
-        return [
-            "swift test",
-            "swift test --filter <pattern>",
-            "xcodebuild -scheme <package-scheme> -testPlan <plan> test",
-        ]
+        commands = ["swift test", "swift test --filter <pattern>"]
+        if repo_shape["xctestplans"]:
+            commands.append(f"xcodebuild -scheme {inferred_xcode_scheme(repo_shape)} -showTestPlans")
+            commands.append(
+                f"xcodebuild -scheme {inferred_xcode_scheme(repo_shape)} -testPlan {Path(repo_shape['xctestplans'][0]).stem} test"
+            )
+        return commands
     if operation_type == "mutation":
         return [
             "Edit package test sources or test fixtures directly when the change stays inside SwiftPM-managed scope.",
@@ -206,7 +262,15 @@ def main() -> int:
             "operation_type": operation_type,
             "operation_type_source": "explicit" if args.operation_type else "inferred",
             "repo_shape": repo_shape,
-            "planned_commands": build_commands(operation_type),
+            "planned_commands": build_commands(operation_type, repo_shape),
+            "inferred_context": {
+                "package_name": inferred_package_name(repo_shape),
+                "primary_test_target": repo_shape["test_targets"][0] if len(repo_shape["test_targets"]) == 1 else None,
+                "ui_test_targets": repo_shape["ui_test_targets"],
+                "has_xcode_test_plan": bool(repo_shape["xctestplans"]),
+                "xcode_scheme_hint": inferred_xcode_scheme(repo_shape) if repo_shape["xctestplans"] else None,
+                "has_metal_sources": bool(repo_shape["metal_sources"]),
+            },
             "next_step": next_step,
         },
     }

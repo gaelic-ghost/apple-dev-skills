@@ -51,6 +51,21 @@ class SwiftPackageTestingWorkflowTests(unittest.TestCase):
             self.assertEqual(payload["status"], "handoff")
             self.assertIn("xcode-testing-workflow", payload["output"]["next_step"])
 
+    def test_infers_test_plan_and_scheme_context(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            package_root = Path(tmpdir)
+            (package_root / "Tests" / "DemoPkgTests").mkdir(parents=True)
+            (package_root / "Package.swift").write_text("// swift-tools-version: 6.0\n", encoding="utf-8")
+            (package_root / "DemoPkg.xctestplan").write_text("{}", encoding="utf-8")
+            code, payload = self.run_script("--operation-type", "test", "--repo-root", tmpdir)
+            self.assertEqual(code, 0)
+            self.assertEqual(payload["status"], "success")
+            self.assertTrue(payload["output"]["inferred_context"]["has_xcode_test_plan"])
+            self.assertEqual(payload["output"]["inferred_context"]["xcode_scheme_hint"], "DemoPkg")
+            joined = "\n".join(payload["output"]["planned_commands"])
+            self.assertIn("-showTestPlans", joined)
+            self.assertIn("-testPlan DemoPkg", joined)
+
     def test_blocks_when_no_operation_or_request_is_provided(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             Path(tmpdir, "Package.swift").write_text("// swift-tools-version: 6.0\n", encoding="utf-8")
