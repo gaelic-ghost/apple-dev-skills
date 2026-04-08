@@ -16,18 +16,17 @@ struct RuntimeConfigurationStore: Sendable {
     ) {
         let profileRootOverride = environment["SPEAKSWIFTLY_PROFILE_ROOT"]
         self.environment = environment
-        self.configurationURL = SpeakSwiftly.Configuration.defaultPersistenceURL(
-            fileManager: fileManager,
-            profileRootOverride: profileRootOverride
-        )
         if let profileRootOverride,
            profileRootOverride.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false
         {
             self.profileRootURL = URL(fileURLWithPath: profileRootOverride, isDirectory: true)
-        } else {
-            self.profileRootURL = configurationURL
+            self.configurationURL = self.profileRootURL
                 .deletingLastPathComponent()
-                .appendingPathComponent("profiles", isDirectory: true)
+                .appendingPathComponent("configuration.json", isDirectory: false)
+        } else {
+            let layout = ServerInstallLayout.defaultForCurrentUser(fileManager: fileManager)
+            self.profileRootURL = layout.runtimeProfileRootURL
+            self.configurationURL = layout.runtimeConfigurationFileURL
         }
         self.activeRuntimeSpeechBackend = activeRuntimeSpeechBackend
             ?? Self.resolveNextRuntimeSpeechBackend(

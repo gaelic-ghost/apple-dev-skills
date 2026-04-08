@@ -111,13 +111,12 @@ actor MockRuntime: ServerRuntimeProtocol {
     func speak(
         text: String,
         with profileName: String,
-        as jobType: SpeakSwiftly.Job,
         textProfileName: String?,
         normalizationContext: SpeechNormalizationContext?,
         sourceFormat: TextForSpeech.SourceFormat?,
-        id: String
     ) async -> RuntimeRequestHandle {
-        let request = MockRequest(id: id, operation: speechOperationName(for: jobType), profileName: profileName)
+        let requestID = UUID().uuidString
+        let request = MockRequest(id: requestID, operation: "queue_speech_live", profileName: profileName)
         queuedSpeechInvocations.append(
             .init(
                 text: text,
@@ -132,10 +131,10 @@ actor MockRuntime: ServerRuntimeProtocol {
             requestContinuation = continuation
         }
         guard let continuation = requestContinuation else {
-            fatalError("The mock runtime could not create a speech request continuation for request '\(id)'.")
+            fatalError("The mock runtime could not create a speech request continuation for request '\(requestID)'.")
         }
 
-        continuation.yield(.acknowledged(.init(id: id)))
+        continuation.yield(.acknowledged(.init(id: requestID)))
 
         if self.activeRequest == nil {
             self.startActiveRequest(request, continuation: continuation)
@@ -144,7 +143,7 @@ actor MockRuntime: ServerRuntimeProtocol {
             continuation.yield(
                 .queued(
                     .init(
-                        id: id,
+                        id: requestID,
                         reason: .waitingForActiveRequest,
                         queuePosition: self.queuedRequests.count
                     )
@@ -152,7 +151,7 @@ actor MockRuntime: ServerRuntimeProtocol {
             )
         }
 
-        return RuntimeRequestHandle(id: id, operation: request.operation, profileName: profileName, events: events)
+        return RuntimeRequestHandle(id: requestID, operation: request.operation, profileName: profileName, events: events)
     }
 
     func createProfile(
@@ -161,9 +160,9 @@ actor MockRuntime: ServerRuntimeProtocol {
         from text: String,
         voice voiceDescription: String,
         outputPath: String?,
-        cwd: String?,
-        id: String
+        cwd: String?
     ) async -> RuntimeRequestHandle {
+        let requestID = UUID().uuidString
         createProfileInvocations.append(
             .init(
                 profileName: profileName,
@@ -186,10 +185,10 @@ actor MockRuntime: ServerRuntimeProtocol {
             )
         }
         let events = AsyncThrowingStream<SpeakSwiftly.RequestEvent, Error> { continuation in
-            continuation.yield(.completed(SpeakSwiftly.Success(id: id, profileName: profileName)))
+            continuation.yield(.completed(SpeakSwiftly.Success(id: requestID, profileName: profileName)))
             continuation.finish()
         }
-        return RuntimeRequestHandle(id: id, operation: "create_profile", profileName: profileName, events: events)
+        return RuntimeRequestHandle(id: requestID, operation: "create_profile", profileName: profileName, events: events)
     }
 
     func createClone(
@@ -197,9 +196,9 @@ actor MockRuntime: ServerRuntimeProtocol {
         vibe: SpeakSwiftly.Vibe,
         from referenceAudioPath: String,
         transcript: String?,
-        cwd: String?,
-        id: String
+        cwd: String?
     ) async -> RuntimeRequestHandle {
+        let requestID = UUID().uuidString
         createCloneInvocations.append(
             .init(
                 profileName: profileName,
@@ -221,33 +220,36 @@ actor MockRuntime: ServerRuntimeProtocol {
             )
         }
         let events = AsyncThrowingStream<SpeakSwiftly.RequestEvent, Error> { continuation in
-            continuation.yield(.completed(SpeakSwiftly.Success(id: id, profileName: profileName)))
+            continuation.yield(.completed(SpeakSwiftly.Success(id: requestID, profileName: profileName)))
             continuation.finish()
         }
-        return RuntimeRequestHandle(id: id, operation: "create_clone", profileName: profileName, events: events)
+        return RuntimeRequestHandle(id: requestID, operation: "create_clone", profileName: profileName, events: events)
     }
 
-    func profiles(id: String) async -> RuntimeRequestHandle {
+    func profiles() async -> RuntimeRequestHandle {
+        let requestID = UUID().uuidString
         let profiles = self.profiles
         let events = AsyncThrowingStream<SpeakSwiftly.RequestEvent, Error> { continuation in
-            continuation.yield(.completed(SpeakSwiftly.Success(id: id, profiles: profiles)))
+            continuation.yield(.completed(SpeakSwiftly.Success(id: requestID, profiles: profiles)))
             continuation.finish()
         }
-        return RuntimeRequestHandle(id: id, operation: "list_profiles", profileName: nil, events: events)
+        return RuntimeRequestHandle(id: requestID, operation: "list_profiles", profileName: nil, events: events)
     }
 
-    func removeProfile(named profileName: String, id: String) async -> RuntimeRequestHandle {
+    func removeProfile(named profileName: String) async -> RuntimeRequestHandle {
+        let requestID = UUID().uuidString
         if mutationRefreshBehavior == .applyMutations {
             profiles.removeAll { $0.profileName == profileName }
         }
         let events = AsyncThrowingStream<SpeakSwiftly.RequestEvent, Error> { continuation in
-            continuation.yield(.completed(SpeakSwiftly.Success(id: id, profileName: profileName)))
+            continuation.yield(.completed(SpeakSwiftly.Success(id: requestID, profileName: profileName)))
             continuation.finish()
         }
-        return RuntimeRequestHandle(id: id, operation: "remove_profile", profileName: profileName, events: events)
+        return RuntimeRequestHandle(id: requestID, operation: "remove_profile", profileName: profileName, events: events)
     }
 
-    func queue(_ queueType: SpeakSwiftly.Queue, id requestID: String) async -> RuntimeRequestHandle {
+    func queue(_ queueType: RuntimeQueueType) async -> RuntimeRequestHandle {
+        let requestID = UUID().uuidString
         let activeRequest: SpeakSwiftly.ActiveRequest? =
             switch queueType {
             case .generation:
@@ -278,7 +280,8 @@ actor MockRuntime: ServerRuntimeProtocol {
         return RuntimeRequestHandle(id: requestID, operation: operationName, profileName: nil, events: events)
     }
 
-    func playback(_ action: SpeakSwiftly.PlaybackAction, id requestID: String) async -> RuntimeRequestHandle {
+    func playback(_ action: RuntimePlaybackAction) async -> RuntimeRequestHandle {
+        let requestID = UUID().uuidString
         switch action {
         case .pause:
             if activeRequest != nil {
@@ -307,7 +310,8 @@ actor MockRuntime: ServerRuntimeProtocol {
         return RuntimeRequestHandle(id: requestID, operation: operationName, profileName: nil, events: events)
     }
 
-    func clearQueue(id requestID: String) async -> RuntimeRequestHandle {
+    func clearQueue() async -> RuntimeRequestHandle {
+        let requestID = UUID().uuidString
         let clearedRequestIDs = queuedRequests.map(\.request.id)
         let clearedCount = clearedRequestIDs.count
         for queuedRequestID in clearedRequestIDs {
@@ -323,9 +327,10 @@ actor MockRuntime: ServerRuntimeProtocol {
         return RuntimeRequestHandle(id: requestID, operation: "clear_queue", profileName: nil, events: events)
     }
 
-    func cancelRequest(_ id: String, requestID: String) async -> RuntimeRequestHandle {
+    func cancelRequest(_ requestIDToCancel: String) async -> RuntimeRequestHandle {
+        let requestID = UUID().uuidString
         do {
-            let cancelledRequestID = try cancelRequestNow(id)
+            let cancelledRequestID = try cancelRequestNow(requestIDToCancel)
             let events = AsyncThrowingStream<SpeakSwiftly.RequestEvent, Error> { continuation in
                 continuation.yield(
                     .completed(
@@ -354,7 +359,7 @@ actor MockRuntime: ServerRuntimeProtocol {
         textRuntime.baseProfile
     }
 
-    func textProfile(named profileID: String) async -> TextForSpeech.Profile? {
+    func textProfile(id profileID: String) async -> TextForSpeech.Profile? {
         textRuntime.profile(named: profileID)
     }
 
@@ -362,8 +367,8 @@ actor MockRuntime: ServerRuntimeProtocol {
         textRuntime.storedProfiles()
     }
 
-    func effectiveTextProfile(named profileID: String?) async -> TextForSpeech.Profile {
-        textRuntime.effectiveProfile(named: profileID)
+    func effectiveTextProfile(id profileID: String?) async -> TextForSpeech.Profile {
+        textRuntime.snapshot(named: profileID)
     }
 
     func textProfilePersistenceURL() async -> URL? {
@@ -394,7 +399,7 @@ actor MockRuntime: ServerRuntimeProtocol {
         textRuntime.use(profile)
     }
 
-    func removeTextProfile(named profileID: String) async throws {
+    func removeTextProfile(id profileID: String) async throws {
         textRuntime.removeProfile(named: profileID)
     }
 
@@ -408,7 +413,7 @@ actor MockRuntime: ServerRuntimeProtocol {
 
     func addTextReplacement(
         _ replacement: TextForSpeech.Replacement,
-        toStoredTextProfileNamed profileID: String
+        toStoredTextProfileID profileID: String
     ) async throws -> TextForSpeech.Profile {
         try textRuntime.addReplacement(replacement, toStoredProfileNamed: profileID)
     }
@@ -419,7 +424,7 @@ actor MockRuntime: ServerRuntimeProtocol {
 
     func replaceTextReplacement(
         _ replacement: TextForSpeech.Replacement,
-        inStoredTextProfileNamed profileID: String
+        inStoredTextProfileID profileID: String
     ) async throws -> TextForSpeech.Profile {
         try textRuntime.replaceReplacement(replacement, inStoredProfileNamed: profileID)
     }
@@ -430,7 +435,7 @@ actor MockRuntime: ServerRuntimeProtocol {
 
     func removeTextReplacement(
         id replacementID: String,
-        fromStoredTextProfileNamed profileID: String
+        fromStoredTextProfileID profileID: String
     ) async throws -> TextForSpeech.Profile {
         try textRuntime.removeReplacement(id: replacementID, fromStoredProfileNamed: profileID)
     }
@@ -438,7 +443,17 @@ actor MockRuntime: ServerRuntimeProtocol {
     // MARK: - Test Control
 
     func publishStatus(_ stage: SpeakSwiftly.StatusStage) {
-        statusContinuation?.yield(.init(stage: stage))
+        let residentState: SpeakSwiftly.ResidentModelState = switch stage {
+        case .warmingResidentModel:
+            .warming
+        case .residentModelReady:
+            .ready
+        case .residentModelsUnloaded:
+            .unloaded
+        case .residentModelFailed:
+            .failed
+        }
+        statusContinuation?.yield(.init(stage: stage, residentState: residentState, speechBackend: .qwen3))
     }
 
     func finishHeldSpeak(id: String) {
@@ -520,16 +535,7 @@ actor MockRuntime: ServerRuntimeProtocol {
         }
     }
 
-    private func speechOperationName(for jobType: SpeakSwiftly.Job) -> String {
-        switch jobType {
-        case .live:
-            "queue_speech_live"
-        case .file:
-            "queue_speech_file"
-        }
-    }
-
-    private func playbackOperationName(for action: SpeakSwiftly.PlaybackAction) -> String {
+    private func playbackOperationName(for action: RuntimePlaybackAction) -> String {
         switch action {
         case .pause:
             "playback_pause"

@@ -84,7 +84,7 @@ actor ServerHost {
 
     static func live(appConfig: AppConfig, state: ServerState) async -> ServerHost {
         let runtimeConfigurationStore = RuntimeConfigurationStore()
-        let runtime = ServerRuntimeAdapter(runtime: await SpeakSwiftly.live())
+        let runtime = ServerRuntimeAdapter(runtime: await SpeakSwiftly.liftoff())
         let host = ServerHost(
             configuration: appConfig.server,
             httpConfig: appConfig.http,
@@ -425,16 +425,16 @@ actor ServerHost {
             baseProfile: .init(profile: await runtime.baseTextProfile()),
             activeProfile: .init(profile: await runtime.activeTextProfile()),
             storedProfiles: (await runtime.textProfiles()).map(TextProfileSnapshot.init(profile:)),
-            effectiveProfile: .init(profile: await runtime.effectiveTextProfile(named: nil))
+            effectiveProfile: .init(profile: await runtime.effectiveTextProfile(id: nil))
         )
     }
 
     func storedTextProfile(_ profileID: String) async -> TextProfileSnapshot? {
-        await runtime.textProfile(named: profileID).map(TextProfileSnapshot.init(profile:))
+        await runtime.textProfile(id: profileID).map(TextProfileSnapshot.init(profile:))
     }
 
     func effectiveTextProfile(_ profileID: String?) async -> TextProfileSnapshot {
-        .init(profile: await runtime.effectiveTextProfile(named: profileID))
+        .init(profile: await runtime.effectiveTextProfile(id: profileID))
     }
 
     func createTextProfile(
@@ -478,7 +478,7 @@ actor ServerHost {
     }
 
     func removeTextProfile(named profileID: String) async throws -> TextProfilesSnapshot {
-        try await runtime.removeTextProfile(named: profileID)
+        try await runtime.removeTextProfile(id: profileID)
         await emitTextProfilesChanged()
         await requestPublish(mode: .immediate, refreshRuntimeState: false)
         return await textProfilesSnapshot()
@@ -498,7 +498,7 @@ actor ServerHost {
     ) async throws -> TextProfileSnapshot {
         let profile: TextForSpeech.Profile
         if let profileID {
-            profile = try await runtime.addTextReplacement(replacement, toStoredTextProfileNamed: profileID)
+            profile = try await runtime.addTextReplacement(replacement, toStoredTextProfileID: profileID)
         } else {
             profile = try await runtime.addTextReplacement(replacement)
         }
@@ -513,7 +513,7 @@ actor ServerHost {
     ) async throws -> TextProfileSnapshot {
         let profile: TextForSpeech.Profile
         if let profileID {
-            profile = try await runtime.replaceTextReplacement(replacement, inStoredTextProfileNamed: profileID)
+            profile = try await runtime.replaceTextReplacement(replacement, inStoredTextProfileID: profileID)
         } else {
             profile = try await runtime.replaceTextReplacement(replacement)
         }
@@ -528,7 +528,7 @@ actor ServerHost {
     ) async throws -> TextProfileSnapshot {
         let profile: TextForSpeech.Profile
         if let profileID {
-            profile = try await runtime.removeTextReplacement(id: replacementID, fromStoredTextProfileNamed: profileID)
+            profile = try await runtime.removeTextReplacement(id: replacementID, fromStoredTextProfileID: profileID)
         } else {
             profile = try await runtime.removeTextReplacement(id: replacementID)
         }
@@ -568,15 +568,12 @@ actor ServerHost {
         sourceFormat: TextForSpeech.SourceFormat? = nil
     ) async throws -> String {
         try ensureWorkerReady()
-        let requestID = UUID().uuidString
         let handle = await runtime.speak(
             text: text,
             with: profileName,
-            as: .live,
             textProfileName: textProfileName,
             normalizationContext: normalizationContext,
-            sourceFormat: sourceFormat,
-            id: requestID
+            sourceFormat: sourceFormat
         )
         return await enqueuePublicJob(handle)
     }
@@ -590,15 +587,13 @@ actor ServerHost {
         cwd: String?
     ) async throws -> String {
         try ensureWorkerReady()
-        let requestID = UUID().uuidString
         let handle = await runtime.createProfile(
             named: profileName,
             vibe: vibe,
             from: text,
             voice: voiceDescription,
             outputPath: outputPath,
-            cwd: cwd,
-            id: requestID
+            cwd: cwd
         )
         return await enqueuePublicJob(handle)
     }
@@ -611,30 +606,26 @@ actor ServerHost {
         cwd: String?
     ) async throws -> String {
         try ensureWorkerReady()
-        let requestID = UUID().uuidString
         let handle = await runtime.createClone(
             named: profileName,
             vibe: vibe,
             from: referenceAudioPath,
             transcript: transcript,
-            cwd: cwd,
-            id: requestID
+            cwd: cwd
         )
         return await enqueuePublicJob(handle)
     }
 
     func submitRemoveProfile(profileName: String) async throws -> String {
         try ensureWorkerReady()
-        let requestID = UUID().uuidString
-        let handle = await runtime.removeProfile(named: profileName, id: requestID)
+        let handle = await runtime.removeProfile(named: profileName)
         return await enqueuePublicJob(handle)
     }
 
     // MARK: - Immediate Control Operations
 
-    func queueSnapshot(queueType: SpeakSwiftly.Queue) async throws -> QueueSnapshotResponse {
-        let requestID = UUID().uuidString
-        let handle = await runtime.queue(queueType, id: requestID)
+    func queueSnapshot(queueType: RuntimeQueueType) async throws -> QueueSnapshotResponse {
+        let handle = await runtime.queue(queueType)
         let success = try await awaitImmediateSuccess(
             handle: handle,
             missingTerminalMessage: "SpeakSwiftly finished the '\(handle.operation)' control request without yielding a terminal success payload.",
@@ -660,8 +651,7 @@ actor ServerHost {
     }
 
     func clearQueue() async throws -> QueueClearedResponse {
-        let requestID = UUID().uuidString
-        let handle = await runtime.clearQueue(id: requestID)
+        let handle = await runtime.clearQueue()
         let success = try await awaitImmediateSuccess(
             handle: handle,
             missingTerminalMessage: "SpeakSwiftly finished the '\(handle.operation)' control request without yielding a terminal success payload.",
@@ -671,8 +661,7 @@ actor ServerHost {
     }
 
     func cancelQueuedOrActiveRequest(requestID: String) async throws -> QueueCancellationResponse {
-        let controlRequestID = UUID().uuidString
-        let handle = await runtime.cancelRequest(requestID, requestID: controlRequestID)
+        let handle = await runtime.cancelRequest(requestID)
         let success = try await awaitImmediateSuccess(
             handle: handle,
             missingTerminalMessage: "SpeakSwiftly finished the '\(handle.operation)' control request without yielding a terminal success payload.",
@@ -927,8 +916,7 @@ actor ServerHost {
     }
 
     private func refreshProfiles(reason: String) async throws -> [ProfileSnapshot] {
-        let requestID = UUID().uuidString
-        let handle = await runtime.profiles(id: requestID)
+        let handle = await runtime.profiles()
         let success = try await awaitImmediateSuccess(
             handle: handle,
             missingTerminalMessage: "SpeakSwiftly finished the internal list_profiles request without yielding a terminal success payload.",
@@ -997,6 +985,10 @@ actor ServerHost {
                     emitProfileCacheChanged()
                 }
             }
+        case .residentModelsUnloaded:
+            self.workerMode = "starting"
+            self.workerStage = status.stage.rawValue
+            self.startupError = nil
         case .residentModelFailed:
             self.workerMode = "failed"
             self.workerStage = status.stage.rawValue
@@ -1173,9 +1165,8 @@ actor ServerHost {
 
     // MARK: - Runtime Snapshot Fetches
 
-    private func fetchQueueStatus(_ queueType: SpeakSwiftly.Queue) async throws -> QueueStatusSnapshot {
-        let requestID = UUID().uuidString
-        let handle = await runtime.queue(queueType, id: requestID)
+    private func fetchQueueStatus(_ queueType: RuntimeQueueType) async throws -> QueueStatusSnapshot {
+        let handle = await runtime.queue(queueType)
         let success = try await awaitImmediateSuccess(
             handle: handle,
             missingTerminalMessage: "SpeakSwiftly finished the queue snapshot request without yielding a terminal success payload.",
@@ -1192,8 +1183,7 @@ actor ServerHost {
     }
 
     private func fetchPlaybackStatus() async throws -> PlaybackStatusSnapshot {
-        let requestID = UUID().uuidString
-        let handle = await runtime.playback(.state, id: requestID)
+        let handle = await runtime.playback(.state)
         let success = try await awaitImmediateSuccess(
             handle: handle,
             missingTerminalMessage: "SpeakSwiftly finished the playback state request without yielding a terminal success payload.",
@@ -1563,9 +1553,8 @@ actor ServerHost {
         return buffer
     }
 
-    private func playbackStateResponse(for action: SpeakSwiftly.PlaybackAction) async throws -> PlaybackStateResponse {
-        let requestID = UUID().uuidString
-        let handle = await runtime.playback(action, id: requestID)
+    private func playbackStateResponse(for action: RuntimePlaybackAction) async throws -> PlaybackStateResponse {
+        let handle = await runtime.playback(action)
         let success = try await awaitImmediateSuccess(
             handle: handle,
             missingTerminalMessage: "SpeakSwiftly finished the '\(handle.operation)' control request without yielding a terminal success payload.",
@@ -1580,7 +1569,7 @@ actor ServerHost {
         return .init(playback: .init(summary: playbackState))
     }
 
-    private func requestName(for action: SpeakSwiftly.PlaybackAction) -> String {
+    private func requestName(for action: RuntimePlaybackAction) -> String {
         switch action {
         case .pause:
             "playback_pause"
@@ -1591,7 +1580,7 @@ actor ServerHost {
         }
     }
 
-    private func queueTypeName(_ queueType: SpeakSwiftly.Queue) -> String {
+    private func queueTypeName(_ queueType: RuntimeQueueType) -> String {
         switch queueType {
         case .generation:
             "generation"
