@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import filecmp
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
@@ -11,6 +12,7 @@ EXACT_NO_FINDINGS = "No findings."
 
 README_SNIPPETS = [
     "root `skills/` as the canonical",
+    "bundled copy of root",
     "plugins/",
     ".agents/plugins/marketplace.json",
     "~/.codex/plugins/",
@@ -28,6 +30,7 @@ README_SNIPPETS = [
 
 AGENTS_SNIPPETS = [
     "canonical workflow-authoring surface",
+    "real bundled directory",
     "plugin packaging root",
     ".agents/plugins/marketplace.json",
     ".claude-plugin/marketplace.json",
@@ -37,6 +40,7 @@ AGENTS_SNIPPETS = [
 
 AUDIT_SNIPPETS = [
     "Root `skills/` is the canonical workflow-authoring surface.",
+    "real bundled directory",
     ".claude-plugin/marketplace.json",
     "plugin packaging root",
     "uv tool install",
@@ -90,6 +94,43 @@ def _check_symlink(repo_root: Path, path: Path, target: str) -> list[Finding]:
     return []
 
 
+def _compare_directory_trees(source: Path, target: Path, prefix: str = "") -> list[str]:
+    comparison = filecmp.dircmp(source, target)
+    mismatches: list[str] = []
+    for name in sorted(comparison.left_only):
+        mismatches.append(f"missing bundled entry `{prefix}{name}`")
+    for name in sorted(comparison.right_only):
+        mismatches.append(f"unexpected bundled entry `{prefix}{name}`")
+    _matches, mismatch, errors = filecmp.cmpfiles(source, target, comparison.common_files, shallow=False)
+    for name in sorted(mismatch):
+        mismatches.append(f"content differs for `{prefix}{name}`")
+    for name in sorted(errors):
+        mismatches.append(f"comparison failed for `{prefix}{name}`")
+    for name in sorted(comparison.common_dirs):
+        mismatches.extend(_compare_directory_trees(source / name, target / name, prefix=f"{prefix}{name}/"))
+    return mismatches
+
+
+def _check_packaged_skills(repo_root: Path, plugin_name: str) -> list[Finding]:
+    source = repo_root / "skills"
+    target = repo_root / "plugins" / plugin_name / "skills"
+    rel = str(target.relative_to(repo_root))
+    if not target.exists() and not target.is_symlink():
+        return [Finding(rel, "missing-packaged-skills-dir", "Expected bundled plugin `skills/` directory.")]
+    if target.is_symlink():
+        return [Finding(rel, "packaged-skills-is-symlink", "Expected a real bundled plugin `skills/` directory, not a symlink.")]
+    if not target.is_dir():
+        return [Finding(rel, "packaged-skills-not-directory", "Expected bundled plugin `skills/` path to be a directory.")]
+    if source.is_dir():
+        mismatches = _compare_directory_trees(source, target)
+        if mismatches:
+            preview = "; ".join(mismatches[:5])
+            if len(mismatches) > 5:
+                preview += f"; plus {len(mismatches) - 5} more"
+            return [Finding(rel, "packaged-skills-drift", f"Bundled plugin `skills/` directory is out of sync with root `skills/`: {preview}.")]
+    return []
+
+
 def audit_repo(repo_root: Path, plugin_name: str) -> list[Finding]:
     findings: list[Finding] = []
     findings.extend(_check_file_contains(repo_root, repo_root / "README.md", README_SNIPPETS, "readme"))
@@ -113,7 +154,7 @@ def audit_repo(repo_root: Path, plugin_name: str) -> list[Finding]:
     )
     findings.extend(_check_symlink(repo_root, repo_root / ".agents" / "skills", "../skills"))
     findings.extend(_check_symlink(repo_root, repo_root / ".claude" / "skills", "../skills"))
-    findings.extend(_check_symlink(repo_root, repo_root / "plugins" / plugin_name / "skills", "../../skills"))
+    findings.extend(_check_packaged_skills(repo_root, plugin_name))
     return findings
 
 

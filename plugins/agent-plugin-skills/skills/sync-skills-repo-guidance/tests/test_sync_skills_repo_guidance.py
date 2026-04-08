@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import os
+import shutil
 import sys
 from pathlib import Path
 
@@ -21,6 +22,7 @@ m = _load_module()
 
 
 def _write_repo(repo_root: Path, plugin_name: str) -> None:
+    (repo_root / "skills" / "example-skill").mkdir(parents=True)
     (repo_root / "plugins" / plugin_name).mkdir(parents=True)
     (repo_root / "docs" / "maintainers").mkdir(parents=True)
     (repo_root / ".claude-plugin").mkdir()
@@ -28,6 +30,7 @@ def _write_repo(repo_root: Path, plugin_name: str) -> None:
         "\n".join(
             [
                 "root `skills/` as the canonical authoring surface",
+                "bundled copy of root `skills/`",
                 "plugins/",
                 ".agents/plugins/marketplace.json",
                 "~/.codex/plugins/",
@@ -50,6 +53,7 @@ def _write_repo(repo_root: Path, plugin_name: str) -> None:
         "\n".join(
             [
                 "canonical workflow-authoring surface",
+                "real bundled directory",
                 "plugin packaging root",
                 ".agents/plugins/marketplace.json",
                 ".claude-plugin/marketplace.json",
@@ -92,6 +96,7 @@ def _write_repo(repo_root: Path, plugin_name: str) -> None:
         "\n".join(
             [
                 "Root `skills/` is the canonical workflow-authoring surface.",
+                "real bundled directory",
                 ".claude-plugin/marketplace.json",
                 "plugin packaging root",
                 "uv tool install",
@@ -104,7 +109,7 @@ def _write_repo(repo_root: Path, plugin_name: str) -> None:
     (repo_root / ".claude").mkdir()
     os.symlink("../skills", repo_root / ".agents" / "skills")
     os.symlink("../skills", repo_root / ".claude" / "skills")
-    os.symlink("../../skills", repo_root / "plugins" / plugin_name / "skills")
+    shutil.copytree(repo_root / "skills", repo_root / "plugins" / plugin_name / "skills")
 
 
 def test_audit_repo_accepts_expected_repo_shape(tmp_path: Path) -> None:
@@ -115,7 +120,7 @@ def test_audit_repo_accepts_expected_repo_shape(tmp_path: Path) -> None:
     assert findings == []
 
 
-def test_audit_repo_flags_missing_guidance_and_symlink_drift(tmp_path: Path) -> None:
+def test_audit_repo_flags_missing_guidance_and_bundle_drift(tmp_path: Path) -> None:
     (tmp_path / "plugins" / "example-skills").mkdir(parents=True)
     (tmp_path / "README.md").write_text("plugins/\n", encoding="utf-8")
     (tmp_path / "AGENTS.md").write_text("", encoding="utf-8")
@@ -129,3 +134,4 @@ def test_audit_repo_flags_missing_guidance_and_symlink_drift(tmp_path: Path) -> 
     assert "agents-missing-snippet" in issue_ids
     assert "missing-path" in issue_ids
     assert "missing-symlink" in issue_ids
+    assert "missing-packaged-skills-dir" in issue_ids

@@ -4,7 +4,7 @@
 
 - Keep `apple-dev-skills` as a durable Apple development skill source-of-truth repo with plugin-first packaging for Codex and Claude Code.
 
-## Product principles
+## Product Principles
 
 - Keep root `skills/` as the canonical workflow-authoring surface.
 - Prefer deterministic local scripts and validation over implied workflow behavior.
@@ -31,21 +31,24 @@
 - [x] Milestone 16: Apple and Swift Docs Skill Extraction
 - [x] Milestone 17: Existing Skill Rename and Install-Surface Cleanup
 - [ ] Milestone 18: Claude Code Plugin Extras
-- [x] Milestone 19: Swift Style Tooling Workflow
-- [x] Milestone 20: Customization Consolidation Review
-- [ ] Milestone 21: MCP App UI for Configuration and Customization
-- [ ] Milestone 22: macOS Menu Bar Extra for Skill Controls
-- [ ] Milestone 23: Dash Direct MCP and Call Library
-- [x] Milestone 24: Repo Self-Compliance and Install-Surface Audit
-- [x] Milestone 25: Use `Agent Dev Skills` plugin to align repo with skills/plugin repo standards
-- [ ] Milestone 26: Swift and Xcode Testing Offload Workflow
-- [x] Milestone 27: Customization Surface Simplification Implementation
-- [x] Milestone 28: Repo Maintenance Toolkit Skill
-- [x] Milestone 29: Shared Toolkit Extraction to `productivity-skills`
-- [x] Milestone 31: Swift Package Execution Skill Split
-- [ ] Milestone 32: Execution Skill Split and Inference Refactor
-- [x] Milestone 33: Swift/Xcode Repo-Maintenance Toolkit Profiles
-- [x] Milestone 34: Guidance Preservation and AGENTS Expansion
+- [x] Milestone 19: Format Swift Sources
+- [x] Milestone 20: Structure Swift Sources
+- [ ] Milestone 21: Swift Cleanup Automation Exploration
+- [x] Milestone 22: Expand TODO and FIXME Ledger Normalization
+- [x] Milestone 23: Customization Consolidation Review
+- [ ] Milestone 24: MCP App UI for Configuration and Customization
+- [ ] Milestone 25: macOS Menu Bar Extra for Skill Controls
+- [ ] Milestone 26: Dash Direct MCP and Call Library
+- [ ] Milestone 27: Repo Self-Compliance and Install-Surface Audit
+- [ ] Milestone 28: Use `Agent Dev Skills` plugin to align repo with skills/plugin repo standards
+- [ ] Milestone 29: Swift and Xcode Testing Offload Workflow
+- [x] Milestone 30: Customization Surface Simplification Implementation
+- [x] Milestone 31: Repo Maintenance Toolkit Skill
+- [x] Milestone 32: Shared Toolkit Extraction to `productivity-skills`
+- [x] Milestone 33: Swift Package Execution Skill Split
+- [x] Milestone 34: Execution Skill Split and Inference Refactor
+- [x] Milestone 35: Swift/Xcode Repo-Maintenance Toolkit Profiles
+- [x] Milestone 36: Guidance Preservation and AGENTS Expansion
 
 ## Milestone 1: Initial Apple Skill Bundle
 
@@ -241,6 +244,7 @@ Scope:
 Tickets:
 
 - [x] Audit current SwiftPM `swift package init` flags and template behavior on supported `Swift 5.10+` toolchains.
+- [x] Keep `bootstrap-swift-package` as the explicit shipped skill name for Swift package bootstrap work in roadmap and repo docs.
 - [x] Update the bootstrap workflow to use current `swift package init` testing options and keep generated tests aligned with the selected testing mode.
 - [x] Document and enforce `Swift 5.10+` as the supported and validated bootstrap floor, and block older toolchains such as `5.9` with clear upgrade guidance.
 - [x] Document how the skill should choose between `swift package init` flags and follow-up package edits when toolchain support differs within the supported `5.10+` floor.
@@ -360,7 +364,7 @@ Exit criteria:
 
 - [x] The repo ships a first-class style-tooling skill with explicit surface boundaries, deterministic SwiftFormat config export support, and fully updated maintainer and validation docs.
 
-## Milestone 28: Structure Swift Sources
+## Milestone 20: Structure Swift Sources
 
 Scope:
 
@@ -378,7 +382,7 @@ Exit criteria:
 
 - [x] The repo ships distinct formatting and structural Swift cleanup skills with clear boundaries and shared choreography.
 
-## Milestone 29: Swift Cleanup Automation Exploration
+## Milestone 21: Swift Cleanup Automation Exploration
 
 Scope:
 
@@ -397,7 +401,7 @@ Exit criteria:
 
 - [ ] The repo has a written decision and an approved implementation direction for higher-level Swift cleanup automation.
 
-## Milestone 30: Expand TODO and FIXME Ledger Normalization
+## Milestone 22: Expand TODO and FIXME Ledger Normalization
 
 Scope:
 
@@ -419,7 +423,7 @@ Exit criteria:
 
 - [x] The helper can normalize supported Swift and Objective-C TODO/FIXME forms into stable ledger entries with source-location data, syntax metadata, and optional deterministic links to roadmap milestones or related saved plan docs.
 
-## Milestone 20: Customization Consolidation Review
+## Milestone 23: Customization Consolidation Review
 
 Scope:
 
@@ -458,7 +462,7 @@ Exit criteria:
 
 See `docs/maintainers/customization-consolidation-review.md`.
 
-## Milestone 21: MCP App UI for Configuration and Customization
+## Milestone 24: MCP App UI for Configuration and Customization
 
 Scope:
 
@@ -476,7 +480,7 @@ Exit criteria:
 
 - [ ] The repo ships a documented MCP App path for viewing and editing customization state, or has an explicit bounded design that is ready for implementation.
 
-## Milestone 22: macOS Menu Bar Extra for Skill Controls
+## Milestone 25: macOS Menu Bar Extra for Skill Controls
 
 Scope:
 
@@ -494,7 +498,7 @@ Exit criteria:
 
 - [ ] Maintainers have a documented plan for whether to build the menu bar app, what it should own, and where it should live.
 
-## Milestone 23: Dash Direct MCP and Call Library
+## Milestone 26: Dash Direct MCP and Call Library
 
 Scope:
 
@@ -517,7 +521,7 @@ Exit criteria:
 
 - [ ] The Dash workflow teaches direct MCP usage first, documents the localhost HTTP structure as a real fallback, and ships a practical library of common example calls and docset targets.
 
-## Milestone 24: Repo Self-Compliance and Install-Surface Audit
+## Milestone 27: Repo Self-Compliance and Install-Surface Audit
 
 Scope:
 
@@ -525,35 +529,36 @@ Scope:
 
 Tickets:
 
-- [ ] Audit the repo against its own documented symlink expectations for `.agents/skills`, `.claude/skills`, and `plugins/apple-dev-skills/skills`.
-- [ ] Audit the repo against its own documented local plugin install expectations for `plugins/apple-dev-skills/` and repo-local marketplace wiring.
+- [x] Audit the repo against its own documented symlink expectations for `.agents/skills`, `.claude/skills`, and `plugins/apple-dev-skills/skills`.
+- [x] Audit the repo against its own documented local plugin install expectations for `plugins/apple-dev-skills/` and repo-local marketplace wiring.
 - [ ] Verify whether Codex can discover the packaged plugin from the documented marketplace entry after a restart, not just whether the files exist on disk.
 - [ ] Verify whether the `install-plugin-to-socket` workflow can reliably wire sibling plugins into this repo's local install surface without hand edits.
 - [ ] Document any mismatch between “files exist in the right place” and “Codex actually discovers the plugin” so install guidance reflects operational reality instead of filesystem assumptions.
-- [ ] Add a maintainer smoke-test flow for local plugin discovery and install-surface verification.
+- [x] Add a maintainer smoke-test flow for local plugin discovery and install-surface verification.
 
 Exit criteria:
 
 - [ ] Maintainers have a verified, reality-based local discovery and install story for this repo, with docs and tooling updated to match what Codex actually honors.
 
-## Milestone 25: Use `Agent Dev Skills` plugin to align repo with skills/plugin repo standards
+## Milestone 28: Use `Agent Dev Skills` plugin to align repo with skills/plugin repo standards
 
 Scope:
 
-- Use the repo-scoped `agent-plugin-skills` plugin to audit and align this repository with the current shared skills/plugin repo standards.
+- Use the adjacent `agent-plugin-skills` maintainer plugin workflow to audit and align this repository with the current shared skills/plugin repo standards, while keeping this repository's tracked repo marketplace focused on exporting only `apple-dev-skills`.
 
 Tickets:
 
-- Confirm the repo-scoped `agent-plugin-skills` install stays current for local maintainer work.
-- Use `sync-skills-repo-guidance`, `validate-plugin-install-surfaces`, `maintain-plugin-docs`, and bootstrap guidance where relevant to identify standards drift.
+- Confirm the local maintainer install of `agent-plugin-skills` stays current for work on this repository without turning this repo's tracked marketplace into a second published plugin catalog.
+- Use `maintain-plugin-repo` as the repo-wide audit and coordination entrypoint, with `validate-plugin-install-surfaces`, `maintain-plugin-docs`, and `install-plugin-to-socket` as routed specialist owners where relevant.
 - Align repo docs, packaging surfaces, marketplaces, ignores, and maintainer guidance with the current shared standards without flattening repo-specific policy.
+- Remove tracked vendored maintainer-plugin copies from this repo once the adjacent standards source and local maintainer install path are sufficient.
 
 Exit criteria:
 
 - The repository validates cleanly against the current shared skills/plugin repo standards.
 - Repo docs, plugin packaging, marketplace wiring, and maintainer guidance describe the same live behavior.
 
-## Milestone 26: Swift and Xcode Testing Offload Workflow
+## Milestone 29: Swift and Xcode Testing Offload Workflow
 
 Scope:
 
@@ -583,69 +588,69 @@ Exit criteria:
 - Maintainers have one documented and validated way to offload repetitive Swift and Xcode verification work from the main agent thread.
 - The offload path returns concise, decision-useful results without obscuring the underlying build or test evidence.
 
-## Milestone 27: Customization Surface Simplification Implementation
+## Milestone 30: Customization Surface Simplification Implementation
 
 Scope:
 
-- Implement the smaller customization surface approved by Milestone 20 before building any MCP App or other UI on top of customization state.
+- [x] Implement the smaller customization surface approved by Milestone 23 before building any MCP App or other UI on top of customization state.
 
 Tickets:
 
-- Reduce each active customization template to the remaining user-meaningful knobs approved in the review.
-- Collapse the two sync-skill booleans into one smaller write-mode model.
-- Reclassify safety invariants and maintainer tuning so they stop appearing as ordinary durable user customization.
-- Teach the approved inference-first defaults in the affected workflow docs and runtime wrappers.
-- Decide whether maintainer-time generation or sync is still needed for duplicated `customization_config.py` copies after the surface reduction lands.
-- Update tests, validators, and maintainer docs to match the reduced surface.
+- [x] Reduce each active customization template to the remaining user-meaningful knobs approved in the review.
+- [x] Collapse the two sync-skill booleans into one smaller write-mode model.
+- [x] Reclassify safety invariants and maintainer tuning so they stop appearing as ordinary durable user customization.
+- [x] Teach the approved inference-first defaults in the affected workflow docs and runtime wrappers.
+- [x] Decide whether maintainer-time generation or sync is still needed for duplicated `customization_config.py` copies after the surface reduction lands.
+- [x] Update tests, validators, and maintainer docs to match the reduced surface.
 
 Exit criteria:
 
-- The shipped customization surface is materially smaller, better classified, and ready to support future UI work without carrying the current drift forward.
-- Completed 2026-04-04 by reducing the live customization surface, introducing sync-skill `writeMode`, and aligning wrappers, tests, and maintainer docs with the smaller model.
+- [x] The shipped customization surface is materially smaller, better classified, and ready to support future UI work without carrying the current drift forward.
+- [x] Completed 2026-04-04 by reducing the live customization surface, introducing sync-skill `writeMode`, and aligning wrappers, tests, and maintainer docs with the smaller model.
 
-## Milestone 28: Repo Maintenance Toolkit Skill
+## Milestone 31: Repo Maintenance Toolkit Skill
 
 Scope:
 
-- Add a reusable local-first maintainer toolkit integration for Swift and Xcode repositories, then wire the bootstrap and guidance-sync skills to install or refresh that toolkit in target repos.
+- [x] Add a reusable local-first maintainer toolkit integration for Swift and Xcode repositories, then wire the bootstrap and guidance-sync skills to install or refresh that toolkit in target repos.
 
 Tickets:
 
-- Add a managed `scripts/repo-maintenance/` asset tree and thin GitHub workflow wrapper for Apple repo bootstraps and guidance-sync runs.
-- Ship a thin GitHub workflow wrapper that calls the local validation entrypoint instead of owning logic itself.
-- Add standard and submodule-aware release flows to the managed toolkit.
-- Update bootstrap and guidance-sync skills to install or refresh the toolkit in target repos.
-- Update tests, validators, root docs, and maintainer docs to reflect the expanded active skill surface.
+- [x] Add a managed `scripts/repo-maintenance/` asset tree and thin GitHub workflow wrapper for Apple repo bootstraps and guidance-sync runs.
+- [x] Ship a thin GitHub workflow wrapper that calls the local validation entrypoint instead of owning logic itself.
+- [x] Add standard and submodule-aware release flows to the managed toolkit.
+- [x] Update bootstrap and guidance-sync skills to install or refresh the toolkit in target repos.
+- [x] Update tests, validators, root docs, and maintainer docs to reflect the expanded active skill surface.
 
 Exit criteria:
 
-- Successful bootstrap and guidance-sync runs install or refresh the managed toolkit in target repos.
-- The Apple repo keeps a canonical vendored toolkit snapshot for its integration surfaces.
-- Root docs, maintainer docs, and validation all describe the same Apple-specific integration surface.
-- Completed 2026-04-05 by shipping the toolkit assets, adding managed repo-maintenance resources, and wiring bootstrap and sync workflows to install or refresh them.
+- [x] Successful bootstrap and guidance-sync runs install or refresh the managed toolkit in target repos.
+- [x] The Apple repo keeps a canonical vendored toolkit snapshot for its integration surfaces.
+- [x] Root docs, maintainer docs, and validation all describe the same Apple-specific integration surface.
+- [x] Completed 2026-04-05 by shipping the toolkit assets, adding managed repo-maintenance resources, and wiring bootstrap and sync workflows to install or refresh them.
 
-## Milestone 29: Shared Toolkit Extraction to `productivity-skills`
+## Milestone 32: Shared Toolkit Extraction to `productivity-skills`
 
 Scope:
 
-- Move the standalone shared `repo-maintenance-toolkit` skill into `../productivity-skills` because it is globally useful rather than Apple-specific.
-- Keep `apple-dev-skills` focused on Apple workflow skills while preserving self-contained bootstrap and guidance-sync integrations.
+- [x] Move the standalone shared `repo-maintenance-toolkit` skill into `../productivity-skills` because it is globally useful rather than Apple-specific.
+- [x] Keep `apple-dev-skills` focused on Apple workflow skills while preserving self-contained bootstrap and guidance-sync integrations.
 
 Tickets:
 
-- Add `repo-maintenance-toolkit` as an active shared skill in `../productivity-skills`.
-- Remove `repo-maintenance-toolkit` from the Apple repo's active skill inventory.
-- Vendor the managed toolkit snapshot under `shared/repo-maintenance-toolkit/` so Apple bootstrap and sync workflows stay independently usable.
-- Realign docs, roadmap notes, validators, and tests in both repos to match the new ownership boundary.
+- [x] Add `repo-maintenance-toolkit` as an active shared skill in `../productivity-skills`.
+- [x] Remove `repo-maintenance-toolkit` from the Apple repo's active skill inventory.
+- [x] Vendor the managed toolkit snapshot under `shared/repo-maintenance-toolkit/` so Apple bootstrap and sync workflows stay independently usable.
+- [x] Realign docs, roadmap notes, validators, and tests in both repos to match the new ownership boundary.
 
 Exit criteria:
 
-- `productivity-skills` is the canonical home of the standalone `repo-maintenance-toolkit` skill.
-- Successful bootstrap and guidance-sync runs install or refresh the managed toolkit in target repos.
-- `apple-dev-skills` no longer presents the toolkit as an active top-level skill, but still keeps the vendored integration snapshot needed for standalone Apple workflows.
-- Completed 2026-04-05 by extracting the shared skill to `productivity-skills`, vendoring the Apple snapshot under `shared/repo-maintenance-toolkit/`, and re-aligning both repos' docs and tests.
+- [x] `productivity-skills` is the canonical home of the standalone `repo-maintenance-toolkit` skill.
+- [x] Successful bootstrap and guidance-sync runs install or refresh the managed toolkit in target repos.
+- [x] `apple-dev-skills` no longer presents the toolkit as an active top-level skill, but still keeps the vendored integration snapshot needed for standalone Apple workflows.
+- [x] Completed 2026-04-05 by extracting the shared skill to `productivity-skills`, vendoring the Apple snapshot under `shared/repo-maintenance-toolkit/`, and re-aligning both repos' docs and tests.
 
-## Milestone 31: Swift Package Execution Skill Split
+## Milestone 33: Swift Package Execution Skill Split
 
 Scope:
 
@@ -664,7 +669,7 @@ Exit criteria:
 - [x] The repo ships a dedicated SwiftPM execution skill, the Xcode workflow is more tightly scoped, and package-facing docs consistently route ordinary package work through the new boundary.
 - [x] Completed 2026-04-07 by adding `swift-package-workflow`, tightening `xcode-app-project-workflow`, and updating package-facing handoffs and maintainer docs.
 
-## Milestone 32: Execution Skill Split and Inference Refactor
+## Milestone 34: Execution Skill Split and Inference Refactor
 
 Scope:
 
@@ -693,27 +698,27 @@ Exit criteria:
 - [x] Continued 2026-04-08 by adding specialized package-resource fallback guidance, `.xctestplan`-aware compatibility routing, Xcode bundle-integration handoffs, and richer inferred context in the compatibility surfaces.
 - [x] Continued 2026-04-08 by thinning the compatibility surfaces themselves so they stay routing-focused, with the package compatibility wrapper returning routing context instead of shadow command planning.
 
-## Milestone 33: Swift/Xcode Repo-Maintenance Toolkit Profiles
+## Milestone 35: Swift/Xcode Repo-Maintenance Toolkit Profiles
 
 Scope:
 
-- Promote a first-class Swift/Xcode-aware `repo-maintenance-toolkit` direction in `productivity-skills` so Apple workflow skills can rely on a cleaner shared maintainer contract.
+- Promote a first-class Swift/Xcode-aware `repo-maintenance-toolkit` direction that keeps the shipped Apple plugin self-contained for end users while remaining maintainable for repo authors.
 
 Tickets:
 
 - [x] Document the planned toolkit direction and profile model in maintainer docs.
 - [x] Define the profile contract for `generic`, `swift-package`, and `xcode-app`.
-- [x] Add the Swift/Xcode-aware toolkit profiles in `productivity-skills`.
-- [x] Update Apple bootstrap and guidance-sync skills to consume the shared toolkit contract.
+- [x] Add the Swift/Xcode-aware toolkit profiles and bundle them into the shipped Apple plugin surface.
+- [x] Update Apple bootstrap and guidance-sync skills to consume the shipped shared toolkit contract.
 - [x] Reduce local vendored-toolkit duplication after the shared contract is proven and stable.
 
 Exit criteria:
 
-- [x] The canonical Swift/Xcode-aware toolkit contract lives in `productivity-skills`, and Apple workflow skills consume it through a stable shared profile surface.
+- [x] The canonical shipped Swift/Xcode-aware toolkit contract lives in this repository, and Apple workflow skills consume it through a stable shared profile surface.
 - [x] Continued 2026-04-08 in this repo by making the vendored toolkit installer profile-aware, emitting `scripts/repo-maintenance/config/profile.env`, and teaching Apple bootstrap and guidance-sync skills to install the `swift-package` or `xcode-app` profile explicitly.
-- [x] Completed 2026-04-08 by upstreaming the profile contract into `productivity-skills` and re-scoping the Apple-local mirror, docs, and validation language around a thin standalone consumer snapshot instead of a second toolkit ownership surface.
+- [x] Completed 2026-04-08 by making the shipped Apple plugin self-contained, bundling the toolkit contract locally, and re-scoping docs and validation around a one-and-done install surface instead of an external contract owner.
 
-## Milestone 34: Guidance Preservation and AGENTS Expansion
+## Milestone 36: Guidance Preservation and AGENTS Expansion
 
 Scope:
 

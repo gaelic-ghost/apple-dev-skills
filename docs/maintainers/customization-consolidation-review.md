@@ -159,10 +159,10 @@ If the repo still wants less duplication after the surface shrinks, the approved
 
 ## Post-Extraction Note
 
-The shared `repo-maintenance-toolkit` skill was later extracted into `../productivity-skills` because it is globally useful rather than Apple-specific.
+The Apple plugin now treats its bundled `repo-maintenance-toolkit` source as part of the shipped local contract.
 
-- `apple-dev-skills` no longer counts that skill in its active customization surface
-- this repo still vendors the managed toolkit snapshot under `shared/repo-maintenance-toolkit/` so the Apple bootstrap and guidance-sync skills can stay independently usable
+- `apple-dev-skills` no longer treats an external toolkit repo as part of the end-user install story
+- this repo keeps the managed toolkit source under `shared/repo-maintenance-toolkit/` so the Apple bootstrap and guidance-sync skills stay independently usable and fully bundled
 
 ## Follow-Up Plan
 

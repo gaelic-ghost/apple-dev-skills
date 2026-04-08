@@ -99,10 +99,10 @@ class CustomizationConsolidationReviewTests(unittest.TestCase):
     def test_roadmap_marks_review_and_implementation_done(self) -> None:
         text = ROADMAP.read_text(encoding="utf-8")
 
-        self.assertIn("- [x] Milestone 20: Customization Consolidation Review", text)
+        self.assertIn("- [x] Milestone 23: Customization Consolidation Review", text)
         self.assertIn("See `docs/maintainers/customization-consolidation-review.md`.", text)
-        self.assertIn("- [x] Milestone 27: Customization Surface Simplification Implementation", text)
-        self.assertIn("## Milestone 27: Customization Surface Simplification Implementation", text)
+        self.assertIn("- [x] Milestone 30: Customization Surface Simplification Implementation", text)
+        self.assertIn("## Milestone 30: Customization Surface Simplification Implementation", text)
 
 
 if __name__ == "__main__":

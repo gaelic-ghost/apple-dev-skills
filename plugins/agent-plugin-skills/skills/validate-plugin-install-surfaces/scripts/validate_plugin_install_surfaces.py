@@ -5,6 +5,7 @@ import json
 import os
 import re
 import shlex
+import filecmp
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Optional
@@ -442,6 +443,44 @@ def audit_install_surfaces(repo_root: Path, skill_dirs: list[Path], plugin_dirs:
     return findings
 
 
+def _compare_directory_trees(source: Path, target: Path, prefix: str = "") -> list[str]:
+    comparison = filecmp.dircmp(source, target)
+    mismatches: list[str] = []
+    for name in sorted(comparison.left_only):
+        mismatches.append(f"missing bundled entry `{prefix}{name}`")
+    for name in sorted(comparison.right_only):
+        mismatches.append(f"unexpected bundled entry `{prefix}{name}`")
+    _matches, mismatch, errors = filecmp.cmpfiles(source, target, comparison.common_files, shallow=False)
+    for name in sorted(mismatch):
+        mismatches.append(f"content differs for `{prefix}{name}`")
+    for name in sorted(errors):
+        mismatches.append(f"comparison failed for `{prefix}{name}`")
+    for name in sorted(comparison.common_dirs):
+        mismatches.extend(_compare_directory_trees(source / name, target / name, prefix=f"{prefix}{name}/"))
+    return mismatches
+
+
+def _audit_packaged_skills(repo_root: Path, plugin_name: str) -> list[Finding]:
+    findings: list[Finding] = []
+    source = repo_root / "skills"
+    target = repo_root / "plugins" / plugin_name / "skills"
+    rel = str(target.relative_to(repo_root))
+    if not target.exists() and not target.is_symlink():
+        return [Finding(rel, "missing-packaged-skills-dir", "Expected bundled plugin `skills/` directory.", "mirror")]
+    if target.is_symlink():
+        return [Finding(rel, "packaged-skills-is-symlink", "Expected a real bundled plugin `skills/` directory, not a symlink.", "mirror")]
+    if not target.is_dir():
+        return [Finding(rel, "packaged-skills-not-directory", "Expected bundled plugin `skills/` path to be a directory.", "mirror")]
+    if source.is_dir():
+        mismatches = _compare_directory_trees(source, target)
+        if mismatches:
+            preview = "; ".join(mismatches[:5])
+            if len(mismatches) > 5:
+                preview += f"; plus {len(mismatches) - 5} more"
+            return [Finding(rel, "packaged-skills-drift", f"Bundled plugin `skills/` directory is out of sync with root `skills/`: {preview}.", "mirror")]
+    return findings
+
+
 def audit_mirrors(repo_root: Path, plugin_name: Optional[str]) -> list[Finding]:
     findings: list[Finding] = []
     for path, target in (
@@ -454,11 +493,7 @@ def audit_mirrors(repo_root: Path, plugin_name: Optional[str]) -> list[Finding]:
             findings.append(issue)
 
     if plugin_name is not None:
-        plugin_skills = repo_root / "plugins" / plugin_name / "skills"
-        issue = is_symlink_target(plugin_skills, "../../skills")
-        if issue is not None:
-            issue.path = relative_to_repo(repo_root, plugin_skills)
-            findings.append(issue)
+        findings.extend(_audit_packaged_skills(repo_root, plugin_name))
 
     return findings
 

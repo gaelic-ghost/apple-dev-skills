@@ -3,6 +3,8 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import shutil
+import filecmp
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
@@ -76,6 +78,7 @@ def expected_files(repo_root: Path, plugin_name: str) -> dict[Path, str]:
             f"Document personal Codex installs separately at `~/.codex/plugins/{plugin_name}` with `~/.agents/plugins/marketplace.json`.\n"
             "If the repo itself is meant to be addable as a Claude marketplace, keep `.claude-plugin/marketplace.json` at the repo root.\n"
             "Use POSIX symlink mirrors for `.agents/skills` and `.claude/skills`.\n"
+            f"Keep `plugins/{plugin_name}/skills/` as a real bundled directory that stays in sync with root `skills/`.\n"
             "Track shared marketplace catalogs and canonical plugin sources in git.\n"
             "Ignore local install copies, caches, and local-only runtime settings.\n"
             "Keep `ruff` and `mypy` available as `uv`-managed tools by default.\n"
@@ -159,8 +162,66 @@ def expected_symlinks(repo_root: Path, plugin_name: str) -> dict[Path, str]:
     return {
         repo_root / ".agents" / "skills": "../skills",
         repo_root / ".claude" / "skills": "../skills",
-        repo_root / "plugins" / plugin_name / "skills": "../../skills",
     }
+
+
+def _compare_directory_trees(source: Path, target: Path, prefix: str = "") -> list[str]:
+    comparison = filecmp.dircmp(source, target)
+    mismatches: list[str] = []
+    for name in sorted(comparison.left_only):
+        mismatches.append(f"missing bundled entry `{prefix}{name}`")
+    for name in sorted(comparison.right_only):
+        mismatches.append(f"unexpected bundled entry `{prefix}{name}`")
+    _matches, mismatch, errors = filecmp.cmpfiles(source, target, comparison.common_files, shallow=False)
+    for name in sorted(mismatch):
+        mismatches.append(f"content differs for `{prefix}{name}`")
+    for name in sorted(errors):
+        mismatches.append(f"comparison failed for `{prefix}{name}`")
+    for name in sorted(comparison.common_dirs):
+        mismatches.extend(_compare_directory_trees(source / name, target / name, prefix=f"{prefix}{name}/"))
+    return mismatches
+
+
+def _sync_directory_tree(source: Path, target: Path) -> None:
+    target.mkdir(parents=True, exist_ok=True)
+    for child in list(target.iterdir()):
+        source_match = source / child.name
+        if source_match.exists():
+            continue
+        if child.is_dir() and not child.is_symlink():
+            shutil.rmtree(child)
+        else:
+            child.unlink()
+    for child in source.iterdir():
+        destination = target / child.name
+        if child.is_dir():
+            if destination.is_symlink() or destination.is_file():
+                destination.unlink()
+            _sync_directory_tree(child, destination)
+        else:
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(child, destination)
+
+
+def _audit_packaged_skills(repo_root: Path, plugin_name: str) -> list[Finding]:
+    findings: list[Finding] = []
+    source = repo_root / "skills"
+    target = repo_root / "plugins" / plugin_name / "skills"
+    rel = str(target.relative_to(repo_root))
+    if not target.exists() and not target.is_symlink():
+        return [Finding(rel, "missing-packaged-skills-dir", "Expected bundled plugin `skills/` directory.")]
+    if target.is_symlink():
+        return [Finding(rel, "packaged-skills-is-symlink", "Expected a real bundled plugin `skills/` directory, not a symlink.")]
+    if not target.is_dir():
+        return [Finding(rel, "packaged-skills-not-directory", "Expected bundled plugin `skills/` path to be a directory.")]
+    if source.is_dir():
+        mismatches = _compare_directory_trees(source, target)
+        if mismatches:
+            preview = "; ".join(mismatches[:5])
+            if len(mismatches) > 5:
+                preview += f"; plus {len(mismatches) - 5} more"
+            findings.append(Finding(rel, "packaged-skills-drift", f"Bundled plugin `skills/` directory is out of sync with root `skills/`: {preview}."))
+    return findings
 
 
 def audit_repo(repo_root: Path, plugin_name: str) -> list[Finding]:
@@ -181,6 +242,7 @@ def audit_repo(repo_root: Path, plugin_name: str) -> list[Finding]:
         actual_target = os.readlink(path)
         if actual_target != target:
             findings.append(Finding(rel, "wrong-symlink-target", f"Expected {target}, found {actual_target}."))
+    findings.extend(_audit_packaged_skills(repo_root, plugin_name))
     return findings
 
 
@@ -201,6 +263,7 @@ def apply_repo(repo_root: Path, plugin_name: str) -> tuple[list[dict[str, str]],
     for directory in [
         repo_root / "skills",
         repo_root / "plugins",
+        repo_root / "plugins" / plugin_name / "skills",
         repo_root / "plugins" / plugin_name / "assets",
         repo_root / "plugins" / plugin_name / "bin",
     ]:
@@ -227,6 +290,21 @@ def apply_repo(repo_root: Path, plugin_name: str) -> tuple[list[dict[str, str]],
         os.symlink(target, path)
         actions.append({"action": "create-symlink", "path": str(path.relative_to(repo_root)), "target": target})
         created_paths.append(str(path.relative_to(repo_root)))
+
+    source_skills = repo_root / "skills"
+    bundled_skills = repo_root / "plugins" / plugin_name / "skills"
+    if bundled_skills.is_symlink():
+        bundled_skills.unlink()
+        bundled_skills.mkdir(parents=True, exist_ok=True)
+        actions.append({"action": "replace-plugin-skills-symlink", "path": str(bundled_skills.relative_to(repo_root))})
+        created_paths.append(str(bundled_skills.relative_to(repo_root)))
+    elif not bundled_skills.exists():
+        bundled_skills.mkdir(parents=True, exist_ok=True)
+        actions.append({"action": "create-dir", "path": str(bundled_skills.relative_to(repo_root))})
+        created_paths.append(str(bundled_skills.relative_to(repo_root)))
+    if source_skills.is_dir():
+        _sync_directory_tree(source_skills, bundled_skills)
+        actions.append({"action": "sync-packaged-skills", "path": str(bundled_skills.relative_to(repo_root))})
     return actions, created_paths
 
 

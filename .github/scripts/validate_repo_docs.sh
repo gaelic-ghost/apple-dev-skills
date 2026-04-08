@@ -31,8 +31,9 @@ echo "Validating local discovery mirrors..."
 [[ "$(readlink .agents/skills)" == "../skills" ]] || fail "Expected .agents/skills -> ../skills"
 [[ -L ".claude/skills" ]] || fail "Expected .claude/skills to be a symlink to ../skills"
 [[ "$(readlink .claude/skills)" == "../skills" ]] || fail "Expected .claude/skills -> ../skills"
-[[ -L "plugins/apple-dev-skills/skills" ]] || fail "Expected plugins/apple-dev-skills/skills to be a symlink to ../../skills"
-[[ "$(readlink plugins/apple-dev-skills/skills)" == "../../skills" ]] || fail "Expected plugins/apple-dev-skills/skills -> ../../skills"
+[[ -d "plugins/apple-dev-skills/skills" ]] || fail "Expected plugins/apple-dev-skills/skills to be a bundled skills directory."
+[[ ! -L "plugins/apple-dev-skills/skills" ]] || fail "Expected plugins/apple-dev-skills/skills to be a real bundled directory, not a symlink."
+diff -qr "skills" "plugins/apple-dev-skills/skills" >/dev/null || fail "Bundled plugin skills drift detected between skills/ and plugins/apple-dev-skills/skills/"
 
 echo "Validating authoritative resource links in root docs..."
 required_resource_strings=(
@@ -60,8 +61,8 @@ require_contains "README.md" 'docs/maintainers/customization-consolidation-revie
 require_contains "README.md" 'docs/maintainers/execution-split-and-inference-plan.md'
 require_contains "README.md" '.agents/skills -> ../skills'
 require_contains "README.md" '.claude/skills -> ../skills'
-require_contains "README.md" 'plugins/apple-dev-skills/skills -> ../../skills'
-require_contains "README.md" 'The canonical shared repo-maintenance toolkit now lives in `../productivity-skills`.'
+require_contains "README.md" 'plugins/apple-dev-skills/skills/` as a real bundled copy'
+require_contains "README.md" 'The Apple plugin now ships its repo-maintenance toolkit contract directly.'
 
 echo "Validating AGENTS maintainer pointers..."
 require_contains "AGENTS.md" 'docs/maintainers/reality-audit.md'
@@ -70,7 +71,7 @@ require_contains "AGENTS.md" 'docs/maintainers/customization-consolidation-revie
 require_contains "AGENTS.md" 'docs/maintainers/execution-split-and-inference-plan.md'
 require_contains "AGENTS.md" '.agents/skills -> ../skills'
 require_contains "AGENTS.md" '.claude/skills -> ../skills'
-require_contains "AGENTS.md" 'plugins/apple-dev-skills/skills -> ../../skills'
+require_contains "AGENTS.md" 'plugins/apple-dev-skills/skills/` as a real bundled copy'
 
 echo "Validating plugin and marketplace metadata..."
 require_contains "plugins/apple-dev-skills/.codex-plugin/plugin.json" '"skills": "./skills/"'
@@ -97,8 +98,9 @@ echo "Validating reality audit guide..."
 audit_doc="docs/maintainers/reality-audit.md"
 require_contains "$audit_doc" "## Source-of-Truth Order"
 require_contains "$audit_doc" "## Audit Procedure"
+require_contains "$audit_doc" "## Plugin Smoke Test Flow"
 require_contains "$audit_doc" "## Reporting Shape"
-require_contains "$audit_doc" "../productivity-skills/skills/repo-maintenance-toolkit/"
+require_contains "$audit_doc" 'this repository'"'"'s shipped Apple plugin owns the end-user toolkit contract'
 
 echo "Validating customization consolidation review..."
 customization_review_doc="docs/maintainers/customization-consolidation-review.md"
@@ -116,13 +118,13 @@ require_contains "$execution_split_doc" "## Guidance Preservation Contract"
 require_contains "$execution_split_doc" "## AGENTS Expansion Strategy"
 require_contains "$execution_split_doc" "## Repo-Maintenance Toolkit Direction"
 require_contains "$execution_split_doc" "## Implementation Plan"
-require_contains "$execution_split_doc" 'the same profile contract now exists upstream in `productivity-skills`'
-require_contains "ROADMAP.md" "- [x] Milestone 20: Customization Consolidation Review"
-require_contains "ROADMAP.md" "- [x] Milestone 27: Customization Surface Simplification Implementation"
-require_contains "ROADMAP.md" "## Milestone 27: Customization Surface Simplification Implementation"
-require_contains "ROADMAP.md" "- [ ] Milestone 32: Execution Skill Split and Inference Refactor"
-require_contains "ROADMAP.md" "- [x] Milestone 33: Swift/Xcode Repo-Maintenance Toolkit Profiles"
-require_contains "ROADMAP.md" "- [x] Milestone 34: Guidance Preservation and AGENTS Expansion"
+require_contains "$execution_split_doc" 'the shipped plugin self-contained'
+require_contains "ROADMAP.md" "- [x] Milestone 23: Customization Consolidation Review"
+require_contains "ROADMAP.md" "- [x] Milestone 30: Customization Surface Simplification Implementation"
+require_contains "ROADMAP.md" "## Milestone 30: Customization Surface Simplification Implementation"
+require_contains "ROADMAP.md" "- [x] Milestone 34: Execution Skill Split and Inference Refactor"
+require_contains "ROADMAP.md" "- [x] Milestone 35: Swift/Xcode Repo-Maintenance Toolkit Profiles"
+require_contains "ROADMAP.md" "- [x] Milestone 36: Guidance Preservation and AGENTS Expansion"
 
 echo "Validating skill directory layout..."
 active_skill_mds=(

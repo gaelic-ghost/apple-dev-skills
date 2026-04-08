@@ -27,16 +27,24 @@ def test_audit_repo_flags_missing_paths(tmp_path: Path) -> None:
     issue_ids = {finding.issue_id for finding in findings}
     assert "missing-path" in issue_ids
     assert "missing-symlink" in issue_ids
+    assert "missing-packaged-skills-dir" in issue_ids
 
 
-def test_apply_repo_creates_expected_symlinks(tmp_path: Path) -> None:
+def test_apply_repo_creates_expected_discovery_mirrors_and_bundled_skills(tmp_path: Path) -> None:
+    skill_dir = tmp_path / "skills" / "hello"
+    skill_dir.mkdir(parents=True)
+    (skill_dir / "SKILL.md").write_text("---\nname: hello\ndescription: Say hello.\n---\n", encoding="utf-8")
+
     actions, created_paths = m.apply_repo(tmp_path, "example-skills")
 
     assert any(action["action"] == "create-symlink" for action in actions)
+    assert any(action["action"] == "sync-packaged-skills" for action in actions)
     assert (tmp_path / ".agents" / "skills").is_symlink()
     assert os.readlink(tmp_path / ".agents" / "skills") == "../skills"
     assert (tmp_path / ".claude" / "skills").is_symlink()
-    assert (tmp_path / "plugins" / "example-skills" / "skills").is_symlink()
+    assert (tmp_path / "plugins" / "example-skills" / "skills").is_dir()
+    assert not (tmp_path / "plugins" / "example-skills" / "skills").is_symlink()
+    assert (tmp_path / "plugins" / "example-skills" / "skills" / "hello" / "SKILL.md").exists()
     assert "plugins/example-skills/.codex-plugin/plugin.json" in created_paths
     assert ".claude-plugin/marketplace.json" in created_paths
 

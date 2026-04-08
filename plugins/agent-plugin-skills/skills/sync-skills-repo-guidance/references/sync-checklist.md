@@ -26,7 +26,8 @@ Check these policy points:
 - the shared `.gitignore` snippet for local runtime state is present or deliberately superseded by stricter ignores
 - repo guidance names the workflow owner for Codex install lifecycle work instead of implying bootstrap or sync scripts perform install, update, uninstall, verify, repair, enable, disable, or promote operations themselves
 - troubleshooting guidance tells users to restart Codex after marketplace changes, inspect `~/.codex/log/codex-tui.log` for skipped-marketplace warnings, and not assume `/plugins` ordering is intuitive
-- POSIX symlink mirrors are explicit and documented
+- POSIX discovery mirrors are explicit and documented
+- bundled plugin `skills/` directories are explicit, documented, and kept in sync with root `skills/`
 - maintainer Python tooling guidance keeps `ruff` and `mypy` available through `uv tool install`
 - standalone skill install guidance matches `npx skills add`
 - OpenAI and Claude docs links are current and accurate

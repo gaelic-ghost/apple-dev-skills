@@ -1,6 +1,6 @@
 ---
 name: bootstrap-skills-plugin-repo
-description: Bootstrap or align a skills repository to Gale's preferred plugin-first structure with root skills authoring, plugin packaging under plugins/, POSIX symlink mirrors for Codex and Claude discovery, maintainer docs, and AGENTS guidance. Use when creating a new skills repo or structurally aligning an existing one. Do not use this for narrow README-only or roadmap-only maintenance.
+description: Bootstrap or align a skills repository to Gale's preferred plugin-first structure with root skills authoring, plugin packaging under plugins/, POSIX discovery mirrors for Codex and Claude project discovery, a bundled plugin-root `skills/` directory, maintainer docs, and AGENTS guidance. Use when creating a new skills repo or structurally aligning an existing one. Do not use this for narrow README-only or roadmap-only maintenance.
 ---
 
 # Bootstrap Skills Plugin Repo
@@ -24,7 +24,7 @@ Bootstrap or align a skills repository to the house layout used for Gale's skill
    - `docs/maintainers/reality-audit.md`
    - `docs/maintainers/workflow-atlas.md`
 3. Use `scripts/bootstrap_skills_plugin_repo.py` to audit the target structure in `check-only` mode first.
-4. If the user wants scaffold creation or alignment, run the script in `apply` mode to create missing repo structure, plugin manifests, marketplace wiring, and POSIX symlink mirrors.
+4. If the user wants scaffold creation or alignment, run the script in `apply` mode to create missing repo structure, plugin manifests, marketplace wiring, repo-level discovery mirrors, and a bundled plugin-root `skills/` directory.
 5. Keep root `skills/` as the canonical authored skill surface.
 6. Keep plugin, marketplace, MCP, app, and hook manifests under `plugins/<plugin-name>/` and `.agents/plugins/`.
 7. Keep the repo-local Codex install shape explicit in repo guidance:
@@ -41,11 +41,11 @@ Bootstrap or align a skills repository to the house layout used for Gale's skill
 12. Preserve existing repo-specific guidance. Merge missing house guidance into docs and `AGENTS.md` without flattening local policy.
 13. Seed maintainer Python tooling guidance so bootstrapped repos call out `uv sync --dev`, `uv tool install ruff`, `uv tool install mypy`, and `uv run --group dev pytest`.
 14. Use `$skill-creator` for individual skill authoring. This skill owns repo structure, not per-skill content design.
-15. Validate the resulting repo layout, symlinks, manifests, marketplace catalogs, `.gitignore`, and docs alignment before closing.
-16. Create POSIX symlink mirrors for local discovery:
+15. Validate the resulting repo layout, discovery mirrors, bundled plugin skills directory, manifests, marketplace catalogs, `.gitignore`, and docs alignment before closing.
+16. Create POSIX symlink mirrors for local repo discovery:
    - `.agents/skills -> ../skills`
    - `.claude/skills -> ../skills`
-   - `plugins/<plugin-name>/skills -> ../../skills`
+17. Keep `plugins/<plugin-name>/skills/` as a real bundled directory that stays in sync with root `skills/`.
 
 ## Output Contract
 

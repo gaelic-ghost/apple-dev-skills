@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import shutil
 import sys
 from pathlib import Path
 
@@ -53,7 +54,7 @@ def make_valid_repo(tmp_path: Path) -> Path:
     )
     (repo / "README.md").write_text(
         "# agent-plugin-skills\n\n"
-        "Maintainer repo.\n\n"
+        "Maintainer repo. This plugin ships a bundled copy of root `skills/`.\n\n"
         "## Install\n\n"
         "### Codex Plugin\n\n"
         "Use the plugin in `plugins/agent-plugin-skills/.codex-plugin/plugin.json`.\n\n"
@@ -67,7 +68,7 @@ def make_valid_repo(tmp_path: Path) -> Path:
     )
     (repo / ".agents" / "skills").symlink_to("../skills")
     (repo / ".claude" / "skills").symlink_to("../skills")
-    (plugin_root / "skills").symlink_to("../../skills")
+    shutil.copytree(repo / "skills", plugin_root / "skills")
     return repo
 
 
@@ -94,6 +95,8 @@ def test_audit_valid_repo_has_no_findings(tmp_path: Path) -> None:
 def test_detects_missing_openai_yaml_and_bad_skill_reference(tmp_path: Path) -> None:
     repo = make_valid_repo(tmp_path)
     (repo / "skills" / "example-skill" / "agents" / "openai.yaml").unlink()
+    shutil.rmtree(repo / "plugins" / "agent-plugin-skills" / "skills")
+    shutil.copytree(repo / "skills", repo / "plugins" / "agent-plugin-skills" / "skills")
     (repo / "README.md").write_text(
         "# agent-plugin-skills\n\n## Install\n\n```bash\nnpx skills add gaelic-ghost/agent-plugin-skills --skill missing-skill\n```\n",
         encoding="utf-8",
@@ -138,3 +141,24 @@ def test_detects_marketplace_root_source_path_as_invalid(tmp_path: Path) -> None
     issue_ids = {item.issue_id for item in metadata}
 
     assert "marketplace-empty-relative-source-path" in issue_ids
+
+
+def test_detects_packaged_skills_symlink_and_drift(tmp_path: Path) -> None:
+    repo = make_valid_repo(tmp_path)
+    shutil.rmtree(repo / "plugins" / "agent-plugin-skills" / "skills")
+    (repo / "plugins" / "agent-plugin-skills" / "skills").symlink_to("../../skills")
+
+    mirrors = m.audit_mirrors(repo, "agent-plugin-skills")
+    issue_ids = {item.issue_id for item in mirrors}
+    assert "packaged-skills-is-symlink" in issue_ids
+
+    (repo / "plugins" / "agent-plugin-skills" / "skills").unlink()
+    shutil.copytree(repo / "skills", repo / "plugins" / "agent-plugin-skills" / "skills")
+    (repo / "plugins" / "agent-plugin-skills" / "skills" / "example-skill" / "SKILL.md").write_text(
+        "---\nname: example-skill\ndescription: Drifted skill.\n---\n",
+        encoding="utf-8",
+    )
+
+    mirrors = m.audit_mirrors(repo, "agent-plugin-skills")
+    issue_ids = {item.issue_id for item in mirrors}
+    assert "packaged-skills-drift" in issue_ids

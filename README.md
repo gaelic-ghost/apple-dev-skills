@@ -27,7 +27,7 @@ Canonical Apple development skills with a plugin-first packaging layout for Code
 - `sync-swift-package-guidance`
   - Top-level skill for bringing an existing Swift package repo's `AGENTS.md` and workflow guidance up to baseline.
 
-## Legacy Compatibility Skills
+### Legacy Compatibility Skills
 
 - `xcode-app-project-workflow`
   - Legacy compatibility entrypoint for older broad Xcode workflow references. Prefer `xcode-build-run-workflow` or `xcode-testing-workflow` for new installs, docs, and prompts.
@@ -41,9 +41,11 @@ Every active skill now follows the same documentation contract:
 - named `fallback` and `handoff` behavior
 - a clear customization stance, including explicit `policy-only` knobs or an explicit “no durable customization surface” statement
 
-Maintainer-facing workflow diagrams, input and output contracts, and Agent ↔ User UX maps live in [docs/maintainers/workflow-atlas.md](./docs/maintainers/workflow-atlas.md). Audit procedure and source-of-truth guidance live in [docs/maintainers/reality-audit.md](./docs/maintainers/reality-audit.md). The current customization-system decision and follow-up plan live in [docs/maintainers/customization-consolidation-review.md](./docs/maintainers/customization-consolidation-review.md). The planned execution-skill split, guidance-preservation contract, and toolkit direction live in [docs/maintainers/execution-split-and-inference-plan.md](./docs/maintainers/execution-split-and-inference-plan.md), with the concrete guidance mapping in [docs/maintainers/workflow-guidance-preservation-matrix.md](./docs/maintainers/workflow-guidance-preservation-matrix.md).
+## Repo Purpose
 
-## Packaging and Delegation
+This repository is the source-of-truth authoring and packaging repo for the `apple-dev-skills` plugin. It keeps Apple-focused skills, packaged plugin assets, shared toolkit integrations, and maintainer validation in one place so end users can install a single self-contained plugin into Swift and Xcode repos.
+
+## Packaging And Discovery
 
 This repository now tracks a plugin-first packaging plan while keeping root `skills/` as the canonical workflow-authoring surface.
 
@@ -55,7 +57,7 @@ Shared guidance across both ecosystems:
 - use POSIX symlink mirrors for local Codex and Claude project discovery on macOS and Linux:
   - `.agents/skills -> ../skills`
   - `.claude/skills -> ../skills`
-  - `plugins/apple-dev-skills/skills -> ../../skills`
+- keep `plugins/apple-dev-skills/skills/` as a real bundled copy of the shipped skill tree so the installed plugin stays self-contained
 
 Current plugin scaffolding lives under:
 
@@ -85,7 +87,18 @@ The plugin package in this repo is intentionally conservative:
 - Claude-only extras layered on top under `plugins/apple-dev-skills/hooks/` and `plugins/apple-dev-skills/bin/`
 - no essential workflow behavior should depend on Claude-only extras
 
-## Install Surfaces
+## Standards And Docs
+
+Maintainer-facing workflow diagrams, input and output contracts, and Agent ↔ User UX maps live in [docs/maintainers/workflow-atlas.md](./docs/maintainers/workflow-atlas.md). Audit procedure and source-of-truth guidance live in [docs/maintainers/reality-audit.md](./docs/maintainers/reality-audit.md). The current customization-system decision and follow-up plan live in [docs/maintainers/customization-consolidation-review.md](./docs/maintainers/customization-consolidation-review.md). The planned execution-skill split, guidance-preservation contract, and toolkit direction live in [docs/maintainers/execution-split-and-inference-plan.md](./docs/maintainers/execution-split-and-inference-plan.md), with the concrete guidance mapping in [docs/maintainers/workflow-guidance-preservation-matrix.md](./docs/maintainers/workflow-guidance-preservation-matrix.md).
+
+### Maintainer References
+
+- Agent Skills Standard: <https://agentskills.io/home>
+- OpenAI Codex Skills: <https://developers.openai.com/codex/skills>
+- OpenAI Codex AGENTS.md configuration: <https://developers.openai.com/codex/guides/agents-md/>
+- Claude Code Plugins: <https://code.claude.com/docs/en/plugins>
+
+### Install Surfaces
 
 Repo-local Codex packaging and personal Codex installs are different surfaces and the docs should keep them separate:
 
@@ -96,7 +109,7 @@ Repo-local Codex packaging and personal Codex installs are different surfaces an
 
 The repo also tracks a repo-root Claude marketplace catalog at `.claude-plugin/marketplace.json` for Git-backed sharing, while direct local Claude development should still use `claude --plugin-dir`.
 
-Local Codex install lifecycle work such as install, update, uninstall, verify, repair, enable, disable, and promote belongs to the maintainer workflow in `install-plugin-to-socket`, not to the bootstrap or sync skills in this repository.
+Repo-wide standards audit and coordination for this repository now belongs to the maintainer workflow in `maintain-plugin-repo`. Local Codex install lifecycle work such as install, update, uninstall, verify, repair, enable, disable, and promote remains the bounded responsibility of `install-plugin-to-socket`, not of the bootstrap or sync skills in this repository.
 
 After changing a repo-local marketplace entry, fully restart Codex, inspect `~/.codex/log/codex-tui.log` if the plugin does not appear, and remember that `/plugins` ordering may not be intuitive.
 
@@ -118,11 +131,11 @@ Keep `ruff` and `mypy` available as maintainer-side `uv` tools even when a given
 
 ## Install
 
-Standalone skill installation is handled through the Vercel `skills` CLI against root `skills/`. Plugin packaging and local marketplace wiring target `plugins/apple-dev-skills/`. For local project discovery on macOS and Linux, this repo also exposes `.agents/skills` and `.claude/skills` as symlink mirrors into root `skills/`.
+This repository is plugin-first for end users. Start with the packaged plugin surfaces below when you want to install `apple-dev-skills` into Codex or Claude. Standalone `npx skills` installs remain available for maintainers and for direct skill-by-skill experimentation against root `skills/`.
 
-### Local Plugin Development Install
+### Local Codex Plugin Development Install
 
-Use the packaged plugin root at `plugins/apple-dev-skills/` when smoke-testing Codex plugin wiring. The canonical local author flow is still the official Codex marketplace path:
+Use the packaged plugin root at `plugins/apple-dev-skills/` when smoke-testing the Codex Plugin install surface. The canonical local author flow is still the official Codex marketplace path:
 
 1. Point a repo or personal marketplace entry at `./plugins/apple-dev-skills`.
 2. Set `policy.installation` to `AVAILABLE`.
@@ -156,13 +169,17 @@ Repo-scoped marketplace shape:
 
 Keep `source.path` relative to the marketplace root, restart Codex after marketplace changes, and verify the plugin appears in `/plugins`.
 
-If Gale is using a local helper such as `install-plugin-to-socket`, treat that as an optional machine-local maintainer shortcut rather than part of the repository's portable install contract.
+If Gale is using local maintainer helpers from the adjacent `agent-plugin-skills` repository, treat `maintain-plugin-repo` as the repo-wide audit and coordination entrypoint and `install-plugin-to-socket` as the bounded local install-lifecycle helper. Those maintainer workflows are optional machine-local shortcuts, not part of this repository's portable install contract.
 
 ### Claude Marketplace Development
 
 For direct local Claude work, load the tracked plugin root with `claude --plugin-dir /absolute/path/to/plugins/apple-dev-skills`.
 
 If the repository is being shared as a Claude marketplace, use the repo-root catalog at `.claude-plugin/marketplace.json` and keep plugin paths relative to that marketplace root.
+
+### Standalone Skills CLI Install
+
+Standalone skill installation is handled through the Vercel `skills` CLI against root `skills/`. For local project discovery on macOS and Linux, this repo also exposes `.agents/skills` and `.claude/skills` as symlink mirrors into root `skills/`, while the shipped plugin keeps its own bundled `skills/` tree.
 
 Install one skill:
 
@@ -200,10 +217,8 @@ Common starting points:
   `npx skills add gaelic-ghost/apple-dev-skills --skill sync-xcode-project-guidance`
 - Existing Swift package repo guidance sync:
   `npx skills add gaelic-ghost/apple-dev-skills --skill sync-swift-package-guidance`
-- Shared repo-maintenance toolkit:
-  `npx skills add gaelic-ghost/productivity-skills --skill repo-maintenance-toolkit`
 
-## Migration
+### Migration
 
 This repo previously experimented with a router layer and later removed it.
 
@@ -218,9 +233,9 @@ This repo previously experimented with a router layer and later removed it.
 
 New install-facing names should prefer the narrower execution skills directly instead of the legacy compatibility surfaces.
 
-The canonical shared repo-maintenance toolkit now lives in `../productivity-skills`. This repository keeps a mirrored consumer snapshot under `shared/repo-maintenance-toolkit/` only so the Apple bootstrap and guidance-sync skills can still install or refresh the same managed file set without depending on a second repo at runtime. That local mirror is intentionally not the contract owner; toolkit feature work should land in `productivity-skills` first and then be mirrored here only as needed for standalone Apple workflow installs. The mirrored installer is profile-aware and writes `scripts/repo-maintenance/config/profile.env` so downstream repos can tell whether they are on the `swift-package` or `xcode-app` profile.
+The Apple plugin now ships its repo-maintenance toolkit contract directly. This repository keeps the managed toolkit source under `shared/repo-maintenance-toolkit/` so the Apple bootstrap and guidance-sync skills can install or refresh the same file set without requiring a second plugin or repo for end users. The bundled installer is profile-aware and writes `scripts/repo-maintenance/config/profile.env` so downstream repos can tell whether they are on the `swift-package` or `xcode-app` profile.
 
-## AGENTS Guidance
+### AGENTS Guidance
 
 Repository-consumable Swift and Apple baseline policy snippets:
 
@@ -264,7 +279,7 @@ Use these snippets for cross-project standards that belong in end-user `AGENTS.m
 │       ├── assets/
 │       ├── bin/
 │       ├── hooks/
-│       └── skills -> ../../skills
+│       └── skills/
 ├── shared/
 │   ├── agents-snippets/
 │   │   ├── apple-swift-package-core.md
@@ -287,13 +302,6 @@ Use these snippets for cross-project standards that belong in end-user `AGENTS.m
 The canonical workflow content still lives under root `skills/`. The discovery mirrors are local POSIX symlinks for macOS and Linux development, including WSL 2 when Windows is involved.
 
 Maintainers: authoritative skill-authoring resources live in `AGENTS.md`.
-
-## Maintainer References
-
-- Agent Skills Standard: <https://agentskills.io/home>
-- OpenAI Codex Skills: <https://developers.openai.com/codex/skills>
-- OpenAI Codex AGENTS.md configuration: <https://developers.openai.com/codex/guides/agents-md/>
-- Claude Code Plugins: <https://code.claude.com/docs/en/plugins>
 
 ## License
 

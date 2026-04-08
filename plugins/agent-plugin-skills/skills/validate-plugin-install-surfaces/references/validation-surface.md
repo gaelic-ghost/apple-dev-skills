@@ -23,14 +23,18 @@
 
 - `plugins/*/.codex-plugin/plugin.json`
 - `plugins/*/.claude-plugin/plugin.json`
-- `plugins/*/skills` discovery mirror
+- `plugins/*/skills/` bundled plugin skills directory
 - `.agents/plugins/marketplace.json`
 
 ## Discovery Mirrors
 
 - `.agents/skills -> ../skills`
 - `.claude/skills -> ../skills`
-- `plugins/<plugin>/skills -> ../../skills`
+
+## Bundled Plugin Skills Contract
+
+- `plugins/<plugin>/skills/` must be a real directory, not a symlink
+- the bundled plugin tree must stay in sync with root `skills/`
 
 ## Install-Surface Checks
 

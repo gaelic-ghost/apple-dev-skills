@@ -4,7 +4,7 @@ Date: 2026-04-08
 
 ## Purpose
 
-Record the planned split of the current execution skills into narrower build-run and testing skills, define the guidance-preservation contract for that split, and establish the companion plan for a first-class Swift and Xcode-oriented `repo-maintenance-toolkit` profile in `productivity-skills`.
+Record the planned split of the current execution skills into narrower build-run and testing skills, define the guidance-preservation contract for that split, and establish the companion plan for a first-class Swift and Xcode-oriented `repo-maintenance-toolkit` profile owned by this shipped Apple plugin.
 
 ## Current Problem
 
@@ -89,7 +89,7 @@ Keep execution-only mechanics out of `AGENTS.md` when they are too tied to tool 
 
 ## Repo-Maintenance Toolkit Direction
 
-The repo should treat the first-class `repo-maintenance-toolkit` skill in `productivity-skills` as the canonical shared contract, with Swift- and Xcode-aware profiles, instead of treating the mirrored toolkit snapshot here as the long-term architecture.
+The repo should treat the bundled Apple-facing `repo-maintenance-toolkit` contract in this repository as the canonical shipped surface, with Swift- and Xcode-aware profiles, instead of treating an external repo as part of the end-user install story.
 
 Planned profile shape:
 
@@ -98,15 +98,14 @@ Planned profile shape:
 - `xcode-app`
 - optional later `swift-mixed-root`
 
-The Apple repo should then consume that toolkit contract rather than continuing to own so much mirrored toolkit logic locally.
+The Apple repo should ship that toolkit contract directly and keep any external sharing or upstreaming as maintainer-only coordination.
 
 Current Apple-side integration status:
 
 - the vendored installer in this repo is now profile-aware
 - Apple bootstrap and guidance-sync skills explicitly install the `swift-package` or `xcode-app` profile
 - installed repos now get `scripts/repo-maintenance/config/profile.env` as a concrete profile marker
-- the same profile contract now exists upstream in `productivity-skills`
-- the remaining local work is keeping the Apple mirror intentionally thin and consumer-shaped instead of treating it as a second contract owner
+- the remaining local work is keeping the Apple-local shared source authoritative and the shipped plugin self-contained
 
 ## Implementation Plan
 
@@ -137,8 +136,8 @@ Current status:
 
 ### Phase 4: Toolkit promotion
 
-- Keep the Swift and Xcode-oriented `repo-maintenance-toolkit` profile support canonical in `productivity-skills`.
-- Keep the Apple-local mirror as a thin consumer contract for standalone bootstrap and sync installs rather than as a second ownership surface.
+- Keep the Swift and Xcode-oriented `repo-maintenance-toolkit` profile support canonical in this repository's shared toolkit source.
+- Keep any future upstream sharing strictly maintainer-side so the Apple plugin remains one-and-done for end users.
 
 ## First Implementation Slice
 

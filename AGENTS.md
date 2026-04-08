@@ -62,11 +62,11 @@ Applicability guidance:
 - Keep repo-local Codex marketplace wiring under `.agents/plugins/marketplace.json` and Git-backed Claude marketplace sharing under repo-root `.claude-plugin/marketplace.json`.
 - Track canonical plugin source trees and shared marketplace catalogs in git.
 - Do not track consumer-side install copies, caches, or machine-local runtime state in this repository.
-- Follow canonical Codex and Claude project-level discovery guidance on macOS and Linux through POSIX symlink mirrors instead of duplicate skill trees:
+- Follow canonical Codex and Claude project-level discovery guidance on macOS and Linux through POSIX symlink mirrors for local discovery, while keeping the shipped plugin bundle self-contained:
   - `.agents/skills -> ../skills`
   - `.claude/skills -> ../skills`
-  - `plugins/apple-dev-skills/skills -> ../../skills`
-- Treat those symlink mirrors as discovery and packaging conveniences, not as independent sources of truth.
+- Keep `plugins/apple-dev-skills/skills/` as a real bundled copy of the shipped skill tree.
+- Treat the local discovery mirrors as conveniences, not as independent sources of truth.
 - For Claude Code, keep in mind that plugins can package more than skills alone. Claude plugins may bundle commands, hooks, MCP or LSP configuration, skills, and plugin-scoped subagents.
 - For Claude Code subagents, treat them as Markdown-plus-frontmatter runtime personas with their own prompts, tool access, and context window. They are not a replacement for shared skills or repo guidance.
 - For Codex subagents, treat them as explicit delegation infrastructure for bounded parallel or specialized work. They should not be assumed to exist unless the host supports them and the task actually benefits from delegation.
@@ -174,7 +174,7 @@ Some alternatives for user customization/config include using their Agent's memo
 - Use `docs/maintainers/reality-audit.md` as the maintainer operating guide for source-of-truth order, audit procedure, durable review criteria, and reusable repo-maintenance conventions.
 - Use `docs/maintainers/workflow-atlas.md` for repo-maintainer workflow diagrams, branch paths, workflow inputs/outputs, and Agent+Skill UX audits.
 - Use `docs/maintainers/customization-consolidation-review.md` as the source of truth for the current customization-surface decision and its approved follow-up plan.
-- Use `docs/maintainers/execution-split-and-inference-plan.md` as the source of truth for the planned execution-skill split, inference direction, guidance-preservation contract, and the shared-toolkit consumer contract with `productivity-skills`.
+- Use `docs/maintainers/execution-split-and-inference-plan.md` as the source of truth for the planned execution-skill split, inference direction, guidance-preservation contract, and the current repo-maintenance toolkit ownership model.
 - Use `docs/maintainers/workflow-guidance-preservation-matrix.md` as the concrete mapping from monolithic execution guidance to narrower skill or `AGENTS.md` destinations during the split.
 - Prefer logically grouped skills over splitting adjacent workflows into separate skills.
 - Within a grouped skill, define one primary workflow path and keep variants subordinate to that path.

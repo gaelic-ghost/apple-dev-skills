@@ -41,12 +41,14 @@ Current scope note:
    - `.agents/plugins/marketplace.json`
    - local `source.path` correctness
    - referenced plugin roots existing on disk
-6. Audit discovery mirrors for:
+6. Audit repo-level discovery mirrors for:
    - `.agents/skills -> ../skills`
    - `.claude/skills -> ../skills`
-   - `plugins/<plugin>/skills -> ../../skills`
-7. Audit README install examples and install-surface references against the actual repo structure.
-8. Return Markdown and JSON findings grouped by metadata, install surfaces, and mirrors.
+7. Audit the bundled plugin skills directory for:
+   - `plugins/<plugin>/skills/` existing as a real directory
+   - the bundled tree staying in sync with root `skills/`
+8. Audit README install examples and install-surface references against the actual repo structure.
+9. Return Markdown and JSON findings grouped by metadata, install surfaces, and bundled-skills or mirror drift.
 
 ## Output Contract
 
