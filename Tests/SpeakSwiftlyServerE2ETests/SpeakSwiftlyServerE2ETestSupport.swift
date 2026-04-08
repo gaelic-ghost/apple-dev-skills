@@ -143,6 +143,14 @@ final class ServerProcess: @unchecked Sendable {
         stdoutRecorder.contents + (stdoutRecorder.isEmpty || stderrRecorder.isEmpty ? "" : "\n") + stderrRecorder.contents
     }
 
+    func stderrObjects() -> [[String: Any]] {
+        stderrRecorder.snapshot.compactMap { line in
+            guard let data = line.data(using: .utf8) else { return nil }
+            guard let json = try? JSONSerialization.jsonObject(with: data) else { return nil }
+            return json as? [String: Any]
+        }
+    }
+
     func waitForStderrJSONObject(
         timeout: Duration,
         matching predicate: @escaping @Sendable ([String: Any]) -> Bool
@@ -1194,6 +1202,7 @@ struct E2EJobEvent: Decodable, Sendable {
     let op: String?
     let stage: String?
     let ok: Bool?
+    let reason: String?
     let profileName: String?
     let profilePath: String?
     let message: String?
@@ -1206,6 +1215,7 @@ struct E2EJobEvent: Decodable, Sendable {
         case op
         case stage
         case ok
+        case reason
         case profileName = "profile_name"
         case profilePath = "profile_path"
         case message

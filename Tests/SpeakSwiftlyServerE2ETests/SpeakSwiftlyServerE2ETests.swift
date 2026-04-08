@@ -60,6 +60,14 @@ struct SpeakSwiftlyServerE2ETests {
         try await Self.runMarvisTripletLane(using: .mcp)
     }
 
+    @Test func httpMarvisQueuedLivePlaybackDrainsInOrder() async throws {
+        try await Self.runQueuedMarvisTripletLane(using: .http)
+    }
+
+    @Test func mcpMarvisQueuedLivePlaybackDrainsInOrder() async throws {
+        try await Self.runQueuedMarvisTripletLane(using: .mcp)
+    }
+
     @Test func httpOperatorControlSurfaceCoversReadQueuePlaybackAndRemovalFlows() async throws {
         let sandbox = try ServerE2ESandbox()
         defer { sandbox.cleanup() }
@@ -1245,6 +1253,229 @@ struct SpeakSwiftlyServerE2ETests {
         }
     }
 
+    private static func runQueuedMarvisTripletLane(using transport: E2ETransport) async throws {
+        struct MarvisQueuedLane {
+            let profileName: String
+            let vibe: String
+            let voiceDescription: String
+            let expectedVoice: String
+        }
+
+        let sandbox = try ServerE2ESandbox()
+        defer { sandbox.cleanup() }
+
+        let prefix = transport.profilePrefix
+        let lanes = [
+            MarvisQueuedLane(
+                profileName: "\(prefix)-marvis-queued-femme-profile",
+                vibe: "femme",
+                voiceDescription: "A warm, bright, feminine narrator voice.",
+                expectedVoice: "conversational_a"
+            ),
+            MarvisQueuedLane(
+                profileName: "\(prefix)-marvis-queued-masc-profile",
+                vibe: "masc",
+                voiceDescription: "A grounded, rich, masculine speaking voice.",
+                expectedVoice: "conversational_b"
+            ),
+            MarvisQueuedLane(
+                profileName: "\(prefix)-marvis-queued-androgenous-profile",
+                vibe: "androgenous",
+                voiceDescription: "A calm, balanced, and gentle speaking voice.",
+                expectedVoice: "conversational_a"
+            ),
+        ]
+
+        let server = try makeServer(
+            port: randomPort(in: 59_000..<59_200),
+            profileRootURL: sandbox.profileRootURL,
+            silentPlayback: false,
+            playbackTrace: isPlaybackTraceEnabled,
+            mcpEnabled: transport == .mcp,
+            speechBackend: "marvis"
+        )
+        try server.start()
+        defer { server.stop() }
+
+        switch transport {
+        case .http:
+            let client = E2EHTTPClient(baseURL: server.baseURL)
+            try await waitUntilWorkerReady(
+                using: client,
+                timeout: e2eTimeout,
+                server: server,
+                expectPlaybackEngine: true
+            )
+
+            for lane in lanes {
+                try await createVoiceDesignProfile(
+                    using: client,
+                    server: server,
+                    profileName: lane.profileName,
+                    vibe: lane.vibe,
+                    text: testingProfileText,
+                    voiceDescription: lane.voiceDescription
+                )
+            }
+
+            var jobIDs = [String]()
+            for lane in lanes {
+                let jobID = try await submitSpeechJob(
+                    using: client,
+                    text: testingPlaybackText,
+                    profileName: lane.profileName
+                )
+                jobIDs.append(jobID)
+            }
+
+            _ = try await waitForPlaybackState(
+                using: client,
+                timeout: .seconds(180),
+                matching: { $0.state == "playing" && $0.activeRequest?.id == jobIDs[0] }
+            )
+            let queued = try await waitForGenerationQueue(
+                using: client,
+                timeout: .seconds(180),
+                matching: { snapshot in
+                    let ids = Set(snapshot.queue.map(\.id))
+                    return ids.contains(jobIDs[1]) && ids.contains(jobIDs[2])
+                }
+            )
+            #expect(queued.queueType == "generation")
+
+            let firstSnapshot = try await waitForTerminalJob(
+                id: jobIDs[0],
+                using: client,
+                timeout: e2eTimeout,
+                server: server
+            )
+            assertSpeechJobCompleted(firstSnapshot, expectedJobID: jobIDs[0])
+            #expect(!firstSnapshot.history.contains { $0.event == "queued" })
+
+            let secondSnapshot = try await waitForTerminalJob(
+                id: jobIDs[1],
+                using: client,
+                timeout: e2eTimeout,
+                server: server
+            )
+            assertSpeechJobCompleted(secondSnapshot, expectedJobID: jobIDs[1])
+            #expect(secondSnapshot.history.contains {
+                $0.event == "queued" && $0.reason == "waiting_for_active_request"
+            })
+
+            let thirdSnapshot = try await waitForTerminalJob(
+                id: jobIDs[2],
+                using: client,
+                timeout: e2eTimeout,
+                server: server
+            )
+            assertSpeechJobCompleted(thirdSnapshot, expectedJobID: jobIDs[2])
+            #expect(thirdSnapshot.history.contains {
+                $0.event == "queued" && $0.reason == "waiting_for_active_request"
+            })
+
+            try await assertMarvisPlaybackStartedInOrder(on: server, requestIDs: jobIDs)
+
+            for (jobID, lane) in zip(jobIDs, lanes) {
+                try await expectMarvisVoiceSelection(
+                    on: server,
+                    requestID: jobID,
+                    expectedVoice: lane.expectedVoice
+                )
+            }
+
+        case .mcp:
+            let client = try await E2EMCPClient.connect(
+                baseURL: server.baseURL,
+                path: "/mcp",
+                timeout: e2eTimeout,
+                server: server
+            )
+            try await waitUntilWorkerReady(
+                using: client,
+                timeout: e2eTimeout,
+                server: server,
+                expectPlaybackEngine: true
+            )
+
+            for lane in lanes {
+                try await createVoiceDesignProfile(
+                    using: client,
+                    server: server,
+                    profileName: lane.profileName,
+                    vibe: lane.vibe,
+                    text: testingProfileText,
+                    voiceDescription: lane.voiceDescription
+                )
+            }
+
+            var jobIDs = [String]()
+            for lane in lanes {
+                let payload = try await client.callTool(
+                    name: "queue_speech_live",
+                    arguments: [
+                        "text": testingPlaybackText,
+                        "profile_name": lane.profileName,
+                    ]
+                )
+                let jobID = try requireString("job_id", in: payload)
+                #expect(payload["job_resource_uri"] as? String == "speak://jobs/\(jobID)")
+                jobIDs.append(jobID)
+            }
+
+            let queued = try await waitForMCPGenerationQueue(
+                using: client,
+                timeout: .seconds(180),
+                matching: { snapshot in
+                    let ids = Set(snapshot.queue.map(\.id))
+                    return ids.contains(jobIDs[1]) && ids.contains(jobIDs[2])
+                }
+            )
+            #expect(queued.queueType == "generation")
+
+            let firstSnapshot = try await waitForTerminalJob(
+                id: jobIDs[0],
+                using: client,
+                timeout: e2eTimeout,
+                server: server
+            )
+            assertSpeechJobCompleted(firstSnapshot, expectedJobID: jobIDs[0])
+            #expect(!firstSnapshot.history.contains { $0.event == "queued" })
+
+            let secondSnapshot = try await waitForTerminalJob(
+                id: jobIDs[1],
+                using: client,
+                timeout: e2eTimeout,
+                server: server
+            )
+            assertSpeechJobCompleted(secondSnapshot, expectedJobID: jobIDs[1])
+            #expect(secondSnapshot.history.contains {
+                $0.event == "queued" && $0.reason == "waiting_for_active_request"
+            })
+
+            let thirdSnapshot = try await waitForTerminalJob(
+                id: jobIDs[2],
+                using: client,
+                timeout: e2eTimeout,
+                server: server
+            )
+            assertSpeechJobCompleted(thirdSnapshot, expectedJobID: jobIDs[2])
+            #expect(thirdSnapshot.history.contains {
+                $0.event == "queued" && $0.reason == "waiting_for_active_request"
+            })
+
+            try await assertMarvisPlaybackStartedInOrder(on: server, requestIDs: jobIDs)
+
+            for (jobID, lane) in zip(jobIDs, lanes) {
+                try await expectMarvisVoiceSelection(
+                    on: server,
+                    requestID: jobID,
+                    expectedVoice: lane.expectedVoice
+                )
+            }
+        }
+    }
+
     // MARK: HTTP Lane Helpers
 
     private static func createVoiceDesignProfile(
@@ -1715,6 +1946,34 @@ struct SpeakSwiftlyServerE2ETests {
         #expect(log["event"] as? String == "marvis_voice_selected")
     }
 
+    private static func assertMarvisPlaybackStartedInOrder(
+        on server: ServerProcess,
+        requestIDs: [String]
+    ) async throws {
+        let startedRequestIDs: [String] = try await e2eWaitUntil(
+            timeout: e2eTimeout,
+            pollInterval: .milliseconds(200)
+        ) {
+            let matches = server.stderrObjects().compactMap { object -> String? in
+                guard object["event"] as? String == "playback_started" else { return nil }
+                return object["request_id"] as? String
+            }
+            let filtered = matches.filter { requestIDs.contains($0) }
+            guard Set(filtered).isSuperset(of: Set(requestIDs)) else { return nil }
+            return filtered
+        }
+
+        var previousIndex = -1
+        for requestID in requestIDs {
+            guard let index = startedRequestIDs.firstIndex(of: requestID) else {
+                Issue.record("The live Marvis playback trace never reported a playback_started event for request '\(requestID)'.")
+                return
+            }
+            #expect(index > previousIndex)
+            previousIndex = index
+        }
+    }
+
     private static func waitForMCPPlaybackState(
         using client: E2EMCPClient,
         timeout: Duration,
@@ -1724,7 +1983,12 @@ struct SpeakSwiftlyServerE2ETests {
             let payload = try requireObjectPayload(
                 from: try await client.callToolJSON(name: "playback_state", arguments: [:])
             )
-            let snapshot = try decodePayload(E2EPlaybackStateSnapshot.self, from: payload)
+            let snapshot: E2EPlaybackStateSnapshot
+            if let playback = payload["playback"] as? [String: Any] {
+                snapshot = try decodePayload(E2EPlaybackStateSnapshot.self, from: playback)
+            } else {
+                snapshot = try decodePayload(E2EPlaybackStateSnapshot.self, from: payload)
+            }
             return predicate(snapshot) ? snapshot : nil
         }
     }

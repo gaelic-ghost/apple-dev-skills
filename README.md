@@ -336,7 +336,7 @@ The current HTTP surface is:
 - `GET /jobs/{job_id}`
 - `GET /jobs/{job_id}/events`
 
-`POST /speak`, `POST /profiles`, `POST /profiles/clone`, and `DELETE /profiles/{profile_name}` all return job metadata immediately. `POST /speak` mirrors the current public `SpeakSwiftly.Runtime.speak(... as: .live)` path directly, which means every speech request records the initial acknowledgement event before it starts and eventually reaches terminal completion. `POST /speak` also accepts optional `cwd`, `repo_root`, `text_profile_name`, `text_format`, `nested_source_format`, and `source_format` fields so clients can pass path-aware, stored-profile-aware, and explicit format-aware normalization context through to the runtime when speech input should not rely on automatic format detection. `POST /profiles` and `POST /profiles/clone` now require an explicit `vibe` value of `masc`, `femme`, or `androgenous` so the server stays aligned with the current `SpeakSwiftly` profile model instead of guessing. Progress, worker status changes, acknowledgements, and terminal results are exposed through `GET /jobs/{job_id}/events` as SSE, and retained job state is discoverable through `GET /jobs`.
+`POST /speak`, `POST /profiles`, `POST /profiles/clone`, and `DELETE /profiles/{profile_name}` all return job metadata immediately. `POST /speak` mirrors the current public `SpeakSwiftly.Runtime.speak(... as: .live)` path directly, which means every speech request records the initial acknowledgement event before it starts and eventually reaches terminal completion. `POST /speak` also accepts optional `cwd`, `repo_root`, `text_profile_name`, `text_format`, `nested_source_format`, and `source_format` fields so clients can pass path-aware, stored-profile-aware, and explicit format-aware normalization context through to the runtime when speech input should not rely on automatic format detection. Live playback is still a single-speaker path on one worker, so when one audible `POST /speak` request is already playing, later live requests can still be accepted and queued immediately, but their generation waits until the active playback drains before the next live request starts. `POST /profiles` and `POST /profiles/clone` now require an explicit `vibe` value of `masc`, `femme`, or `androgenous` so the server stays aligned with the current `SpeakSwiftly` profile model instead of guessing. Progress, worker status changes, acknowledgements, and terminal results are exposed through `GET /jobs/{job_id}/events` as SSE, and retained job state is discoverable through `GET /jobs`.
 
 The `/text-profiles` route family is intentionally synchronous and state-oriented rather than job-oriented. It exposes the current base, active, stored, and effective `TextForSpeech.Profile` state plus replacement editing and profile persistence paths for downstream apps or agents that need to help a user shape text normalization directly. `POST /text-profiles/load` and `POST /text-profiles/save` map directly to the public normalizer persistence calls so operators can refresh or flush stored normalization state without reaching into the runtime process manually.
 
@@ -471,11 +471,13 @@ The current automated suite covers configuration parsing, queued live speech job
 SPEAKSWIFTLYSERVER_E2E=1 swift test --filter SpeakSwiftlyServerE2ETests
 ```
 
-That serialized live suite now mirrors the main `SpeakSwiftly` sequential workflows across both HTTP and MCP:
+That serialized live suite now mirrors the main `SpeakSwiftly` live workflows across both HTTP and MCP:
 
 - voice-design profile creation, then silent playback, then audible playback
 - clone creation with a provided transcript, then silent playback, then audible playback
 - clone creation with inferred transcript loading, then silent playback, then audible playback
+- Marvis all-vibes audible playback across three stored voice profiles
+- queued Marvis audible live playback that pre-queues three jobs and verifies ordered drain behavior on one worker
 
 If you want the underlying playback trace logs too, add `SPEAKSWIFTLY_PLAYBACK_TRACE=1` to that same command.
 
