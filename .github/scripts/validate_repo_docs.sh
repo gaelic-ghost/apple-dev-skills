@@ -79,6 +79,8 @@ echo "Validating workflow document structure..."
 workflow_doc="docs/maintainers/workflow-atlas.md"
 require_contains "$workflow_doc" "## Repo Workflow Map"
 require_contains "$workflow_doc" '## `xcode-app-project-workflow`'
+require_contains "$workflow_doc" '## `swift-package-build-run-workflow`'
+require_contains "$workflow_doc" '## `swift-package-testing-workflow`'
 require_contains "$workflow_doc" '## `explore-apple-swift-docs`'
 require_contains "$workflow_doc" '## `format-swift-sources`'
 require_contains "$workflow_doc" '## `structure-swift-sources`'
@@ -120,6 +122,8 @@ require_contains "ROADMAP.md" "- [ ] Milestone 34: Guidance Preservation and AGE
 echo "Validating skill directory layout..."
 active_skill_mds=(
   "./skills/xcode-app-project-workflow/SKILL.md"
+  "./skills/swift-package-build-run-workflow/SKILL.md"
+  "./skills/swift-package-testing-workflow/SKILL.md"
   "./skills/swift-package-workflow/SKILL.md"
   "./skills/explore-apple-swift-docs/SKILL.md"
   "./skills/format-swift-sources/SKILL.md"
@@ -129,7 +133,7 @@ active_skill_mds=(
   "./skills/sync-xcode-project-guidance/SKILL.md"
   "./skills/sync-swift-package-guidance/SKILL.md"
 )
-[[ ${#active_skill_mds[@]} -eq 9 ]] || fail "Expected exactly 9 active skills, found ${#active_skill_mds[@]}."
+[[ ${#active_skill_mds[@]} -eq 11 ]] || fail "Expected exactly 11 active skills, found ${#active_skill_mds[@]}."
 
 shared_xcode_snippet="./shared/agents-snippets/apple-xcode-project-core.md"
 shared_package_snippet="./shared/agents-snippets/apple-swift-package-core.md"
@@ -171,7 +175,7 @@ for skill_md in "${active_skill_mds[@]}"; do
   fi
 
   case "$skill_dir" in
-    ./skills/bootstrap-swift-package|./skills/sync-swift-package-guidance|./skills/swift-package-workflow)
+    ./skills/bootstrap-swift-package|./skills/sync-swift-package-guidance|./skills/swift-package-workflow|./skills/swift-package-build-run-workflow|./skills/swift-package-testing-workflow)
       local_snippet="$skill_dir/references/snippets/apple-swift-package-core.md"
       shared_snippet="$shared_package_snippet"
       snippet_ref='references/snippets/apple-swift-package-core.md'

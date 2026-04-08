@@ -100,6 +100,9 @@ Applicability guidance:
 ## Specialization Boundaries
 
 - Keep `xcode-app-project-workflow` focused on execution, diagnostics, mutation safety, and fallback planning for existing Xcode-managed or Xcode-adjacent work.
+- Keep `swift-package-build-run-workflow` focused on package build/run, manifest, dependency, plugin, resource, Metal-distribution, and Release-versus-Debug work in SwiftPM repos.
+- Keep `swift-package-testing-workflow` focused on Swift Testing, XCTest holdouts, `.xctestplan`, fixtures, async test guidance, and test diagnosis in SwiftPM repos.
+- Keep `swift-package-workflow` as a compatibility-routing surface while the narrower package execution skills take over.
 - Keep `explore-apple-swift-docs` focused on Apple and Swift docs exploration across Xcode MCP docs, Dash, and official web docs.
 - When an execution workflow needs documentation context, prefer entering or recommending `explore-apple-swift-docs` first rather than rebuilding docs-source selection inside `xcode-app-project-workflow`.
 
@@ -171,6 +174,7 @@ Some alternatives for user customization/config include using their Agent's memo
 - Use `docs/maintainers/workflow-atlas.md` for repo-maintainer workflow diagrams, branch paths, workflow inputs/outputs, and Agent+Skill UX audits.
 - Use `docs/maintainers/customization-consolidation-review.md` as the source of truth for the current customization-surface decision and its approved follow-up plan.
 - Use `docs/maintainers/execution-split-and-inference-plan.md` as the source of truth for the planned execution-skill split, inference direction, guidance-preservation contract, and repo-maintenance-toolkit promotion path.
+- Use `docs/maintainers/workflow-guidance-preservation-matrix.md` as the concrete mapping from monolithic execution guidance to narrower skill or `AGENTS.md` destinations during the split.
 - Prefer logically grouped skills over splitting adjacent workflows into separate skills.
 - Within a grouped skill, define one primary workflow path and keep variants subordinate to that path.
 - Do not create a separate skill for an adjacent workflow unless it has materially different tools, inputs, outputs, and audience.

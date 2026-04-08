@@ -38,8 +38,9 @@ class SwiftPackageWorkflowTests(unittest.TestCase):
             Path(tmpdir, "Package.swift").write_text("// swift-tools-version: 6.0\n", encoding="utf-8")
             code, payload = self.run_script("--operation-type", "build", "--repo-root", tmpdir)
             self.assertEqual(code, 0)
-            self.assertEqual(payload["status"], "success")
+            self.assertEqual(payload["status"], "handoff")
             self.assertEqual(payload["path_type"], "primary")
+            self.assertEqual(payload["output"]["recommended_skill"], "swift-package-build-run-workflow")
             self.assertEqual(payload["output"]["planned_commands"], ["swift build"])
             self.assertFalse(payload["output"]["repo_shape"]["mixed_root"])
 
@@ -51,6 +52,7 @@ class SwiftPackageWorkflowTests(unittest.TestCase):
             self.assertEqual(code, 0)
             self.assertEqual(payload["status"], "handoff")
             self.assertTrue(payload["output"]["repo_shape"]["mixed_root"])
+            self.assertEqual(payload["output"]["recommended_skill"], "xcode-app-project-workflow")
             self.assertIn("xcode-app-project-workflow", payload["output"]["next_step"])
 
     def test_allows_mixed_root_with_opt_in(self) -> None:
@@ -65,7 +67,8 @@ class SwiftPackageWorkflowTests(unittest.TestCase):
                 "--mixed-root-opt-in",
             )
             self.assertEqual(code, 0)
-            self.assertEqual(payload["status"], "success")
+            self.assertEqual(payload["status"], "handoff")
+            self.assertEqual(payload["output"]["recommended_skill"], "swift-package-build-run-workflow")
             self.assertTrue(payload["output"]["repo_shape"]["mixed_root"])
 
     def test_can_infer_test_operation_from_request(self) -> None:
@@ -73,9 +76,10 @@ class SwiftPackageWorkflowTests(unittest.TestCase):
             Path(tmpdir, "Package.swift").write_text("// swift-tools-version: 6.0\n", encoding="utf-8")
             code, payload = self.run_script("--request", "run the package tests", "--repo-root", tmpdir)
             self.assertEqual(code, 0)
-            self.assertEqual(payload["status"], "success")
+            self.assertEqual(payload["status"], "handoff")
             self.assertEqual(payload["output"]["operation_type"], "test")
             self.assertEqual(payload["output"]["operation_type_source"], "inferred")
+            self.assertEqual(payload["output"]["recommended_skill"], "swift-package-testing-workflow")
             self.assertEqual(payload["output"]["planned_commands"], ["swift test"])
 
     def test_blocks_when_no_operation_or_request_is_provided(self) -> None:

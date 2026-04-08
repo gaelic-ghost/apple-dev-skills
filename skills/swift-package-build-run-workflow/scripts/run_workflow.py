@@ -5,7 +5,7 @@
 #   "PyYAML>=6.0.2,<7",
 # ]
 # ///
-"""Runtime workflow policy engine for swift-package-workflow."""
+"""Runtime workflow policy engine for swift-package-build-run-workflow."""
 
 from __future__ import annotations
 
@@ -24,7 +24,6 @@ VALID_OPERATION_TYPES = {
     "read-search",
     "manifest-dependencies",
     "build",
-    "test",
     "run",
     "plugin",
     "toolchain-management",
@@ -42,7 +41,6 @@ def infer_operation_type_from_request(request: str | None) -> str | None:
         return None
 
     checks: list[tuple[str, tuple[str, ...]]] = [
-        ("test", (" test", " tests", "testing", "xctest", "swift testing", "xctestplan", "spec")),
         ("run", (" run", "launch", "execute", "start")),
         ("plugin", ("plugin", "plugins")),
         ("toolchain-management", ("toolchain", "swift version", "xcrun", "xcodebuild", "metal toolchain", "sdk")),
@@ -54,6 +52,8 @@ def infer_operation_type_from_request(request: str | None) -> str | None:
     ]
 
     padded = f" {text} "
+    if any(needle in padded for needle in (" test", " tests", "testing", "xctest", "swift testing", "xctestplan", "spec")):
+        return "test"
     for operation_type, needles in checks:
         if any(needle in padded for needle in needles):
             return operation_type
@@ -113,8 +113,6 @@ def build_commands(operation_type: str) -> list[str]:
         ]
     if operation_type == "build":
         return ["swift build"]
-    if operation_type == "test":
-        return ["swift test"]
     if operation_type == "run":
         return ["swift run <target>"]
     if operation_type == "plugin":
@@ -127,12 +125,6 @@ def build_commands(operation_type: str) -> list[str]:
             shell_join(["swift", "package", "dump-package"]),
         ]
     return []
-
-
-def recommended_skill(operation_type: str) -> str:
-    if operation_type == "test":
-        return "swift-package-testing-workflow"
-    return "swift-package-build-run-workflow"
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -167,23 +159,34 @@ def main() -> int:
         print(json.dumps(payload, indent=2, sort_keys=True))
         return 1
 
+    if operation_type == "test":
+        payload = {
+            "status": "handoff",
+            "path_type": "fallback",
+            "output": {
+                "operation_type": operation_type,
+                "operation_type_source": "explicit" if args.operation_type else "inferred",
+                "repo_shape": discover_repo_shape(args.repo_root),
+                "planned_commands": [],
+                "next_step": "Use swift-package-testing-workflow because this request is primarily about package tests.",
+            },
+        }
+        print(json.dumps(payload, indent=2, sort_keys=True))
+        return 0
+
     repo_shape = discover_repo_shape(args.repo_root)
-    status = "handoff"
+    status = "success"
     path_type = "primary"
-    recommended = recommended_skill(operation_type)
-    next_step = f"Use {recommended} because the package execution surface is now split by build/run versus testing."
+    next_step = "Proceed with the SwiftPM-first path."
 
     if not repo_shape["exists"]:
         status = "blocked"
-        recommended = None
         next_step = "Resolve the repo root before continuing."
     elif not repo_shape["has_package"]:
         status = "blocked"
-        recommended = None
         next_step = "Use a Swift package repo with Package.swift at the selected root."
     elif repo_shape["mixed_root"] and not args.mixed_root_opt_in:
         status = "handoff"
-        recommended = "xcode-app-project-workflow"
         next_step = "Use xcode-app-project-workflow because this repo root is mixed and Xcode-managed behavior may matter."
 
     payload = {
@@ -194,7 +197,6 @@ def main() -> int:
             "operation_type_source": "explicit" if args.operation_type else "inferred",
             "repo_shape": repo_shape,
             "planned_commands": build_commands(operation_type),
-            "recommended_skill": recommended,
             "next_step": next_step,
         },
     }

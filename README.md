@@ -6,8 +6,12 @@ Canonical Apple development skills with a plugin-first packaging layout for Code
 
 - `xcode-app-project-workflow`
   - Top-level Apple and Swift execution skill for Xcode work, diagnostics, toolchains, and `.pbxproj`-aware mutation decisions.
+- `swift-package-build-run-workflow`
+  - Top-level SwiftPM-first skill for existing package repos when the work is primarily about manifest changes, dependencies, package resources, Metal distribution, builds, runs, plugins, and Debug-versus-Release validation.
+- `swift-package-testing-workflow`
+  - Top-level SwiftPM-first skill for existing package repos when the work is primarily about Swift Testing, XCTest holdouts, `.xctestplan`, fixtures, async tests, and test diagnosis.
 - `swift-package-workflow`
-  - Top-level SwiftPM-first execution skill for existing package repos, manifest work, dependency changes, builds, tests, runs, plugins, and terminal-first editor workflows.
+  - Compatibility surface for older broad package-workflow references that now route into the narrower package build/run or testing skills.
 - `explore-apple-swift-docs`
   - Top-level docs skill for Apple and Swift docs exploration across Xcode MCP docs, Dash, and official web docs, with optional Dash follow-up when needed.
 - `format-swift-sources`
@@ -30,7 +34,7 @@ Every active skill now follows the same documentation contract:
 - named `fallback` and `handoff` behavior
 - a clear customization stance, including explicit `policy-only` knobs or an explicit “no durable customization surface” statement
 
-Maintainer-facing workflow diagrams, input and output contracts, and Agent ↔ User UX maps live in [docs/maintainers/workflow-atlas.md](./docs/maintainers/workflow-atlas.md). Audit procedure and source-of-truth guidance live in [docs/maintainers/reality-audit.md](./docs/maintainers/reality-audit.md). The current customization-system decision and follow-up plan live in [docs/maintainers/customization-consolidation-review.md](./docs/maintainers/customization-consolidation-review.md). The planned execution-skill split, guidance-preservation contract, and toolkit direction live in [docs/maintainers/execution-split-and-inference-plan.md](./docs/maintainers/execution-split-and-inference-plan.md).
+Maintainer-facing workflow diagrams, input and output contracts, and Agent ↔ User UX maps live in [docs/maintainers/workflow-atlas.md](./docs/maintainers/workflow-atlas.md). Audit procedure and source-of-truth guidance live in [docs/maintainers/reality-audit.md](./docs/maintainers/reality-audit.md). The current customization-system decision and follow-up plan live in [docs/maintainers/customization-consolidation-review.md](./docs/maintainers/customization-consolidation-review.md). The planned execution-skill split, guidance-preservation contract, and toolkit direction live in [docs/maintainers/execution-split-and-inference-plan.md](./docs/maintainers/execution-split-and-inference-plan.md), with the concrete guidance mapping in [docs/maintainers/workflow-guidance-preservation-matrix.md](./docs/maintainers/workflow-guidance-preservation-matrix.md).
 
 ## Packaging and Delegation
 
@@ -167,6 +171,10 @@ Common starting points:
 
 - Xcode work:
   `npx skills add gaelic-ghost/apple-dev-skills --skill xcode-app-project-workflow`
+- Swift package build or run work:
+  `npx skills add gaelic-ghost/apple-dev-skills --skill swift-package-build-run-workflow`
+- Swift package testing work:
+  `npx skills add gaelic-ghost/apple-dev-skills --skill swift-package-testing-workflow`
 - Apple or Swift docs exploration:
   `npx skills add gaelic-ghost/apple-dev-skills --skill explore-apple-swift-docs`
 - SwiftLint and SwiftFormat integration:
@@ -254,6 +262,8 @@ Use these snippets for cross-project standards that belong in end-user `AGENTS.m
     ├── bootstrap-swift-package/
     ├── explore-apple-swift-docs/
     ├── format-swift-sources/
+    ├── swift-package-build-run-workflow/
+    ├── swift-package-testing-workflow/
     ├── swift-package-workflow/
     ├── structure-swift-sources/
     ├── sync-swift-package-guidance/

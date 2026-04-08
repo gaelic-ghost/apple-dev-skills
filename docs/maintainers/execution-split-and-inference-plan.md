@@ -8,12 +8,14 @@ Record the planned split of the current execution skills into narrower build-run
 
 ## Current Problem
 
-The current execution surfaces are still too broad:
+The package side of the split is now underway, but the overall execution surface is still broader than it should be:
 
 - `xcode-app-project-workflow`
-- `swift-package-workflow`
+- `swift-package-build-run-workflow`
+- `swift-package-testing-workflow`
+- `swift-package-workflow` as a compatibility surface
 
-Those skills now contain good guidance, but they still force the agent to do too much of the routing work manually:
+Those skills now contain good guidance, but they still force the agent to do too much of the routing work manually, especially on the Xcode side and in broad compatibility entry points:
 
 - classify build versus run versus testing intent before the runtime wrapper can help
 - decide when testing-specific guidance, package-resource guidance, Metal handoff guidance, or Debug-vs-Release guidance matters
@@ -47,6 +49,8 @@ Skills that remain separate and keep their current high-level role:
 ## Guidance Preservation Contract
 
 No guidance currently carried by `xcode-app-project-workflow` or `swift-package-workflow` should be dropped during the split.
+
+Use [workflow-guidance-preservation-matrix.md](./workflow-guidance-preservation-matrix.md) as the concrete line-by-line mapping during implementation.
 
 The split must preserve every active guidance area in one of these forms:
 

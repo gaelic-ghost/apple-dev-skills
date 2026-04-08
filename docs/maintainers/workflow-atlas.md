@@ -20,6 +20,8 @@ This document describes the maintainer-facing workflow view of the active skills
 flowchart TD
     U["User request"] --> A["Agent classifies request"]
     A --> X["xcode-app-project-workflow"]
+    A --> WPBR["swift-package-build-run-workflow"]
+    A --> WPT["swift-package-testing-workflow"]
     A --> WP["swift-package-workflow"]
     A --> D["explore-apple-swift-docs"]
     A --> ST["format-swift-sources"]
@@ -32,10 +34,17 @@ flowchart TD
     X --> XT["May recommend format-swift-sources for SwiftLint or SwiftFormat setup"]
     X --> XSRC["May recommend structure-swift-sources for source cleanup"]
     X --> XB["May recommend bootstrap-swift-package"]
-    X --> XWP["May recommend swift-package-workflow for ordinary package work"]
+    X --> XWP["May recommend swift-package-build-run-workflow or swift-package-testing-workflow for ordinary package work"]
     X --> XS["May recommend bootstrap-xcode-app-project only when the user actually means new-project creation"]
     X --> SG["May recommend sync-xcode-project-guidance for repo guidance alignment"]
+    WPBR --> WPBRD["May recommend explore-apple-swift-docs"]
+    WPBR --> WPBRT["May recommend swift-package-testing-workflow for test-focused work"]
+    WPBR --> WPBRX["May recommend xcode-app-project-workflow when Xcode-managed behavior matters"]
+    WPT --> WPTD["May recommend explore-apple-swift-docs"]
+    WPT --> WPTB["May recommend swift-package-build-run-workflow for build or manifest work"]
+    WPT --> WPTX["May recommend xcode-app-project-workflow when Xcode-managed behavior matters"]
     WP --> WPD["May recommend explore-apple-swift-docs"]
+    WP --> WPR["Routes broad package work into the narrower package skills"]
     WP --> WPX["May recommend xcode-app-project-workflow when Xcode-managed behavior matters"]
     WP --> WPS["May recommend sync-swift-package-guidance for repo guidance alignment"]
     D --> DX["May recommend xcode-app-project-workflow"]
@@ -46,7 +55,7 @@ flowchart TD
     SS --> SSF["Uses format-swift-sources before and after structure work"]
     SS --> SSX["May recommend xcode-app-project-workflow when file moves need guarded Xcode follow-through"]
     D --> DB["May recommend bootstrap-xcode-app-project"]
-    B --> BW["May recommend swift-package-workflow"]
+    B --> BW["May recommend swift-package-build-run-workflow or swift-package-testing-workflow"]
     B --> BX["May recommend xcode-app-project-workflow"]
     B --> BS["May recommend sync-swift-package-guidance after bootstrap or later repo-guidance drift"]
     B --> BR["Installs repo-maintenance toolkit into the new repo"]
@@ -54,19 +63,19 @@ flowchart TD
     AX --> AR["Installs repo-maintenance toolkit into the new repo"]
     SX --> SXW["Hands off to xcode-app-project-workflow after sync"]
     SX --> SR["Refreshes repo-maintenance toolkit while syncing guidance"]
-    SP --> SPB["Uses swift-package-workflow plus swift build and swift test by default after sync, and may recommend xcode-app-project-workflow for Xcode-managed package work"]
+    SP --> SPB["Uses the narrower package build-run or testing skills after sync, and may recommend xcode-app-project-workflow for Xcode-managed package work"]
     SP --> SPR["Refreshes repo-maintenance toolkit while syncing guidance"]
 ```
 
 ### Branch and Path Notes
 
 - The repo has no Apple router or orchestrator layer.
-- The nine active skills are parallel top-level entry points for different situations.
+- The active surface now has eleven skills, including two narrower Swift package execution skills and one compatibility-routing package surface.
 - Cross-skill recommendation is decentralized inside each active skill.
 - End-user `AGENTS.md` guidance is recommended from each skill's local snippet copy, not from a router.
 - The active skill surface now uses the intended install-facing names directly.
 - The shared repo-maintenance toolkit is now external to the active Apple skill surface and is vendored locally under `shared/repo-maintenance-toolkit/` so bootstrap and sync skills can keep installing the same managed file set without a cross-repo runtime dependency.
-- A later execution-skill split is planned so build-run and testing concerns become separate Xcode and SwiftPM execution skills, while preserving all current execution guidance through shared references, narrower skills, or synced `AGENTS.md` policy.
+- The Swift package side of the execution split is now underway, with build-run and testing split into separate skills while `swift-package-workflow` remains as a compatibility-routing surface.
 
 ## Planned Execution Split
 
@@ -75,7 +84,11 @@ flowchart TD
   - `xcode-testing-workflow`
   - `swift-package-build-run-workflow`
   - `swift-package-testing-workflow`
-- The current `xcode-app-project-workflow` and `swift-package-workflow` remain the active shipped execution surfaces until that split lands.
+- The Swift package side has started landing now:
+  - `swift-package-build-run-workflow`
+  - `swift-package-testing-workflow`
+  - `swift-package-workflow` as a compatibility surface
+- The Xcode side still remains to be split.
 - The split must preserve all current execution guidance, either directly in the narrower replacement skills, in shared references, or in synced and bootstrapped `AGENTS.md` output where the guidance is really durable repo policy.
 - The active planning source for that work is `docs/maintainers/execution-split-and-inference-plan.md`.
 
@@ -113,7 +126,7 @@ flowchart TD
 - User-visible response:
   - The user sees direct progress inside one of the nine top-level skills, or a direct recommendation to switch to another skill.
 - Interaction style:
-  - The repo-level UX is a bundle of nine parallel top-level skills, with plugin packaging layered around them as the install surface.
+  - The repo-level UX is a bundle of eleven active skills, with plugin packaging layered around them as the install surface.
 
 ## `xcode-app-project-workflow`
 
@@ -155,7 +168,7 @@ flowchart LR
 - `run_workflow.py` is the local runtime entrypoint.
 - Mutation is a guard, not a second top-level workflow.
 - Apple or Swift docs exploration now lives outside this skill in `explore-apple-swift-docs`.
-- Ordinary Swift package execution now lives outside this skill in `swift-package-workflow`.
+- Ordinary Swift package execution now lives outside this skill in `swift-package-build-run-workflow` and `swift-package-testing-workflow`, with `swift-package-workflow` kept only as a compatibility surface.
 - Official CLI execution remains the only documented fallback plan when the primary agent-side MCP path cannot complete.
 
 ### Inputs
@@ -208,22 +221,24 @@ flowchart LR
 - `success` + `fallback`: official CLI fallback completed
 - `blocked`: direct `.pbxproj` warning boundary not yet satisfied, context missing, or safe fallback unavailable
 
-## `swift-package-workflow`
+## `swift-package-build-run-workflow`
 
 ### Purpose
 
-Provide the canonical SwiftPM-first execution workflow for existing package repositories whose source of truth is `Package.swift`, especially for terminal-first and editor-first development outside Xcode.
+Provide the canonical SwiftPM-first execution workflow for existing package repositories when the work is primarily about build, run, manifest, dependency, plugin, package-resource, Metal-distribution, or Release-versus-Debug concerns.
 
 ### Workflow Diagram
 
 ```mermaid
 flowchart TD
-    I["Operation input"] --> C["Classify operation type"]
+    I["Operation input"] --> C["Classify build-run operation type"]
     C --> RW["run_workflow.py"]
-    RW --> DETECT{"Plain Package.swift repo?"}
+    RW --> TESTLIKE{"Actually test-focused?"}
+    TESTLIKE -->|Yes| HO1["Handoff to swift-package-testing-workflow"]
+    TESTLIKE -->|No| DETECT{"Plain Package.swift repo?"}
     DETECT -->|No package| BL["Blocked"]
-    DETECT -->|Mixed root| HO["Handoff to xcode-app-project-workflow unless explicitly kept SwiftPM-first"]
-    DETECT -->|Yes| CMD["Plan SwiftPM-first path"]
+    DETECT -->|Mixed root| HO2["Handoff to xcode-app-project-workflow unless explicitly kept SwiftPM-first"]
+    DETECT -->|Yes| CMD["Plan SwiftPM-first build-run path"]
     CMD --> OUT["Success / primary"]
 ```
 
@@ -231,53 +246,114 @@ flowchart TD
 
 - `run_workflow.py` is the local runtime entrypoint.
 - SwiftPM and ordinary filesystem edits are the default execution surface.
+- Test-focused requests hand off to `swift-package-testing-workflow`.
 - Mixed roots hand off by default when Xcode-managed behavior may matter.
-- Repo-guidance sync and new-package bootstrap remain outside this skill.
-
-### Inputs
-
-- Required:
-  - `operation_type`
-- Optional:
-  - `repo_root`
-  - `mixed_root_opt_in`
-- Defaults:
-  - repo-maintainer runtime entrypoint `scripts/run_workflow.py`
-  - `repo_root=.`
-  - SwiftPM-first execution for ordinary package work
-
-### Outputs
-
-- `status`
-  - `success`
-  - `handoff`
-  - `blocked`
-- `path_type`
-  - `primary`
-  - `fallback`
-- Primary output fields:
-  - operation type
-  - repo-shape result
-  - planned commands
-  - next step or handoff payload
 
 ### Agent ↔ User UX
 
 - Entry:
-  - The user asks for ordinary Swift package development, manifest work, dependency work, build, test, run, plugin, or terminal-first editor collaboration.
+  - The user asks for manifest work, dependency changes, build, run, plugin work, package resources, Metal distribution, or Release-versus-Debug validation in a Swift package repo.
 - Agent behavior:
-  - The agent classifies the operation, runs `run_workflow.py` for repo-shape checks and command planning, then uses SwiftPM-first commands or hands off when Xcode-managed behavior matters.
+  - The agent classifies the request, runs `run_workflow.py`, then stays on the SwiftPM-first build-run path or hands off cleanly when the request is really testing or Xcode-managed work.
 - User-visible response:
-  - On success: the user sees the planned or executed SwiftPM-first path.
-  - On handoff: the user sees exactly why the work belongs in `xcode-app-project-workflow`.
-  - On blocked: the user sees the exact repo-shape blocker.
+  - On success: the user sees the planned or executed build-run path.
+  - On handoff: the user sees whether the work belongs in `swift-package-testing-workflow` or `xcode-app-project-workflow`.
 - Interaction style:
-  - SwiftPM-first execution engine with lightweight repo-shape safety.
+  - SwiftPM-first build-run engine with lightweight repo-shape safety.
 
 ### Failure / Fallback / Handoff States
 
-- `success` + `primary`: SwiftPM-first path completed
-- `handoff`: the work belongs to `xcode-app-project-workflow`
+- `success` + `primary`: SwiftPM-first build-run path completed
+- `handoff`: the work belongs to `swift-package-testing-workflow` or `xcode-app-project-workflow`
+- `blocked`: repo root missing, `Package.swift` missing, or no safe SwiftPM-first path exists
+
+## `swift-package-testing-workflow`
+
+### Purpose
+
+Provide the canonical SwiftPM-first execution workflow for existing package repositories when the work is primarily about Swift Testing, XCTest holdouts, `.xctestplan`, fixtures, async test guidance, filtering, retries, or test diagnosis.
+
+### Workflow Diagram
+
+```mermaid
+flowchart TD
+    I["Operation input"] --> C["Classify testing operation type"]
+    C --> RW["run_workflow.py"]
+    RW --> BUILDRUN{"Actually build-run focused?"}
+    BUILDRUN -->|Yes| HO1["Handoff to swift-package-build-run-workflow"]
+    BUILDRUN -->|No| DETECT{"Plain Package.swift repo?"}
+    DETECT -->|No package| BL["Blocked"]
+    DETECT -->|Mixed root| HO2["Handoff to xcode-app-project-workflow unless explicitly kept SwiftPM-first"]
+    DETECT -->|Yes| CMD["Plan SwiftPM-first testing path"]
+    CMD --> OUT["Success / primary"]
+```
+
+### Branch and Path Notes
+
+- `run_workflow.py` is the local runtime entrypoint.
+- SwiftPM and ordinary filesystem edits inside package-managed scope are the default execution surface.
+- Build-run-focused requests hand off to `swift-package-build-run-workflow`.
+- Mixed roots hand off by default when Xcode-managed behavior may matter.
+
+### Agent ↔ User UX
+
+- Entry:
+  - The user asks for package tests, Swift Testing, XCTest, `.xctestplan`, flaky-test diagnosis, test fixtures, or test-only validation in a Swift package repo.
+- Agent behavior:
+  - The agent classifies the request, runs `run_workflow.py`, then stays on the package-testing path or hands off cleanly when the request is really build-run or Xcode-managed work.
+- User-visible response:
+  - On success: the user sees the planned or executed package-testing path.
+  - On handoff: the user sees whether the work belongs in `swift-package-build-run-workflow` or `xcode-app-project-workflow`.
+- Interaction style:
+  - SwiftPM-first testing engine with lightweight repo-shape safety.
+
+### Failure / Fallback / Handoff States
+
+- `success` + `primary`: package-testing path completed
+- `handoff`: the work belongs to `swift-package-build-run-workflow` or `xcode-app-project-workflow`
+- `blocked`: repo root missing, `Package.swift` missing, or no safe package-testing path exists
+
+## `swift-package-workflow`
+
+### Purpose
+
+Provide a compatibility-routing surface for older references to broad SwiftPM execution, while steering the request into `swift-package-build-run-workflow` or `swift-package-testing-workflow`.
+
+### Workflow Diagram
+
+```mermaid
+flowchart TD
+    I["Operation input"] --> C["Classify broad package operation type"]
+    C --> RW["run_workflow.py"]
+    RW --> DETECT{"Plain Package.swift repo?"}
+    DETECT -->|No package| BL["Blocked"]
+    DETECT -->|Mixed root| HO["Handoff to xcode-app-project-workflow unless explicitly kept SwiftPM-first"]
+    DETECT -->|Yes| ROUTE["Recommend narrower package skill"]
+    ROUTE --> OUT["Handoff / primary"]
+```
+
+### Branch and Path Notes
+
+- `run_workflow.py` is the local runtime entrypoint.
+- The primary job is compatibility routing, not long-term ownership of package execution guidance.
+- It preserves the mixed-root handoff to `xcode-app-project-workflow`.
+- Repo-guidance sync and new-package bootstrap remain outside this skill.
+
+### Agent ↔ User UX
+
+- Entry:
+  - The user or an older prompt still asks for `swift-package-workflow`, or the request is broad enough that package build/run versus package testing still needs to be separated.
+- Agent behavior:
+  - The agent classifies the operation, runs `run_workflow.py` for repo-shape checks and compatibility routing, then moves into the narrower package skill or hands off when Xcode-managed behavior matters.
+- User-visible response:
+  - On handoff: the user sees exactly why the work belongs in `swift-package-build-run-workflow`, `swift-package-testing-workflow`, or `xcode-app-project-workflow`.
+  - On blocked: the user sees the exact repo-shape blocker.
+- Interaction style:
+  - Compatibility router with lightweight repo-shape safety.
+
+### Failure / Fallback / Handoff States
+
+- `handoff`: the work belongs to `swift-package-build-run-workflow`, `swift-package-testing-workflow`, or `xcode-app-project-workflow`
 - `blocked`: repo root missing, `Package.swift` missing, or no safe SwiftPM-first path exists
 
 ## `explore-apple-swift-docs`
@@ -602,7 +678,7 @@ flowchart TD
 - This skill is bounded to plain Swift package creation.
 - Within the supported `Swift 5.10+` floor, it prefers current `swift package init` testing-selection flags and only relies on the older default XCTest template when `xctest` is requested and the local CLI exposes no testing-selection flags at all.
 - Existing-package guidance sync belongs to `sync-swift-package-guidance`.
-- Ordinary package execution after bootstrap belongs to `swift-package-workflow`.
+- Ordinary package execution after bootstrap belongs to `swift-package-build-run-workflow` or `swift-package-testing-workflow`.
 - Xcode-specific execution after bootstrap may belong to `xcode-app-project-workflow`.
 
 ### Agent ↔ User UX
@@ -643,7 +719,7 @@ flowchart TD
 
 - This skill is intentionally bounded to repo-guidance alignment for plain Swift packages.
 - New-package creation still belongs to `bootstrap-swift-package`.
-- Ordinary package execution now belongs to `swift-package-workflow`.
+- Ordinary package execution now belongs to `swift-package-build-run-workflow` or `swift-package-testing-workflow`, with `swift-package-workflow` preserved only for compatibility routing.
 - Xcode-managed package execution may still belong to `xcode-app-project-workflow`.
 
 ### Agent ↔ User UX
@@ -651,7 +727,7 @@ flowchart TD
 - Entry:
   - The user asks to align or add repo guidance in an existing Swift package repo.
 - Agent behavior:
-  - The agent verifies the repo shape, applies the guidance sync script, then hands ordinary package work back to `swift-package-workflow`, `swift build`, and `swift test`, or to `xcode-app-project-workflow` when Xcode-managed behavior matters.
+  - The agent verifies the repo shape, applies the guidance sync script, then hands ordinary package work back to `swift-package-build-run-workflow` or `swift-package-testing-workflow`, or to `xcode-app-project-workflow` when Xcode-managed behavior matters.
 - User-visible response:
   - On success: the user sees that repo guidance is aligned and what to use next.
   - On blocked: the user sees the exact repo-shape blocker.

@@ -674,10 +674,11 @@ Tickets:
 
 - [x] Document the planned execution split, inference direction, and guidance-preservation contract in maintainer docs.
 - [x] Start the first runtime-inference slice by teaching current execution wrappers to infer likely operation type from natural request text.
+- [x] Add `swift-package-build-run-workflow`.
+- [x] Add `swift-package-testing-workflow`.
+- [x] Convert `swift-package-workflow` into a compatibility surface for the narrower package execution skills.
 - [ ] Add `xcode-build-run-workflow`.
 - [ ] Add `xcode-testing-workflow`.
-- [ ] Add `swift-package-build-run-workflow`.
-- [ ] Add `swift-package-testing-workflow`.
 - [ ] Convert `xcode-app-project-workflow` and `swift-package-workflow` into compatibility surfaces for one release cycle after the narrower skills land.
 - [ ] Strengthen repo-root, workspace, scheme, target, and test-surface inference in the new runtime wrappers.
 - [ ] Add specialized fallback inference for `.xctestplan`, package resources, and Metal-related signals.
@@ -714,6 +715,7 @@ Scope:
 Tickets:
 
 - [x] Document the guidance-preservation contract and AGENTS expansion strategy in maintainer docs.
+- [x] Audit the current monolithic workflow guidance into a concrete preservation matrix for the split.
 - [ ] Audit all current `xcode-app-project-workflow` and `swift-package-workflow` guidance areas against the future narrower skills.
 - [ ] Promote durable testing, package-resource, Metal handoff, file-membership, and Debug-versus-Release guidance into synced and bootstrapped `AGENTS.md` where appropriate.
 - [ ] Keep transient runtime mechanics in skill-local docs and wrappers instead of pushing them into repo policy.

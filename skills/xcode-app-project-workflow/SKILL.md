@@ -22,7 +22,7 @@ Use this skill as the top-level entry point for execution work in or around Xcod
 - Recommend `format-swift-sources` when the user needs to integrate or maintain SwiftLint or SwiftFormat across CLI, Xcode, SwiftPM, Git hooks, GitHub Actions, or SwiftFormat config export rather than active Xcode execution work.
 - Recommend `structure-swift-sources` when the user needs file splitting, source-tree cleanup, DocC coverage, or TODO/FIXME ledger normalization rather than active Xcode execution work.
 - Recommend `bootstrap-swift-package` when the user needs to create a brand new Swift package rather than work inside an existing Xcode or Swift project.
-- Recommend `swift-package-workflow` when the task is ordinary SwiftPM package development, manifest work, dependency work, build, test, run, plugin, or terminal-first editor collaboration.
+- Recommend `swift-package-build-run-workflow` or `swift-package-testing-workflow` when the task is ordinary SwiftPM package development outside Xcode-managed execution.
 - Recommend `sync-xcode-project-guidance` when an existing Xcode app repo needs `AGENTS.md` or workflow-guidance alignment rather than active engineering work.
 - Mention that older references to `apple-xcode-workflow` now map to `xcode-app-project-workflow`.
 - Mention that Codex Plugin or Claude Code Plugin installs are the preferred install path going forward.
@@ -93,7 +93,7 @@ Use this skill as the top-level entry point for execution work in or around Xcod
 - Use `references/mcp-failure-handoff.md` for the canonical fallback and handoff payload.
 - Use `references/allowlist-guidance.md` when a safe official CLI fallback is blocked by local rules.
 - Recommend `explore-apple-swift-docs` directly when the task becomes Apple or Swift docs exploration work.
-- Recommend `swift-package-workflow` directly when the task becomes ordinary SwiftPM package execution or manifest work.
+- Recommend `swift-package-build-run-workflow` or `swift-package-testing-workflow` directly when the task becomes ordinary SwiftPM package execution outside Xcode-managed work.
 - Recommend `format-swift-sources` directly when the task becomes SwiftLint or SwiftFormat setup, config export, or style-tooling maintenance work.
 - Recommend `structure-swift-sources` directly when the task becomes structural source cleanup work.
 - Recommend `bootstrap-swift-package` directly when the task becomes new-package scaffolding.

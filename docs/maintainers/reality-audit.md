@@ -26,6 +26,7 @@ Root `skills/` is the canonical workflow-authoring surface.
    - `AGENTS.md`
    - `ROADMAP.md`
    - `docs/maintainers/`
+   - especially `execution-split-and-inference-plan.md` and `workflow-guidance-preservation-matrix.md` while the execution split is in progress
 
 Deprecated compatibility skills that remain on disk do not count as part of the active public skill surface unless the validator and root docs explicitly say otherwise.
 

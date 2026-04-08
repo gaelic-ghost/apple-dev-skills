@@ -6,7 +6,8 @@
 - Use `bootstrap-swift-package` when a new Swift package repo still needs to be created from scratch.
 - Use `sync-swift-package-guidance` when the repo guidance for this package drifts and needs to be refreshed or merged forward.
 - Re-run `sync-swift-package-guidance` after substantial package-workflow or plugin updates so local guidance stays aligned.
-- Use `swift-package-workflow` for ordinary package development, manifest edits, dependency changes, builds, tests, runs, and plugin work when `Package.swift` is the source of truth.
+- Use `swift-package-build-run-workflow` for manifest, dependency, plugin, resource, Metal-distribution, build, and run work when `Package.swift` is the source of truth.
+- Use `swift-package-testing-workflow` for Swift Testing, XCTest holdouts, `.xctestplan`, fixtures, and package test diagnosis.
 - Use `scripts/repo-maintenance/validate-all.sh` for local maintainer validation, `scripts/repo-maintenance/sync-shared.sh` for repo-local sync steps, and `scripts/repo-maintenance/release.sh` for releases.
 - Read relevant SwiftPM, Swift, and Apple documentation before proposing package-structure, dependency, manifest, concurrency, or architecture changes.
 - Prefer Dash or local Swift docs first, then official Swift or Apple docs when local docs are insufficient.
