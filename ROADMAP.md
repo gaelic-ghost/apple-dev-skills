@@ -532,7 +532,7 @@ Tickets:
 - [x] Audit the repo against its own documented symlink expectations for `.agents/skills`, `.claude/skills`, and `plugins/apple-dev-skills/skills`.
 - [x] Audit the repo against its own documented local plugin install expectations for `plugins/apple-dev-skills/` and repo-local marketplace wiring.
 - [ ] Verify whether Codex can discover the packaged plugin from the documented marketplace entry after a restart, not just whether the files exist on disk.
-- [ ] Verify whether the `install-plugin-to-socket` workflow can reliably wire sibling plugins into this repo's local install surface without hand edits.
+- [ ] Verify whether the personal-scope `install-plugin-to-socket` workflow can keep sibling maintainer plugins available for work on this repo without touching this repo's tracked marketplace.
 - [ ] Document any mismatch between “files exist in the right place” and “Codex actually discovers the plugin” so install guidance reflects operational reality instead of filesystem assumptions.
 - [x] Add a maintainer smoke-test flow for local plugin discovery and install-surface verification.
 
@@ -548,10 +548,10 @@ Scope:
 
 Tickets:
 
-- Confirm the local maintainer install of `agent-plugin-skills` stays current for work on this repository without turning this repo's tracked marketplace into a second published plugin catalog.
+- Confirm the personal-scope maintainer install of `agent-plugin-skills` stays current for work on this repository without turning this repo's tracked marketplace into a second published plugin catalog.
 - Use `maintain-plugin-repo` as the repo-wide audit and coordination entrypoint, with `validate-plugin-install-surfaces`, `maintain-plugin-docs`, and `install-plugin-to-socket` as routed specialist owners where relevant.
 - Align repo docs, packaging surfaces, marketplaces, ignores, and maintainer guidance with the current shared standards without flattening repo-specific policy.
-- Remove tracked vendored maintainer-plugin copies from this repo once the adjacent standards source and local maintainer install path are sufficient.
+- Remove tracked vendored maintainer-plugin copies from this repo and keep the adjacent standards source plus personal-scope maintainer install path as the maintainer-only setup.
 
 Exit criteria:
 

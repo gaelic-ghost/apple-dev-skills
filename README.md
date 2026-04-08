@@ -109,7 +109,7 @@ Repo-local Codex packaging and personal Codex installs are different surfaces an
 
 The repo also tracks a repo-root Claude marketplace catalog at `.claude-plugin/marketplace.json` for Git-backed sharing, while direct local Claude development should still use `claude --plugin-dir`.
 
-Repo-wide standards audit and coordination for this repository now belongs to the maintainer workflow in `maintain-plugin-repo`. Local Codex install lifecycle work such as install, update, uninstall, verify, repair, enable, disable, and promote remains the bounded responsibility of `install-plugin-to-socket`, not of the bootstrap or sync skills in this repository.
+Repo-wide standards audit and coordination for this repository belongs to the maintainer workflow in `maintain-plugin-repo`. Local Codex install lifecycle work such as install, update, uninstall, verify, repair, enable, disable, and promote remains the bounded responsibility of `install-plugin-to-socket`, not of the bootstrap or sync skills in this repository.
 
 After changing a repo-local marketplace entry, fully restart Codex, inspect `~/.codex/log/codex-tui.log` if the plugin does not appear, and remember that `/plugins` ordering may not be intuitive.
 
@@ -169,7 +169,7 @@ Repo-scoped marketplace shape:
 
 Keep `source.path` relative to the marketplace root, restart Codex after marketplace changes, and verify the plugin appears in `/plugins`.
 
-If Gale is using local maintainer helpers from the adjacent `agent-plugin-skills` repository, treat `maintain-plugin-repo` as the repo-wide audit and coordination entrypoint and `install-plugin-to-socket` as the bounded local install-lifecycle helper. Those maintainer workflows are optional machine-local shortcuts, not part of this repository's portable install contract.
+If Gale is using maintainer helpers from the adjacent `agent-plugin-skills` repository, install them through the personal Codex marketplace rather than this repo's tracked marketplace. Treat `maintain-plugin-repo` as the repo-wide audit and coordination entrypoint and `install-plugin-to-socket` as the bounded local install-lifecycle helper. Those maintainer workflows are machine-local shortcuts, not part of this repository's portable install contract.
 
 ### Claude Marketplace Development
 
