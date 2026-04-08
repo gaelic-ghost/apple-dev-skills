@@ -7,7 +7,7 @@ description: Sync repo guidance for an existing native Apple app repository mana
 
 ## Purpose
 
-Bring an existing Xcode app repository up to the expected guidance baseline without overloading the main Xcode execution skill. This skill owns repo-guidance alignment for existing Apple app repos, including deterministic `AGENTS.md` creation or bounded section append behavior, and refreshes the managed repo-maintenance toolkit alongside that guidance. `scripts/run_workflow.py` is the runtime entrypoint, and `scripts/sync_xcode_project_guidance.py` applies the current sync behavior.
+Bring an existing Xcode app repository up to the expected guidance baseline without overloading the main Xcode execution skill. This skill owns repo-guidance alignment for existing Apple app repos, including deterministic `AGENTS.md` creation or bounded section append behavior, and refreshes the managed `xcode-app` repo-maintenance toolkit profile alongside that guidance. `scripts/run_workflow.py` is the runtime entrypoint, and `scripts/sync_xcode_project_guidance.py` applies the current sync behavior.
 
 ## When To Use
 

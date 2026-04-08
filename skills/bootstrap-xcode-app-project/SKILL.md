@@ -7,7 +7,7 @@ description: Bootstrap a new native Apple app project for macOS, iOS, or iPadOS 
 
 ## Purpose
 
-Create a new native Apple app repository from nothing to a usable baseline on disk. The first implementation prioritizes a deterministic `XcodeGen` path for SwiftUI app projects and a guarded planning path for the standard Xcode-created-project flow. `scripts/run_workflow.py` is the runtime entrypoint, and `scripts/bootstrap_xcode_app_project.py` is the current implementation core for XcodeGen-backed scaffold creation plus repo-maintenance toolkit installation.
+Create a new native Apple app repository from nothing to a usable baseline on disk. The first implementation prioritizes a deterministic `XcodeGen` path for SwiftUI app projects and a guarded planning path for the standard Xcode-created-project flow. `scripts/run_workflow.py` is the runtime entrypoint, and `scripts/bootstrap_xcode_app_project.py` is the current implementation core for XcodeGen-backed scaffold creation plus `xcode-app` repo-maintenance toolkit installation.
 
 ## When To Use
 

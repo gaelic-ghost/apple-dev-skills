@@ -192,5 +192,10 @@ exit 1
             self.assertTrue((target / "DemoApp.xcodeproj").exists())
             self.assertTrue((target / "scripts" / "repo-maintenance" / "validate-all.sh").exists())
             self.assertTrue((target / "scripts" / "repo-maintenance" / "release.sh").exists())
+            self.assertTrue((target / "scripts" / "repo-maintenance" / "config" / "profile.env").exists())
+            self.assertIn(
+                'REPO_MAINTENANCE_PROFILE="xcode-app"',
+                (target / "scripts" / "repo-maintenance" / "config" / "profile.env").read_text(encoding="utf-8"),
+            )
             self.assertTrue((target / ".github" / "workflows" / "validate-repo-maintenance.yml").exists())
             self.assertEqual(payload["validation_result"], "passed (xcodebuild -list)")

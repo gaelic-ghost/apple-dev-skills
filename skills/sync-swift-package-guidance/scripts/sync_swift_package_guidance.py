@@ -175,6 +175,8 @@ def main() -> int:
             str(repo_root),
             "--operation",
             "refresh",
+            "--profile",
+            "swift-package",
         ],
         capture_output=True,
         text=True,
@@ -195,7 +197,7 @@ def main() -> int:
         }
         print(json.dumps(payload, indent=2, sort_keys=True))
         return 1
-    actions.append("refreshed the repo-maintenance toolkit")
+    actions.append("refreshed the swift-package repo-maintenance toolkit profile")
 
     payload = {
         "status": "success",

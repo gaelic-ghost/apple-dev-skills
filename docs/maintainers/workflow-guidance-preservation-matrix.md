@@ -20,6 +20,7 @@ Track where guidance currently carried by the monolithic execution skills moves 
 | Debug versus Release validation and tagged-release expectations | `references/package-resources-testing-and-builds.md` | `swift-package-build-run-workflow` and `swift-package-testing-workflow` | yes | Release expectations are durable enough to belong in package `AGENTS.md` templates. |
 | Mixed-root detection and Xcode handoff | `references/xcode-handoff-conditions.md` | both narrower package skills | no | This remains an execution-time routing concern. |
 | Plugin update, downstream-guidance sync, and local install refresh | `swift-package-workflow/SKILL.md` | both narrower package skills | yes | Repo-maintenance recommendations should also be reflected in synced maintainer guidance where appropriate. |
+| Repo-maintenance toolkit profile identity | bootstrap and sync installer calls plus vendored toolkit snapshot | shared `repo-maintenance-toolkit` installer contract and synced package `AGENTS.md` output | yes | Package repos should install and validate the `swift-package` profile explicitly rather than relying on an unnamed toolkit snapshot. |
 
 ## Xcode Guidance
 
@@ -34,10 +35,11 @@ Track where guidance currently carried by the monolithic execution skills moves 
 | `.pbxproj` direct-edit warning boundary | `references/mutation-risk-policy.md` | `xcode-build-run-workflow` | yes | The runtime warning behavior stays in the skill; the baseline repo rule belongs in `AGENTS.md`. |
 | MCP-first execution and official CLI fallback shape | `references/workflow-policy.md` and `references/cli-fallback-matrix.md` | both narrower Xcode skills | no | This is execution behavior, not durable repo policy. |
 | Plugin update, downstream-guidance sync, and local install refresh | `xcode-app-project-workflow/SKILL.md` | both narrower Xcode skills | yes | Maintainer-facing reminders can also live in synced guidance. |
+| Repo-maintenance toolkit profile identity | bootstrap and sync installer calls plus vendored toolkit snapshot | shared `repo-maintenance-toolkit` installer contract and synced Xcode `AGENTS.md` output | yes | Xcode repos should install and validate the `xcode-app` profile explicitly rather than relying on an unnamed toolkit snapshot. |
 
 ## Split Readiness Checklist
 
 - [x] The matrix exists in-repo before the first real execution split lands.
-- [ ] Every row above is mapped to a concrete destination when each narrower skill is added.
-- [ ] Bootstrap and sync `AGENTS.md` assets absorb the durable rows marked for promotion.
+- [x] Every row above is mapped to a concrete destination when each narrower skill is added.
+- [x] Bootstrap and sync `AGENTS.md` assets absorb the durable rows marked for promotion.
 - [ ] The old monolithic skills stop being primary guidance owners once all rows have a maintained destination.

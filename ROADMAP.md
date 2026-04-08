@@ -699,14 +699,15 @@ Scope:
 Tickets:
 
 - [x] Document the planned toolkit direction and profile model in maintainer docs.
-- [ ] Define the profile contract for `generic`, `swift-package`, and `xcode-app`.
+- [x] Define the profile contract for `generic`, `swift-package`, and `xcode-app`.
 - [ ] Add the Swift/Xcode-aware toolkit profiles in `productivity-skills`.
-- [ ] Update Apple bootstrap and guidance-sync skills to consume the shared toolkit contract.
+- [x] Update Apple bootstrap and guidance-sync skills to consume the shared toolkit contract.
 - [ ] Reduce local vendored-toolkit duplication after the shared contract is proven and stable.
 
 Exit criteria:
 
 - [ ] The canonical Swift/Xcode-aware toolkit contract lives in `productivity-skills`, and Apple workflow skills consume it through a stable shared profile surface.
+- [x] Continued 2026-04-08 in this repo by making the vendored toolkit installer profile-aware, emitting `scripts/repo-maintenance/config/profile.env`, and teaching Apple bootstrap and guidance-sync skills to install the `swift-package` or `xcode-app` profile explicitly.
 
 ## Milestone 34: Guidance Preservation and AGENTS Expansion
 

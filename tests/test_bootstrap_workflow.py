@@ -424,6 +424,11 @@ exec "{real_swift}" "$@"
             package_dir = Path(payload["resolved_path"])
             self.assertTrue((package_dir / "scripts" / "repo-maintenance" / "validate-all.sh").is_file())
             self.assertTrue((package_dir / "scripts" / "repo-maintenance" / "release.sh").is_file())
+            self.assertTrue((package_dir / "scripts" / "repo-maintenance" / "config" / "profile.env").is_file())
+            self.assertIn(
+                'REPO_MAINTENANCE_PROFILE="swift-package"',
+                (package_dir / "scripts" / "repo-maintenance" / "config" / "profile.env").read_text(encoding="utf-8"),
+            )
             self.assertTrue((package_dir / ".github" / "workflows" / "validate-repo-maintenance.yml").is_file())
 
     @unittest.skipUnless(shutil.which("swift"), "swift is required for executable bootstrap coverage")

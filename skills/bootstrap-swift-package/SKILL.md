@@ -7,7 +7,7 @@ description: Bootstrap new Swift Package Manager repositories with consistent de
 
 ## Purpose
 
-Create a new Swift package repository with one top-level entry point, a simplicity-first Swift baseline, and a local-first maintainer toolkit. `scripts/run_workflow.py` is the runtime wrapper, and `scripts/bootstrap_swift_package.sh` is the deterministic implementation core for scaffold creation, testing-mode selection, validation, and repo-maintenance toolkit installation.
+Create a new Swift package repository with one top-level entry point, a simplicity-first Swift baseline, and a local-first maintainer toolkit. `scripts/run_workflow.py` is the runtime wrapper, and `scripts/bootstrap_swift_package.sh` is the deterministic implementation core for scaffold creation, testing-mode selection, validation, and `swift-package` repo-maintenance toolkit installation.
 
 ## When To Use
 

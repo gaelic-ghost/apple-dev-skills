@@ -100,6 +100,13 @@ Planned profile shape:
 
 The Apple repo should then consume that toolkit contract rather than continuing to own so much mirrored toolkit logic locally.
 
+Current Apple-side integration status:
+
+- the vendored installer in this repo is now profile-aware
+- Apple bootstrap and guidance-sync skills explicitly install the `swift-package` or `xcode-app` profile
+- installed repos now get `scripts/repo-maintenance/config/profile.env` as a concrete profile marker
+- the remaining work is upstreaming the same profile contract into `productivity-skills` and then thinning the Apple-local mirror further
+
 ## Implementation Plan
 
 ### Phase 1: Inference-first runtime improvements

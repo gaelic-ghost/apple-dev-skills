@@ -69,6 +69,11 @@ class XcodeGuidanceSyncWorkflowTests(unittest.TestCase):
             self.assertIn("sync-xcode-project-guidance", agents_text)
             self.assertIn("Never edit `.pbxproj` files directly.", agents_text)
             self.assertTrue(Path(tmpdir, "scripts/repo-maintenance/validate-all.sh").is_file())
+            self.assertTrue(Path(tmpdir, "scripts/repo-maintenance/config/profile.env").is_file())
+            self.assertIn(
+                'REPO_MAINTENANCE_PROFILE="xcode-app"',
+                Path(tmpdir, "scripts/repo-maintenance/config/profile.env").read_text(encoding="utf-8"),
+            )
             self.assertTrue(Path(tmpdir, ".github/workflows/validate-repo-maintenance.yml").is_file())
 
     def test_sync_appends_section_to_existing_agents(self) -> None:
@@ -83,6 +88,10 @@ class XcodeGuidanceSyncWorkflowTests(unittest.TestCase):
             self.assertIn("## Existing Section", agents_text)
             self.assertIn("## Apple / Xcode Project Workflow", agents_text)
             self.assertTrue(Path(tmpdir, "scripts/repo-maintenance/release.sh").is_file())
+            self.assertIn(
+                'REPO_MAINTENANCE_PROFILE="xcode-app"',
+                Path(tmpdir, "scripts/repo-maintenance/config/profile.env").read_text(encoding="utf-8"),
+            )
 
     def test_write_mode_can_disable_append_behavior(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:

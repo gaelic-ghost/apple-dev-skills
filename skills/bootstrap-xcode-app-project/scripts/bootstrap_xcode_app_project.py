@@ -195,6 +195,8 @@ def main() -> int:
             str(target_dir),
             "--operation",
             "install",
+            "--profile",
+            "xcode-app",
         ],
         capture_output=True,
         text=True,

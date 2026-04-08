@@ -448,7 +448,7 @@ mkdir -p "$target_dir"
   fi
 
   if [[ -x "$repo_maintenance_installer" ]]; then
-    "$repo_maintenance_installer" --repo-root "$target_dir" --operation install >/dev/null
+    "$repo_maintenance_installer" --repo-root "$target_dir" --operation install --profile swift-package >/dev/null
   else
     failed "Validation failed: repo-maintenance toolkit installer missing at $repo_maintenance_installer."
   fi

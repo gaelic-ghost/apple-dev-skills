@@ -7,7 +7,7 @@ description: Sync repo guidance for an existing Swift Package Manager repository
 
 ## Purpose
 
-Bring an existing Swift package repository up to the expected guidance baseline without stretching the package bootstrap skill into an ongoing repo-guidance surface. This skill owns deterministic `AGENTS.md` creation or bounded section append behavior for existing SwiftPM repos and refreshes the managed repo-maintenance toolkit alongside that guidance. `scripts/run_workflow.py` is the runtime entrypoint, and `scripts/sync_swift_package_guidance.py` applies the current sync behavior.
+Bring an existing Swift package repository up to the expected guidance baseline without stretching the package bootstrap skill into an ongoing repo-guidance surface. This skill owns deterministic `AGENTS.md` creation or bounded section append behavior for existing SwiftPM repos and refreshes the managed `swift-package` repo-maintenance toolkit profile alongside that guidance. `scripts/run_workflow.py` is the runtime entrypoint, and `scripts/sync_swift_package_guidance.py` applies the current sync behavior.
 
 ## When To Use
 
