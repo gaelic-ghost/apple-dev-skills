@@ -122,7 +122,7 @@ require_contains "ROADMAP.md" "- [x] Milestone 27: Customization Surface Simplif
 require_contains "ROADMAP.md" "## Milestone 27: Customization Surface Simplification Implementation"
 require_contains "ROADMAP.md" "- [ ] Milestone 32: Execution Skill Split and Inference Refactor"
 require_contains "ROADMAP.md" "- [x] Milestone 33: Swift/Xcode Repo-Maintenance Toolkit Profiles"
-require_contains "ROADMAP.md" "- [ ] Milestone 34: Guidance Preservation and AGENTS Expansion"
+require_contains "ROADMAP.md" "- [x] Milestone 34: Guidance Preservation and AGENTS Expansion"
 
 echo "Validating skill directory layout..."
 active_skill_mds=(
@@ -221,6 +221,40 @@ do
   cmp -s "$skill_dir/scripts/install_repo_maintenance_toolkit.py" "$toolkit_installer_source" || fail "Repo-maintenance toolkit installer drift detected in $skill_dir"
   diff -qr "$toolkit_source_dir" "$skill_dir/assets/repo-maintenance" >/dev/null || fail "Repo-maintenance toolkit asset drift detected in $skill_dir/assets/repo-maintenance"
   cmp -s "$toolkit_workflow_source" "$skill_dir/assets/github/repo-maintenance-workflows/validate-repo-maintenance.yml" || fail "Repo-maintenance workflow asset drift detected in $skill_dir"
+done
+
+echo "Validating preserved guidance in AGENTS assets..."
+package_agents_assets=(
+  "./skills/bootstrap-swift-package/assets/AGENTS.md"
+  "./skills/sync-swift-package-guidance/assets/AGENTS.md"
+)
+for agents_asset in "${package_agents_assets[@]}"; do
+  require_contains "$agents_asset" 'Use `swift-package-build-run-workflow`'
+  require_contains "$agents_asset" 'Use `swift-package-testing-workflow`'
+  require_contains "$agents_asset" 'scripts/repo-maintenance/config/profile.env'
+  require_contains "$agents_asset" 'Resource.process(...)'
+  require_contains "$agents_asset" 'Resource.copy(...)'
+  require_contains "$agents_asset" 'Resource.embedInCode(...)'
+  require_contains "$agents_asset" 'Bundle.module'
+  require_contains "$agents_asset" '.metallib'
+  require_contains "$agents_asset" '.xctestplan'
+  require_contains "$agents_asset" 'Debug and Release'
+  require_contains "$agents_asset" 'sync-swift-package-guidance'
+done
+
+xcode_agents_assets=(
+  "./skills/bootstrap-xcode-app-project/assets/AGENTS.md"
+  "./skills/sync-xcode-project-guidance/assets/AGENTS.md"
+)
+for agents_asset in "${xcode_agents_assets[@]}"; do
+  require_contains "$agents_asset" 'Use `xcode-build-run-workflow`'
+  require_contains "$agents_asset" 'Use `xcode-testing-workflow`'
+  require_contains "$agents_asset" 'scripts/repo-maintenance/config/profile.env'
+  require_contains "$agents_asset" '.xctestplan'
+  require_contains "$agents_asset" 'project membership, target membership, build phases, and resource inclusion'
+  require_contains "$agents_asset" 'Debug and Release'
+  require_contains "$agents_asset" 'Never edit `.pbxproj` files directly.'
+  require_contains "$agents_asset" 'sync-xcode-project-guidance'
 done
 
 echo "Validating skill-creator contract..."

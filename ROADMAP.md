@@ -45,7 +45,7 @@
 - [x] Milestone 31: Swift Package Execution Skill Split
 - [ ] Milestone 32: Execution Skill Split and Inference Refactor
 - [x] Milestone 33: Swift/Xcode Repo-Maintenance Toolkit Profiles
-- [ ] Milestone 34: Guidance Preservation and AGENTS Expansion
+- [x] Milestone 34: Guidance Preservation and AGENTS Expansion
 
 ## Milestone 1: Initial Apple Skill Bundle
 
@@ -720,11 +720,12 @@ Tickets:
 
 - [x] Document the guidance-preservation contract and AGENTS expansion strategy in maintainer docs.
 - [x] Audit the current monolithic workflow guidance into a concrete preservation matrix for the split.
-- [ ] Audit all current `xcode-app-project-workflow` and `swift-package-workflow` guidance areas against the future narrower skills.
-- [ ] Promote durable testing, package-resource, Metal handoff, file-membership, and Debug-versus-Release guidance into synced and bootstrapped `AGENTS.md` where appropriate.
-- [ ] Keep transient runtime mechanics in skill-local docs and wrappers instead of pushing them into repo policy.
-- [ ] Add validation coverage that checks the preserved-guidance contract after the split lands.
+- [x] Audit all current `xcode-app-project-workflow` and `swift-package-workflow` guidance areas against the future narrower skills.
+- [x] Promote durable testing, package-resource, Metal handoff, file-membership, and Debug-versus-Release guidance into synced and bootstrapped `AGENTS.md` where appropriate.
+- [x] Keep transient runtime mechanics in skill-local docs and wrappers instead of pushing them into repo policy.
+- [x] Add validation coverage that checks the preserved-guidance contract after the split lands.
 
 Exit criteria:
 
-- [ ] Every important guidance area from the current monolithic workflow skills still exists in one explicit maintained location after the split.
+- [x] Every important guidance area from the current monolithic workflow skills still exists in one explicit maintained location after the split.
+- [x] Completed 2026-04-08 by auditing the compatibility workflow guidance against the narrower skills and synced `AGENTS.md` assets, strengthening the bootstrap Xcode `AGENTS.md` template, and adding validator plus workflow-test coverage for the preserved-guidance contract.

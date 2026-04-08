@@ -475,6 +475,13 @@ exec "{real_swift}" "$@"
             self.assertNotIn('.iOS("26.0")', manifest_text)
             self.assertTrue((package_dir / ".git").is_dir())
             self.assertTrue((package_dir / "AGENTS.md").is_file())
+            agents_text = (package_dir / "AGENTS.md").read_text(encoding="utf-8")
+            self.assertIn("swift-package-build-run-workflow", agents_text)
+            self.assertIn("swift-package-testing-workflow", agents_text)
+            self.assertIn("Bundle.module", agents_text)
+            self.assertIn(".xctestplan", agents_text)
+            self.assertIn(".metallib", agents_text)
+            self.assertIn("Debug and Release", agents_text)
             self.assertTrue((package_dir / "scripts" / "repo-maintenance" / "sync-shared.sh").is_file())
 
 
