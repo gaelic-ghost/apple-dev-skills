@@ -89,7 +89,7 @@ Keep execution-only mechanics out of `AGENTS.md` when they are too tied to tool 
 
 ## Repo-Maintenance Toolkit Direction
 
-The repo should move toward a first-class `repo-maintenance-toolkit` skill in `productivity-skills` with Swift- and Xcode-aware profiles instead of treating the vendored toolkit snapshot here as the long-term architecture.
+The repo should treat the first-class `repo-maintenance-toolkit` skill in `productivity-skills` as the canonical shared contract, with Swift- and Xcode-aware profiles, instead of treating the mirrored toolkit snapshot here as the long-term architecture.
 
 Planned profile shape:
 
@@ -105,7 +105,8 @@ Current Apple-side integration status:
 - the vendored installer in this repo is now profile-aware
 - Apple bootstrap and guidance-sync skills explicitly install the `swift-package` or `xcode-app` profile
 - installed repos now get `scripts/repo-maintenance/config/profile.env` as a concrete profile marker
-- the remaining work is upstreaming the same profile contract into `productivity-skills` and then thinning the Apple-local mirror further
+- the same profile contract now exists upstream in `productivity-skills`
+- the remaining local work is keeping the Apple mirror intentionally thin and consumer-shaped instead of treating it as a second contract owner
 
 ## Implementation Plan
 
@@ -136,8 +137,8 @@ Current status:
 
 ### Phase 4: Toolkit promotion
 
-- Add the Swift and Xcode-oriented `repo-maintenance-toolkit` profile support in `productivity-skills`.
-- Replace the current vendored-toolkit-heavy Apple integration with a thinner consumer contract.
+- Keep the Swift and Xcode-oriented `repo-maintenance-toolkit` profile support canonical in `productivity-skills`.
+- Keep the Apple-local mirror as a thin consumer contract for standalone bootstrap and sync installs rather than as a second ownership surface.
 
 ## First Implementation Slice
 

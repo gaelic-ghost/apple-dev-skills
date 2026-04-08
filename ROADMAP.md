@@ -44,7 +44,7 @@
 - [x] Milestone 29: Shared Toolkit Extraction to `productivity-skills`
 - [x] Milestone 31: Swift Package Execution Skill Split
 - [ ] Milestone 32: Execution Skill Split and Inference Refactor
-- [ ] Milestone 33: Swift/Xcode Repo-Maintenance Toolkit Profiles
+- [x] Milestone 33: Swift/Xcode Repo-Maintenance Toolkit Profiles
 - [ ] Milestone 34: Guidance Preservation and AGENTS Expansion
 
 ## Milestone 1: Initial Apple Skill Bundle
@@ -700,14 +700,15 @@ Tickets:
 
 - [x] Document the planned toolkit direction and profile model in maintainer docs.
 - [x] Define the profile contract for `generic`, `swift-package`, and `xcode-app`.
-- [ ] Add the Swift/Xcode-aware toolkit profiles in `productivity-skills`.
+- [x] Add the Swift/Xcode-aware toolkit profiles in `productivity-skills`.
 - [x] Update Apple bootstrap and guidance-sync skills to consume the shared toolkit contract.
-- [ ] Reduce local vendored-toolkit duplication after the shared contract is proven and stable.
+- [x] Reduce local vendored-toolkit duplication after the shared contract is proven and stable.
 
 Exit criteria:
 
-- [ ] The canonical Swift/Xcode-aware toolkit contract lives in `productivity-skills`, and Apple workflow skills consume it through a stable shared profile surface.
+- [x] The canonical Swift/Xcode-aware toolkit contract lives in `productivity-skills`, and Apple workflow skills consume it through a stable shared profile surface.
 - [x] Continued 2026-04-08 in this repo by making the vendored toolkit installer profile-aware, emitting `scripts/repo-maintenance/config/profile.env`, and teaching Apple bootstrap and guidance-sync skills to install the `swift-package` or `xcode-app` profile explicitly.
+- [x] Completed 2026-04-08 by upstreaming the profile contract into `productivity-skills` and re-scoping the Apple-local mirror, docs, and validation language around a thin standalone consumer snapshot instead of a second toolkit ownership surface.
 
 ## Milestone 34: Guidance Preservation and AGENTS Expansion
 

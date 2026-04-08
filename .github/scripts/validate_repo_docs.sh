@@ -61,6 +61,7 @@ require_contains "README.md" 'docs/maintainers/execution-split-and-inference-pla
 require_contains "README.md" '.agents/skills -> ../skills'
 require_contains "README.md" '.claude/skills -> ../skills'
 require_contains "README.md" 'plugins/apple-dev-skills/skills -> ../../skills'
+require_contains "README.md" 'The canonical shared repo-maintenance toolkit now lives in `../productivity-skills`.'
 
 echo "Validating AGENTS maintainer pointers..."
 require_contains "AGENTS.md" 'docs/maintainers/reality-audit.md'
@@ -97,6 +98,7 @@ audit_doc="docs/maintainers/reality-audit.md"
 require_contains "$audit_doc" "## Source-of-Truth Order"
 require_contains "$audit_doc" "## Audit Procedure"
 require_contains "$audit_doc" "## Reporting Shape"
+require_contains "$audit_doc" "../productivity-skills/skills/repo-maintenance-toolkit/"
 
 echo "Validating customization consolidation review..."
 customization_review_doc="docs/maintainers/customization-consolidation-review.md"
@@ -114,11 +116,12 @@ require_contains "$execution_split_doc" "## Guidance Preservation Contract"
 require_contains "$execution_split_doc" "## AGENTS Expansion Strategy"
 require_contains "$execution_split_doc" "## Repo-Maintenance Toolkit Direction"
 require_contains "$execution_split_doc" "## Implementation Plan"
+require_contains "$execution_split_doc" 'the same profile contract now exists upstream in `productivity-skills`'
 require_contains "ROADMAP.md" "- [x] Milestone 20: Customization Consolidation Review"
 require_contains "ROADMAP.md" "- [x] Milestone 27: Customization Surface Simplification Implementation"
 require_contains "ROADMAP.md" "## Milestone 27: Customization Surface Simplification Implementation"
 require_contains "ROADMAP.md" "- [ ] Milestone 32: Execution Skill Split and Inference Refactor"
-require_contains "ROADMAP.md" "- [ ] Milestone 33: Swift/Xcode Repo-Maintenance Toolkit Profiles"
+require_contains "ROADMAP.md" "- [x] Milestone 33: Swift/Xcode Repo-Maintenance Toolkit Profiles"
 require_contains "ROADMAP.md" "- [ ] Milestone 34: Guidance Preservation and AGENTS Expansion"
 
 echo "Validating skill directory layout..."

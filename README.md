@@ -211,7 +211,7 @@ This repo previously experimented with a router layer and later removed it.
 | `apple-dash-docsets` | removed in `v4.0.0`; use `explore-apple-swift-docs` |
 | `apple-swift-package-bootstrap` | removed in `v4.0.0`; use `bootstrap-swift-package` |
 
-The shared repo-maintenance toolkit now lives in `../productivity-skills`. This repository keeps a vendored toolkit snapshot under `shared/repo-maintenance-toolkit/` so the Apple bootstrap and guidance-sync skills can still install or refresh the same managed file set without depending on a second repo at runtime. That vendored installer is now profile-aware and writes `scripts/repo-maintenance/config/profile.env` so downstream repos can tell whether they are on the `swift-package` or `xcode-app` profile.
+The canonical shared repo-maintenance toolkit now lives in `../productivity-skills`. This repository keeps a mirrored consumer snapshot under `shared/repo-maintenance-toolkit/` only so the Apple bootstrap and guidance-sync skills can still install or refresh the same managed file set without depending on a second repo at runtime. That local mirror is intentionally not the contract owner; toolkit feature work should land in `productivity-skills` first and then be mirrored here only as needed for standalone Apple workflow installs. The mirrored installer is profile-aware and writes `scripts/repo-maintenance/config/profile.env` so downstream repos can tell whether they are on the `swift-package` or `xcode-app` profile.
 
 ## AGENTS Guidance
 

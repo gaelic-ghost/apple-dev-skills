@@ -175,7 +175,7 @@ Some alternatives for user customization/config include using their Agent's memo
 - Use `docs/maintainers/reality-audit.md` as the maintainer operating guide for source-of-truth order, audit procedure, durable review criteria, and reusable repo-maintenance conventions.
 - Use `docs/maintainers/workflow-atlas.md` for repo-maintainer workflow diagrams, branch paths, workflow inputs/outputs, and Agent+Skill UX audits.
 - Use `docs/maintainers/customization-consolidation-review.md` as the source of truth for the current customization-surface decision and its approved follow-up plan.
-- Use `docs/maintainers/execution-split-and-inference-plan.md` as the source of truth for the planned execution-skill split, inference direction, guidance-preservation contract, and repo-maintenance-toolkit promotion path.
+- Use `docs/maintainers/execution-split-and-inference-plan.md` as the source of truth for the planned execution-skill split, inference direction, guidance-preservation contract, and the shared-toolkit consumer contract with `productivity-skills`.
 - Use `docs/maintainers/workflow-guidance-preservation-matrix.md` as the concrete mapping from monolithic execution guidance to narrower skill or `AGENTS.md` destinations during the split.
 - Prefer logically grouped skills over splitting adjacent workflows into separate skills.
 - Within a grouped skill, define one primary workflow path and keep variants subordinate to that path.

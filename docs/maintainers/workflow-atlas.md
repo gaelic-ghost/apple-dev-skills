@@ -75,8 +75,8 @@ flowchart TD
 - Cross-skill recommendation is decentralized inside each active skill.
 - End-user `AGENTS.md` guidance is recommended from each skill's local snippet copy, not from a router.
 - The active skill surface now uses the intended install-facing names directly.
-- The shared repo-maintenance toolkit is now external to the active Apple skill surface and is vendored locally under `shared/repo-maintenance-toolkit/` so bootstrap and sync skills can keep installing the same managed file set without a cross-repo runtime dependency.
-- The vendored toolkit contract is now profile-aware, with downstream repos getting `scripts/repo-maintenance/config/profile.env` and Apple workflows choosing either the `swift-package` or `xcode-app` profile explicitly.
+- The shared repo-maintenance toolkit is now external to the active Apple skill surface and is mirrored locally under `shared/repo-maintenance-toolkit/` only so bootstrap and sync skills can keep installing the same managed file set without a cross-repo runtime dependency.
+- The canonical toolkit contract now lives in `../productivity-skills`, while the Apple-local mirror stays intentionally consumer-shaped and profile-aware, with downstream repos getting `scripts/repo-maintenance/config/profile.env` and Apple workflows choosing either the `swift-package` or `xcode-app` profile explicitly.
 - The Swift package side of the execution split is now in place, with build-run and testing split into separate skills while `swift-package-workflow` remains as a compatibility-routing surface.
 - The Xcode side of the execution split is now in place too, with `xcode-build-run-workflow` and `xcode-testing-workflow` as the real owners while `xcode-app-project-workflow` remains as a compatibility-routing surface.
 
