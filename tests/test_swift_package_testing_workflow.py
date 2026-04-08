@@ -49,7 +49,7 @@ class SwiftPackageTestingWorkflowTests(unittest.TestCase):
             code, payload = self.run_script("--operation-type", "test", "--repo-root", tmpdir)
             self.assertEqual(code, 0)
             self.assertEqual(payload["status"], "handoff")
-            self.assertIn("xcode-app-project-workflow", payload["output"]["next_step"])
+            self.assertIn("xcode-testing-workflow", payload["output"]["next_step"])
 
     def test_blocks_when_no_operation_or_request_is_provided(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:

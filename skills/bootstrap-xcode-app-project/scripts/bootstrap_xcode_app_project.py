@@ -278,7 +278,7 @@ def main() -> int:
         "agents_copied": agents_copied,
         "stdout": proc_install_toolkit.stdout + proc_generate.stdout + validation_stdout,
         "stderr": proc_install_toolkit.stderr + proc_generate.stderr + validation_stderr,
-        "next_step": "Use xcode-app-project-workflow for normal work inside the generated project.",
+        "next_step": "Use xcode-build-run-workflow for normal build or run work inside the generated project, and use xcode-testing-workflow when the task is primarily about tests.",
     }
     print(json.dumps(payload, indent=2, sort_keys=True))
     return 0

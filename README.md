@@ -5,7 +5,11 @@ Canonical Apple development skills with a plugin-first packaging layout for Code
 ## Active Skills
 
 - `xcode-app-project-workflow`
-  - Top-level Apple and Swift execution skill for Xcode work, diagnostics, toolchains, and `.pbxproj`-aware mutation decisions.
+  - Compatibility surface for older broad Xcode workflow references that now route into the narrower Xcode build/run or testing skills.
+- `xcode-build-run-workflow`
+  - Top-level Apple and Swift execution skill for Xcode build, run, diagnostics, previews, toolchains, file membership, and `.pbxproj`-aware mutation decisions.
+- `xcode-testing-workflow`
+  - Top-level Apple and Swift execution skill for Xcode-native Swift Testing, XCTest, XCUITest, `.xctestplan`, filtering, retries, and test diagnosis.
 - `swift-package-build-run-workflow`
   - Top-level SwiftPM-first skill for existing package repos when the work is primarily about manifest changes, dependencies, package resources, Metal distribution, builds, runs, plugins, and Debug-versus-Release validation.
 - `swift-package-testing-workflow`
@@ -102,7 +106,7 @@ uv tool install mypy
 uv run --group dev pytest
 ```
 
-Use the executable skill entrypoints directly, for example `skills/xcode-app-project-workflow/scripts/run_workflow.py`.
+Use the executable skill entrypoints directly, for example `skills/xcode-build-run-workflow/scripts/run_workflow.py`.
 For Python wrapper and customization entrypoints that declare inline `uv` dependencies such as `PyYAML`, prefer `uv run scripts/run_workflow.py ...` and `uv run scripts/customization_config.py ...` in consuming repos instead of assuming a plain `python` environment has those dependencies available.
 Use targeted `uv run --group dev pytest tests/...` runs while iterating and a full `uv run --group dev pytest` pass before finalizing repo-wide maintenance.
 Keep `ruff` and `mypy` available as maintainer-side `uv` tools even when a given repo pass only needs the test suite.
@@ -158,7 +162,7 @@ If the repository is being shared as a Claude marketplace, use the repo-root cat
 Install one skill:
 
 ```bash
-npx skills add gaelic-ghost/apple-dev-skills --skill xcode-app-project-workflow
+npx skills add gaelic-ghost/apple-dev-skills --skill xcode-build-run-workflow
 ```
 
 Install all active skills:
@@ -170,7 +174,9 @@ npx skills add gaelic-ghost/apple-dev-skills --all
 Common starting points:
 
 - Xcode work:
-  `npx skills add gaelic-ghost/apple-dev-skills --skill xcode-app-project-workflow`
+  `npx skills add gaelic-ghost/apple-dev-skills --skill xcode-build-run-workflow`
+- Xcode testing work:
+  `npx skills add gaelic-ghost/apple-dev-skills --skill xcode-testing-workflow`
 - Swift package build or run work:
   `npx skills add gaelic-ghost/apple-dev-skills --skill swift-package-build-run-workflow`
 - Swift package testing work:
@@ -200,7 +206,7 @@ This repo previously experimented with a router layer and later removed it.
 | --- | --- |
 | `apple-skills-router-advise-install` | removed |
 | `apple-skills-router` | removed |
-| `apple-xcode-workflow-execute` | `xcode-app-project-workflow` |
+| `apple-xcode-workflow-execute` | `xcode-app-project-workflow` compatibility surface, then `xcode-build-run-workflow` or `xcode-testing-workflow` |
 | `apple-dash-docset-manage` | `explore-apple-swift-docs` |
 | `apple-dash-docsets` | removed in `v4.0.0`; use `explore-apple-swift-docs` |
 | `apple-swift-package-bootstrap` | removed in `v4.0.0`; use `bootstrap-swift-package` |

@@ -205,7 +205,7 @@ def main() -> int:
         "detected_state": detected_state,
         "validation_result": validation_result,
         "actions": actions,
-        "next_step": "Use swift-package-build-run-workflow or swift-package-testing-workflow for ordinary package work, rerun sync-swift-package-guidance after substantial plugin updates, and use xcode-app-project-workflow only when package work needs Xcode-managed tooling.",
+        "next_step": "Use swift-package-build-run-workflow or swift-package-testing-workflow for ordinary package work, rerun sync-swift-package-guidance after substantial plugin updates, and use xcode-build-run-workflow or xcode-testing-workflow only when package work needs Xcode-managed tooling.",
     }
     print(json.dumps(payload, indent=2, sort_keys=True))
     return 0

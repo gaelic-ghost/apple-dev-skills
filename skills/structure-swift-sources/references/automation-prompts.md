@@ -35,6 +35,6 @@ Then use $structure-swift-sources for:
 Execution requirements:
 1) Establish or confirm the formatting baseline first.
 2) Apply the structure rules from the skill references.
-3) If splitting or moving files touches Xcode-managed membership, stop and hand off to $xcode-app-project-workflow.
+3) If splitting or moving files touches Xcode-managed membership, stop and hand off to $xcode-build-run-workflow.
 4) Finish by returning to $format-swift-sources.
 ```

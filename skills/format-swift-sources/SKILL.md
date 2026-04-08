@@ -26,7 +26,8 @@ Use this skill as the top-level workflow for integrating and maintaining SwiftLi
 - Recommend `bootstrap-swift-package` when the user is creating a brand new Swift package and style tooling is only one part of that scaffold.
 - Recommend `bootstrap-xcode-app-project` when the user is creating a brand new native Apple app project and style tooling is only one part of that scaffold.
 - Recommend `swift-package-build-run-workflow` or `swift-package-testing-workflow` when the task shifts from style-tooling integration to ordinary SwiftPM package execution.
-- Recommend `xcode-app-project-workflow` when the task shifts from style-tooling integration to active Xcode execution, diagnostics, or mutation work in an existing project.
+- Recommend `xcode-build-run-workflow` when the task shifts from style-tooling integration to active Xcode execution, diagnostics, or mutation work in an existing project.
+- Recommend `xcode-testing-workflow` when the task shifts from style-tooling integration to active Xcode test work.
 - Recommend `structure-swift-sources` when the task shifts from formatter or linter setup into file splitting, file moves, declaration grouping, DocC coverage, or TODO/FIXME ledger cleanup.
 - Recommend `sync-xcode-project-guidance` or `sync-swift-package-guidance` when the user is aligning `AGENTS.md` and repo guidance rather than integrating style tooling itself.
 
@@ -98,7 +99,8 @@ Use this skill as the top-level workflow for integrating and maintaining SwiftLi
 - SwiftFormat build-phase adoption falls back from package-managed or pinned local binaries to the locally installed CLI path only when shared-version drift is acceptable.
 - For combined cleanup work, use this skill before `structure-swift-sources` to establish the formatting baseline, and run it again after that skill finishes so the post-split or post-move tree is normalized.
 - Recommend `swift-package-build-run-workflow` or `swift-package-testing-workflow` when the task becomes ordinary SwiftPM package execution work.
-- Recommend `xcode-app-project-workflow` when the task becomes Xcode execution or diagnostics work.
+- Recommend `xcode-build-run-workflow` when the task becomes Xcode execution or diagnostics work.
+- Recommend `xcode-testing-workflow` when the task becomes Xcode test work.
 - Recommend `bootstrap-swift-package` or `bootstrap-xcode-app-project` when the user really needs a full project scaffold instead of isolated style-tooling setup.
 - Recommend `structure-swift-sources` directly when the task becomes file splitting, source moves, MARK normalization, DocC coverage, or TODO/FIXME ledger maintenance.
 - Recommend `sync-xcode-project-guidance` or `sync-swift-package-guidance` when the repository needs broader `AGENTS.md` and workflow-baseline alignment.

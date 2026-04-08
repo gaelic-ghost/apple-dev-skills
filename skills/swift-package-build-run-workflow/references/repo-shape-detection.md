@@ -10,4 +10,4 @@ Treat a repo as mixed when:
 
 For mixed roots:
 - prefer `swift-package-build-run-workflow` when the request is ordinary SwiftPM build, run, manifest, dependency, plugin, resource, or Metal-distribution work
-- hand off to `xcode-app-project-workflow` when the request needs Xcode session state, schemes, previews, simulator or device flows, Xcode diagnostics, or guarded Xcode-managed mutation
+- hand off to `xcode-build-run-workflow` when the request needs Xcode session state, schemes, previews, simulator or device flows, Xcode diagnostics, or guarded Xcode-managed mutation

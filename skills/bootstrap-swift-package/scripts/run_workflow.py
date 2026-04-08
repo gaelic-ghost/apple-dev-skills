@@ -228,7 +228,7 @@ def main() -> int:
     parsed = parse_output(proc.stdout)
     status = "success" if proc.returncode == 0 else ("blocked" if proc.returncode == 2 else "failed")
     next_step = (
-        "Use xcode-app-project-workflow for build, test, or xcodebuild-based package work when Xcode-managed tooling is required."
+        "Use xcode-build-run-workflow for build or xcodebuild-based package work when Xcode-managed tooling is required, and use xcode-testing-workflow for Xcode-managed package test work."
         if status == "success"
         else (
             "Resolve the bootstrap prerequisite or toolchain selection issue and rerun the workflow."
@@ -250,7 +250,7 @@ def main() -> int:
         "stdout": proc.stdout,
         "stderr": proc.stderr,
         "next_step": (
-            "Use swift build and swift test by default, and switch to xcode-app-project-workflow when Xcode-managed toolchain behavior is required."
+            "Use swift build and swift test by default, and switch to xcode-build-run-workflow or xcode-testing-workflow when Xcode-managed behavior is required."
             if status == "success"
             else next_step
         ),

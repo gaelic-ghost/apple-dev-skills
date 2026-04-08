@@ -10,4 +10,5 @@ Treat a repo as mixed when:
 
 For mixed roots:
 - prefer `swift-package-testing-workflow` when the request is ordinary SwiftPM testing work
-- hand off to `xcode-app-project-workflow` when the request needs Xcode session state, schemes, previews, simulator or device flows, Xcode diagnostics, or guarded Xcode-managed mutation
+- hand off to `xcode-testing-workflow` when the request needs Xcode session state, schemes, simulator or device flows, XCUITest, or `.xctestplan` execution
+- hand off to `xcode-build-run-workflow` when the request instead needs guarded Xcode-managed mutation or file-membership follow-through

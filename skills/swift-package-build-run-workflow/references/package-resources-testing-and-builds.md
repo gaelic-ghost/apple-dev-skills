@@ -13,7 +13,7 @@
 
 - Precompiled Metal artifacts such as `.metallib` files can be distributed as package resources and loaded from `Bundle.module`.
 - Prefer `.copy(...)` for `.metallib` and similar precompiled binary assets when exact distribution matters.
-- If the work requires compiling Metal shaders, validating Apple-platform bundle integration, or confirming the active Apple-managed Metal toolchain, hand off to `xcode-app-project-workflow`.
+- If the work requires compiling Metal shaders, validating Apple-platform bundle integration, or confirming the active Apple-managed Metal toolchain, hand off to `xcode-build-run-workflow`.
 - In those cases, inspect the active developer directory and toolchain first, then validate with package-oriented `xcodebuild` commands instead of assuming plain `swift build` is sufficient.
 
 ## Swift Testing, XCTest, and test plans

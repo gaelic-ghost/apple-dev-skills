@@ -23,7 +23,7 @@ Use this skill as the primary execution workflow for non-testing work in existin
 - Recommend `swift-package-testing-workflow` when the request is primarily about running, diagnosing, organizing, or evolving tests.
 - Recommend `bootstrap-swift-package` when the package repo does not exist yet.
 - Recommend `sync-swift-package-guidance` when the repo guidance needs to be added, refreshed, or merged.
-- Recommend `xcode-app-project-workflow` when the task depends on active Xcode workspace state, scheme-aware execution, previews, navigator diagnostics, simulator or device flows, or guarded mutation inside Xcode-managed scope.
+- Recommend `xcode-build-run-workflow` when the task depends on active Xcode workspace state, scheme-aware execution, previews, navigator diagnostics, simulator or device flows, or guarded mutation inside Xcode-managed scope.
 - Recommend `explore-apple-swift-docs` when the user needs Apple or Swift docs exploration before implementation or package changes.
 
 ## Single-Path Workflow
@@ -50,7 +50,7 @@ Use this skill as the primary execution workflow for non-testing work in existin
 4. Run `scripts/run_workflow.py` to resolve repo shape, confirm the request stays on the build/run surface, and plan the SwiftPM-first command path.
 5. Use `references/cli-command-matrix.md` for agent-executed SwiftPM commands and terminal-first editor workflows.
 6. Use `references/package-resources-testing-and-builds.md` when the request touches package resources, Metal artifacts, `Bundle.module`, or Debug/Release and tagged-release validation.
-7. If the repo root is ambiguous because Xcode-managed markers are present at the same root, use `references/xcode-handoff-conditions.md` and hand off cleanly to `xcode-app-project-workflow`.
+7. If the repo root is ambiguous because Xcode-managed markers are present at the same root, use `references/xcode-handoff-conditions.md` and hand off cleanly to `xcode-build-run-workflow`.
 8. Report which parts were agent-executed, the docs relied on, the repo-shape result, and any required next step or handoff.
 
 ## Inputs
@@ -96,7 +96,7 @@ Use this skill as the primary execution workflow for non-testing work in existin
 - SwiftPM and ordinary filesystem edits are the default execution surface for this skill.
 - The only current fallback is a non-mutating planned command result when the user asked for guidance rather than immediate execution.
 - Hand off to `swift-package-testing-workflow` when the request becomes primarily about tests, test plans, or test diagnosis.
-- Hand off to `xcode-app-project-workflow` when package build or distribution work depends on:
+- Hand off to `xcode-build-run-workflow` when package build or distribution work depends on:
   - active Xcode workspace or scheme state
   - previews, snippet execution, simulator, or device flows
   - navigator issues or Xcode build-log inspection

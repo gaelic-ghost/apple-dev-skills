@@ -52,8 +52,8 @@ class SwiftPackageWorkflowTests(unittest.TestCase):
             self.assertEqual(code, 0)
             self.assertEqual(payload["status"], "handoff")
             self.assertTrue(payload["output"]["repo_shape"]["mixed_root"])
-            self.assertEqual(payload["output"]["recommended_skill"], "xcode-app-project-workflow")
-            self.assertIn("xcode-app-project-workflow", payload["output"]["next_step"])
+            self.assertEqual(payload["output"]["recommended_skill"], "xcode-build-run-workflow")
+            self.assertIn("xcode-build-run-workflow", payload["output"]["next_step"])
 
     def test_allows_mixed_root_with_opt_in(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:

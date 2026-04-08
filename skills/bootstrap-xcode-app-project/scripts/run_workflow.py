@@ -195,7 +195,7 @@ def main() -> int:
     if generator == "xcode":
         payload = blocked_payload(
             normalized_inputs,
-            "Create the project in Xcode using Apple's standard app-project flow, then use xcode-app-project-workflow for existing-project work.",
+            "Create the project in Xcode using Apple's standard app-project flow, then use xcode-build-run-workflow for build or run work and xcode-testing-workflow for test-focused work inside the existing project.",
             stderr="The first implementation pass does not automate the standard Xcode GUI creation path yet.",
             validation_result="guided xcode path only",
         )

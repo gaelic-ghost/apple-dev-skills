@@ -19,6 +19,6 @@
 - Prefer Swift Testing by default unless an external constraint requires XCTest.
 - Keep package resources under the owning target tree, declare them intentionally with `Resource.process(...)`, `Resource.copy(...)`, `Resource.embedInCode(...)`, and load them through `Bundle.module`.
 - Keep test fixtures as test-target resources instead of relying on the working directory.
-- Bundle precompiled Metal artifacts such as `.metallib` files as explicit resources when they ship with the package, and prefer `xcode-app-project-workflow` when shader compilation or Apple-managed Metal toolchain behavior matters.
+- Bundle precompiled Metal artifacts such as `.metallib` files as explicit resources when they ship with the package, and prefer `xcode-build-run-workflow` when shader compilation or Apple-managed Metal toolchain behavior matters.
 - Validate both Debug and Release paths when optimization or packaging differences matter, and treat tagged releases as a cue to verify the Release artifact path before publishing.
-- Prefer `xcode-app-project-workflow` only when package work needs Xcode-managed SDK or toolchain behavior.
+- Prefer `xcode-build-run-workflow` or `xcode-testing-workflow` only when package work needs Xcode-managed SDK, toolchain, or test behavior.

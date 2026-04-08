@@ -18,7 +18,8 @@ Use this skill as the top-level workflow for structural cleanup inside existing 
 - Use this skill when a Swift package or Xcode app repo has drifted away from the intended feature-plus-layer directory shape.
 - Recommend `format-swift-sources` first when formatter or linter setup is missing, unclear, or stale.
 - Recommend `swift-package-build-run-workflow` or `swift-package-testing-workflow` when structural cleanup in a plain package repo turns into ordinary package execution or SwiftPM validation.
-- Recommend `xcode-app-project-workflow` when structural cleanup turns into active Xcode execution, scheme validation, or guarded project mutation work.
+- Recommend `xcode-build-run-workflow` when structural cleanup turns into active Xcode execution, scheme validation, file-membership follow-through, or guarded project mutation work.
+- Recommend `xcode-testing-workflow` when structural cleanup turns into active Xcode test validation or test-target diagnosis.
 - Recommend `sync-xcode-project-guidance` or `sync-swift-package-guidance` when the real need is repo-level `AGENTS.md` alignment rather than source-structure cleanup.
 
 ## Single-Path Workflow
@@ -98,13 +99,13 @@ Use this skill as the top-level workflow for structural cleanup inside existing 
 - Do not move files across Xcode-managed boundaries without accounting for project membership and validation.
 - Do not rewrite TODO or FIXME comments into ledger IDs unless the ledger files are updated in the same pass.
 - Stop with `blocked` when the repo shape is too ambiguous to choose feature-first versus layer-first layout safely.
-- Stop with `handoff` when project-file mutation or Xcode membership updates need guarded execution through `xcode-app-project-workflow`.
+- Stop with `handoff` when project-file mutation or Xcode membership updates need guarded execution through `xcode-build-run-workflow`.
 
 ## Fallbacks and Handoffs
 
 - If the repo lacks a clear formatter or linter baseline, hand off to `format-swift-sources` before any structural mutation.
 - If a broad repo-wide cleanup is too risky, fall back to one feature directory or one oversized file at a time.
-- If Xcode project integrity must be revalidated after file moves, hand off to `xcode-app-project-workflow`.
+- If Xcode project integrity must be revalidated after file moves, hand off to `xcode-build-run-workflow`.
 - Recommend `sync-xcode-project-guidance` or `sync-swift-package-guidance` when the request is really about durable repo rules rather than current-file cleanup.
 
 ## Customization

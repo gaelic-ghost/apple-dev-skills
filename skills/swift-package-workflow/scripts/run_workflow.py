@@ -183,8 +183,8 @@ def main() -> int:
         next_step = "Use a Swift package repo with Package.swift at the selected root."
     elif repo_shape["mixed_root"] and not args.mixed_root_opt_in:
         status = "handoff"
-        recommended = "xcode-app-project-workflow"
-        next_step = "Use xcode-app-project-workflow because this repo root is mixed and Xcode-managed behavior may matter."
+        recommended = "xcode-build-run-workflow" if operation_type != "test" else "xcode-testing-workflow"
+        next_step = f"Use {recommended} because this repo root is mixed and Xcode-managed behavior may matter."
 
     payload = {
         "status": status,

@@ -22,7 +22,8 @@ Use this skill as the primary execution workflow for test-focused work in existi
 - Recommend `swift-package-build-run-workflow` when the request is primarily about package build/run, manifest, dependency, plugin, resource, or Metal-distribution work.
 - Recommend `bootstrap-swift-package` when the package repo does not exist yet.
 - Recommend `sync-swift-package-guidance` when the repo guidance needs to be added, refreshed, or merged.
-- Recommend `xcode-app-project-workflow` when test work depends on active Xcode workspace state, navigator diagnostics, simulator or device flows, or guarded mutation inside Xcode-managed scope.
+- Recommend `xcode-testing-workflow` when test work depends on active Xcode workspace state, navigator diagnostics, simulator or device flows, or Xcode-native test plans and test execution.
+- Recommend `xcode-build-run-workflow` when package test work crosses into guarded mutation, file membership, or other Xcode-managed project-integrity work.
 - Recommend `explore-apple-swift-docs` when the user needs Apple or Swift docs exploration before implementation or test changes.
 
 ## Single-Path Workflow
@@ -44,7 +45,7 @@ Use this skill as the primary execution workflow for test-focused work in existi
    - preserve its package-appropriate logging, telemetry, structured-concurrency, and Swift Testing guidance
 4. Run `scripts/run_workflow.py` to resolve repo shape, confirm the request stays on the testing surface, and plan the package-testing command path.
 5. Use `references/package-resources-testing-and-builds.md` when the request touches Swift Testing, XCTest, `.xctestplan`, fixtures, async test discipline, or test-related Debug/Release validation.
-6. If the repo root is ambiguous because Xcode-managed markers are present at the same root, use `references/xcode-handoff-conditions.md` and hand off cleanly to `xcode-app-project-workflow`.
+6. If the repo root is ambiguous because Xcode-managed markers are present at the same root, use `references/xcode-handoff-conditions.md` and hand off cleanly to `xcode-testing-workflow`.
 7. Report which parts were agent-executed, the docs relied on, the repo-shape result, and any required next step or handoff.
 
 ## Inputs
@@ -90,13 +91,14 @@ Use this skill as the primary execution workflow for test-focused work in existi
 - SwiftPM and ordinary filesystem edits inside package-managed scope are the default execution surface for this skill.
 - The only current fallback is a non-mutating planned command result when the user asked for guidance rather than immediate execution.
 - Hand off to `swift-package-build-run-workflow` when the request becomes primarily about package build/run, manifest, dependencies, plugins, package resources, or Metal-distribution work.
-- Hand off to `xcode-app-project-workflow` when package test work depends on:
+- Hand off to `xcode-testing-workflow` when package test work depends on:
   - active Xcode workspace or scheme state
   - previews, snippet execution, simulator, or device flows
   - navigator issues or Xcode build-log inspection
   - Xcode MCP mutation tools
   - `.xctestplan` execution or package test behavior that is more authoritative through Xcode-managed Apple SDK integration
-  - direct changes inside `.xcodeproj`, `.xcworkspace`, or `.pbxproj` managed scope
+  - direct test execution through Xcode-native destinations, UI testing, or `.xctestplan` handling inside an Xcode-managed workspace
+- Hand off to `xcode-build-run-workflow` when package test work instead crosses into direct changes inside `.xcodeproj`, `.xcworkspace`, or `.pbxproj` managed scope.
 - Recommend `sync-swift-package-guidance` when the request is really about repo guidance instead of execution.
 - Recommend `bootstrap-swift-package` when the repository still needs to be created from scratch.
 - When maintaining this plugin itself, refresh guidance-sync consumers after substantial package-testing policy changes and keep the local plugin install current; `install-plugin-to-socket` is a useful maintainer shortcut for install, update, verify, and repair work.

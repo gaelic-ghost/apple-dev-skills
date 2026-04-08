@@ -79,6 +79,8 @@ echo "Validating workflow document structure..."
 workflow_doc="docs/maintainers/workflow-atlas.md"
 require_contains "$workflow_doc" "## Repo Workflow Map"
 require_contains "$workflow_doc" '## `xcode-app-project-workflow`'
+require_contains "$workflow_doc" '## `xcode-build-run-workflow`'
+require_contains "$workflow_doc" '## `xcode-testing-workflow`'
 require_contains "$workflow_doc" '## `swift-package-build-run-workflow`'
 require_contains "$workflow_doc" '## `swift-package-testing-workflow`'
 require_contains "$workflow_doc" '## `explore-apple-swift-docs`'
@@ -122,6 +124,8 @@ require_contains "ROADMAP.md" "- [ ] Milestone 34: Guidance Preservation and AGE
 echo "Validating skill directory layout..."
 active_skill_mds=(
   "./skills/xcode-app-project-workflow/SKILL.md"
+  "./skills/xcode-build-run-workflow/SKILL.md"
+  "./skills/xcode-testing-workflow/SKILL.md"
   "./skills/swift-package-build-run-workflow/SKILL.md"
   "./skills/swift-package-testing-workflow/SKILL.md"
   "./skills/swift-package-workflow/SKILL.md"
@@ -133,7 +137,7 @@ active_skill_mds=(
   "./skills/sync-xcode-project-guidance/SKILL.md"
   "./skills/sync-swift-package-guidance/SKILL.md"
 )
-[[ ${#active_skill_mds[@]} -eq 11 ]] || fail "Expected exactly 11 active skills, found ${#active_skill_mds[@]}."
+[[ ${#active_skill_mds[@]} -eq 13 ]] || fail "Expected exactly 13 active skills, found ${#active_skill_mds[@]}."
 
 shared_xcode_snippet="./shared/agents-snippets/apple-xcode-project-core.md"
 shared_package_snippet="./shared/agents-snippets/apple-swift-package-core.md"

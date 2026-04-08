@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import shlex
 import subprocess
 import sys
 from pathlib import Path
@@ -89,89 +88,10 @@ def detect_managed_scope(workspace_path: str | None) -> dict:
     return payload
 
 
-def discover_workspace_state(workspace_path: str | None) -> dict:
-    if not workspace_path:
-        return {"workspace": None, "project": None, "swift_package": False}
-
-    root = Path(workspace_path).expanduser()
-    if not root.exists():
-        return {"workspace": None, "project": None, "swift_package": False}
-
-    workspaces = sorted(str(path) for path in root.rglob("*.xcworkspace"))
-    projects = sorted(str(path) for path in root.rglob("*.xcodeproj"))
-    swift_package = (root / "Package.swift").exists()
-    return {
-        "workspace": workspaces[0] if workspaces else None,
-        "project": projects[0] if projects else None,
-        "swift_package": swift_package,
-    }
-
-
-def shell_join(parts: list[str]) -> str:
-    return " ".join(shlex.quote(part) for part in parts)
-
-
-def build_fallback_commands(operation_type: str, workspace_path: str | None, mapping_profile: str) -> list[str]:
-    state = discover_workspace_state(workspace_path)
-    commands: list[str] = []
-    include_swift_package = mapping_profile != "xcode-only"
-
-    if operation_type in {"workspace-inspection", "session-inspection", "read-search-diagnostics"}:
-        if state["workspace"]:
-            commands.append(shell_join(["xcodebuild", "-workspace", state["workspace"], "-list"]))
-        if state["project"]:
-            commands.append(shell_join(["xcodebuild", "-project", state["project"], "-list"]))
-        if include_swift_package and state["swift_package"]:
-            commands.append("swift package describe")
-    elif operation_type == "build":
-        if state["workspace"]:
-            commands.append(shell_join(["xcodebuild", "-workspace", state["workspace"], "-scheme", "<scheme>", "build"]))
-        if state["project"]:
-            commands.append(shell_join(["xcodebuild", "-project", state["project"], "-scheme", "<scheme>", "build"]))
-        if include_swift_package and state["swift_package"]:
-            commands.append("swift build")
-    elif operation_type == "test":
-        if state["workspace"]:
-            commands.append(
-                shell_join(
-                    [
-                        "xcodebuild",
-                        "test",
-                        "-workspace",
-                        state["workspace"],
-                        "-scheme",
-                        "<scheme>",
-                        "-destination",
-                        "<destination>",
-                    ]
-                )
-            )
-        if state["project"]:
-            commands.append(
-                shell_join(
-                    [
-                        "xcodebuild",
-                        "test",
-                        "-project",
-                        state["project"],
-                        "-scheme",
-                        "<scheme>",
-                        "-destination",
-                        "<destination>",
-                    ]
-                )
-            )
-        if include_swift_package and state["swift_package"]:
-            commands.append("swift test")
-    elif operation_type == "run":
-        if include_swift_package and state["swift_package"]:
-            commands.append("swift run <target>")
-        commands.append("xcrun simctl list")
-    elif operation_type == "package-toolchain-management":
-        if include_swift_package and state["swift_package"]:
-            commands.extend(["swift package describe", "swift package resolve", "swift package update"])
-        commands.extend(["xcrun --find swift", "xcrun --find xcodebuild"])
-    return commands
+def recommended_skill(operation_type: str) -> str:
+    if operation_type == "test":
+        return "xcode-testing-workflow"
+    return "xcode-build-run-workflow"
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -189,8 +109,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main() -> int:
     args = build_parser().parse_args()
-    config = load_effective_config()
-    settings = config["settings"]
+    load_effective_config()
     inferred_operation_type = infer_operation_type_from_request(args.request)
     operation_type = args.operation_type or inferred_operation_type
 
@@ -198,41 +117,35 @@ def main() -> int:
         payload = {
             "status": "blocked",
             "path_type": "primary",
-            "operation_type": None,
-            "operation_type_source": "missing",
-            "workspace_path": args.workspace_path,
-            "tab_identifier": args.tab_identifier,
-            "mcp_failure_reason": args.mcp_failure_reason,
-            "guard_result": {
-                "applied": False,
-                "managed_scope": False,
-                "filesystem_fallback_allowed": True,
-                "reason": "not-applicable",
+            "output": {
+                "operation_type": None,
+                "operation_type_source": "missing",
+                "workspace_path": args.workspace_path,
+                "tab_identifier": args.tab_identifier,
+                "mcp_failure_reason": args.mcp_failure_reason,
+                "guard_result": {
+                    "applied": False,
+                    "managed_scope": False,
+                    "reason": "not-applicable",
+                },
+                "fallback_commands": [],
+                "recommended_skill": None,
+                "next_step": "Pass --operation-type explicitly or provide --request text that makes the intended Xcode workflow obvious.",
             },
-            "fallback_commands": [],
-            "retry_count": int(settings.get("mcpRetryCount", 1)),
-            "next_step": "Pass --operation-type explicitly or provide --request text that makes the intended Xcode workflow obvious.",
-            "execution_model": "agent-mcp-orchestrated",
-            "dry_run": args.dry_run,
         }
         print(json.dumps(payload, indent=2, sort_keys=True))
         return 1
 
-    fallback_commands = build_fallback_commands(
-        operation_type,
-        args.workspace_path,
-        str(settings.get("fallbackCommandMappingProfile", "official-default")),
-    )
-
     guard_result = {
         "applied": False,
         "managed_scope": False,
-        "filesystem_fallback_allowed": True,
+        "direct_edits_allowed": True,
+        "direct_pbxproj_edit_warning_required": False,
         "reason": "not-applicable",
     }
-    status = "success"
-    path_type = "primary"
-    next_step = "Proceed with the agent-side MCP path."
+    status = "handoff"
+    recommended = recommended_skill(operation_type)
+    next_step = f"Use {recommended} because the Xcode execution surface is now split by build-run versus testing."
 
     if operation_type == "mutation":
         scope = detect_managed_scope(args.workspace_path)
@@ -251,34 +164,27 @@ def main() -> int:
             guard_result["reason"] = "direct-pbxproj-edit-warning-required"
             if args.direct_pbxproj_edit and not args.direct_pbxproj_edit_opt_in:
                 status = "blocked"
+                recommended = None
                 next_step = "Warn the user about direct .pbxproj edit risks and rerun with --direct-pbxproj-edit-opt-in only if they explicitly approve that path."
-
-    if args.mcp_failure_reason and status != "blocked":
-        path_type = "fallback"
-        next_step = (
-            f"Use the first documented fallback command because MCP reported {args.mcp_failure_reason}."
-            if fallback_commands
-            else "No documented CLI fallback is available for this operation type."
-        )
 
     payload = {
         "status": status,
-        "path_type": path_type,
-        "operation_type": operation_type,
-        "operation_type_source": "explicit" if args.operation_type else "inferred",
-        "workspace_path": args.workspace_path,
-        "tab_identifier": args.tab_identifier,
-        "mcp_failure_reason": args.mcp_failure_reason,
-        "guard_result": guard_result,
-        "fallback_commands": fallback_commands,
-        "retry_count": int(settings.get("mcpRetryCount", 1)),
-        "next_step": next_step,
-        "execution_model": "agent-mcp-orchestrated",
-        "dry_run": args.dry_run,
+        "path_type": "primary",
+        "output": {
+            "operation_type": operation_type,
+            "operation_type_source": "explicit" if args.operation_type else "inferred",
+            "workspace_path": args.workspace_path,
+            "tab_identifier": args.tab_identifier,
+            "mcp_failure_reason": args.mcp_failure_reason,
+            "guard_result": guard_result,
+            "fallback_commands": [],
+            "recommended_skill": recommended,
+            "next_step": next_step,
+        },
     }
     print(json.dumps(payload, indent=2, sort_keys=True))
     return 0 if status != "blocked" else 1
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    sys.exit(main())

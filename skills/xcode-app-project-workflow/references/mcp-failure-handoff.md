@@ -1,6 +1,6 @@
 # MCP Failure Fallback Contract
 
-Use this payload shape when `xcode-app-project-workflow` falls back from an MCP attempt to the official CLI path.
+Use this payload shape when `xcode-app-project-workflow` hands an older broad Xcode request off to the narrower Xcode execution skills.
 
 ## Inputs
 

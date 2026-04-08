@@ -1,6 +1,6 @@
 # Xcode Handoff Conditions
 
-Hand off to `xcode-app-project-workflow` when:
+Hand off to `xcode-testing-workflow` when:
 - the task depends on an active Xcode workspace or scheme
 - previews or `ExecuteSnippet` style flows matter
 - simulator or device execution matters

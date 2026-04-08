@@ -18,7 +18,8 @@ Bring an existing Xcode app repository up to the expected guidance baseline with
 - Do not use this skill for ordinary build, test, run, diagnostics, docs lookup, or mutation work inside an existing Xcode project.
 - Do not use this skill for plain Swift packages, libraries, or tools that are not native Apple apps.
 - Recommend `bootstrap-xcode-app-project` when the repo does not exist yet.
-- Recommend `xcode-app-project-workflow` when the task is active execution, diagnostics, docs lookup, or mutation work inside an existing Xcode project.
+- Recommend `xcode-build-run-workflow` when the task is active Xcode execution, diagnostics, docs lookup, previews, file-membership follow-through, or mutation work inside an existing Xcode project.
+- Recommend `xcode-testing-workflow` when the task is primarily about Swift Testing, XCTest, XCUITest, `.xctestplan`, or test diagnosis inside an existing Xcode project.
 - Recommend `sync-swift-package-guidance` when the repo is a plain Swift package instead of an Xcode app project.
 - After updating this plugin's Xcode-policy surfaces, recommend rerunning `sync-xcode-project-guidance` in downstream repos so their `AGENTS.md` and repo-maintenance toolkit stay aligned.
 - For local Codex installs of this plugin, mention that `install-plugin-to-socket` is a useful maintainer shortcut for install, update, verify, and repair work.
@@ -53,7 +54,7 @@ Bring an existing Xcode app repository up to the expected guidance baseline with
    - if `AGENTS.md` exists but lacks the managed section, append `assets/append-section.md` as a bounded section
 7. Validate the synced repo guidance:
    - verify `AGENTS.md` exists
-   - verify the synced file mentions `xcode-app-project-workflow`
+   - verify the synced file mentions `xcode-build-run-workflow` and `xcode-testing-workflow`
    - verify the synced file preserves the no-direct-`.pbxproj` rule
 8. Refresh the repo-maintenance toolkit:
    - refresh `scripts/repo-maintenance/`
@@ -64,7 +65,7 @@ Bring an existing Xcode app repository up to the expected guidance baseline with
    - `scripts/repo-maintenance/sync-shared.sh`
    - `scripts/repo-maintenance/release.sh`
 10. Hand off ongoing engineering work cleanly:
-   - recommend `xcode-app-project-workflow` for active Xcode collaboration after the repo guidance is aligned
+   - recommend `xcode-build-run-workflow` or `xcode-testing-workflow` for active Xcode collaboration after the repo guidance is aligned
    - recommend `bootstrap-xcode-app-project` only when the user actually needs a fresh repo instead of guidance sync
 
 ## Inputs
@@ -109,7 +110,8 @@ Bring an existing Xcode app repository up to the expected guidance baseline with
 ## Fallbacks and Handoffs
 
 - The only current fallback is a non-mutating dry-run or guided result that explains what the sync would do.
-- After a successful sync, hand off ongoing execution and diagnostics work to `xcode-app-project-workflow`.
+- After a successful sync, hand off ongoing build, run, diagnostics, preview, and mutation work to `xcode-build-run-workflow`.
+- After a successful sync, hand off ongoing test execution and test diagnosis work to `xcode-testing-workflow`.
 - After a successful sync, use `scripts/repo-maintenance/validate-all.sh` for local maintainer validation and `scripts/repo-maintenance/release.sh` for releases.
 - Recommend `bootstrap-xcode-app-project` when the repository still needs to be created from scratch.
 - Recommend `sync-swift-package-guidance` when the repo is a plain Swift package rather than an Xcode app project.

@@ -6,7 +6,7 @@
 2. Confirm `Package.swift` is present.
 3. Detect whether the root is plain SwiftPM or mixed with Xcode-managed markers.
 4. Prefer the SwiftPM-first path for ordinary package work.
-5. Hand off to `xcode-app-project-workflow` only when Xcode-managed behavior is the primary concern.
+5. Hand off to `xcode-build-run-workflow` only when Xcode-managed build, run, toolchain, or mutation behavior is the primary concern.
 
 ## SwiftPM-first invariant
 

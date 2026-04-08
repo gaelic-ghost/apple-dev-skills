@@ -114,6 +114,13 @@ The Apple repo should then consume that toolkit contract rather than continuing 
 - Convert the current two execution skills into compatibility and migration surfaces for one release cycle.
 - Update docs, tests, and install surfaces to point to the new skill matrix.
 
+Current status:
+
+- the Swift package side is landed
+- the Xcode side is landed
+- both original broad execution skills now act as compatibility-routing surfaces
+- the remaining work is inference strengthening plus the toolkit follow-through
+
 ### Phase 3: Guidance redistribution
 
 - Promote durable execution-adjacent policy into synced and bootstrapped `AGENTS.md` templates where appropriate.
@@ -127,12 +134,12 @@ The Apple repo should then consume that toolkit contract rather than continuing 
 
 ## First Implementation Slice
 
-The first implementation slice should not wait for the full skill split.
+The first implementation slice did not wait for the full skill split.
 
-It should:
+It:
 
-- add request-driven intent inference to the current `swift-package-workflow` and `xcode-app-project-workflow` runtime wrappers
-- document the planned split and preservation contract
-- update roadmap and maintainer docs so the future work is tracked explicitly
+- added request-driven intent inference to the current `swift-package-workflow` and `xcode-app-project-workflow` runtime wrappers before the split
+- documented the planned split and preservation contract
+- updated roadmap and maintainer docs so the future work is tracked explicitly
 
-That inference work survives the later split and directly reduces current agent ceremony.
+That inference work survived the later split and directly reduced current agent ceremony.
