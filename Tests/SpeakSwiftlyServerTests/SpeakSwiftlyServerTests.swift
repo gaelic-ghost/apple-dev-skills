@@ -219,7 +219,7 @@ actor MockRuntime: ServerRuntimeProtocol {
             )
         )
         let events = AsyncThrowingStream<SpeakSwiftly.RequestEvent, Error> { continuation in
-            continuation.yield(.completed(SpeakSwiftly.Success(id: requestID, generatedFile: generatedFile)))
+            continuation.yield(.completed(SpeakSwiftly.Success(id: requestID, generatedFile: generatedFile, activeRequests: nil)))
             continuation.finish()
         }
         return RuntimeRequestHandle(id: requestID, operation: "generate_audio_file", profileName: profileName, events: events)
@@ -307,7 +307,7 @@ actor MockRuntime: ServerRuntimeProtocol {
             )
         )
         let events = AsyncThrowingStream<SpeakSwiftly.RequestEvent, Error> { continuation in
-            continuation.yield(.completed(SpeakSwiftly.Success(id: requestID, generatedBatch: generatedBatch)))
+            continuation.yield(.completed(SpeakSwiftly.Success(id: requestID, generatedBatch: generatedBatch, activeRequests: nil)))
             continuation.finish()
         }
         return RuntimeRequestHandle(id: requestID, operation: "generate_audio_batch", profileName: profileName, events: events)
@@ -344,7 +344,7 @@ actor MockRuntime: ServerRuntimeProtocol {
             )
         }
         let events = AsyncThrowingStream<SpeakSwiftly.RequestEvent, Error> { continuation in
-            continuation.yield(.completed(SpeakSwiftly.Success(id: requestID, profileName: profileName)))
+            continuation.yield(.completed(SpeakSwiftly.Success(id: requestID, profileName: profileName, activeRequests: nil)))
             continuation.finish()
         }
         return RuntimeRequestHandle(id: requestID, operation: "create_voice_profile", profileName: profileName, events: events)
@@ -379,7 +379,7 @@ actor MockRuntime: ServerRuntimeProtocol {
             )
         }
         let events = AsyncThrowingStream<SpeakSwiftly.RequestEvent, Error> { continuation in
-            continuation.yield(.completed(SpeakSwiftly.Success(id: requestID, profileName: profileName)))
+            continuation.yield(.completed(SpeakSwiftly.Success(id: requestID, profileName: profileName, activeRequests: nil)))
             continuation.finish()
         }
         return RuntimeRequestHandle(id: requestID, operation: "clone_voice_profile", profileName: profileName, events: events)
@@ -389,7 +389,7 @@ actor MockRuntime: ServerRuntimeProtocol {
         let requestID = UUID().uuidString
         let profiles = self.profiles
         let events = AsyncThrowingStream<SpeakSwiftly.RequestEvent, Error> { continuation in
-            continuation.yield(.completed(SpeakSwiftly.Success(id: requestID, profiles: profiles)))
+            continuation.yield(.completed(SpeakSwiftly.Success(id: requestID, profiles: profiles, activeRequests: nil)))
             continuation.finish()
         }
         return RuntimeRequestHandle(id: requestID, operation: "list_voice_profiles", profileName: nil, events: events)
@@ -401,7 +401,7 @@ actor MockRuntime: ServerRuntimeProtocol {
             profiles.removeAll { $0.profileName == profileName }
         }
         let events = AsyncThrowingStream<SpeakSwiftly.RequestEvent, Error> { continuation in
-            continuation.yield(.completed(SpeakSwiftly.Success(id: requestID, profileName: profileName)))
+            continuation.yield(.completed(SpeakSwiftly.Success(id: requestID, profileName: profileName, activeRequests: nil)))
             continuation.finish()
         }
         return RuntimeRequestHandle(id: requestID, operation: "delete_voice_profile", profileName: profileName, events: events)
@@ -411,7 +411,7 @@ actor MockRuntime: ServerRuntimeProtocol {
         let requestID = UUID().uuidString
         let job = generationJobs.first { $0.jobID == jobID }
         let events = AsyncThrowingStream<SpeakSwiftly.RequestEvent, Error> { continuation in
-            continuation.yield(.completed(SpeakSwiftly.Success(id: requestID, generationJob: job)))
+            continuation.yield(.completed(SpeakSwiftly.Success(id: requestID, generationJob: job, activeRequests: nil)))
             continuation.finish()
         }
         return RuntimeRequestHandle(id: requestID, operation: "get_generation_job", profileName: nil, events: events)
@@ -421,7 +421,7 @@ actor MockRuntime: ServerRuntimeProtocol {
         let requestID = UUID().uuidString
         let jobs = generationJobs
         let events = AsyncThrowingStream<SpeakSwiftly.RequestEvent, Error> { continuation in
-            continuation.yield(.completed(SpeakSwiftly.Success(id: requestID, generationJobs: jobs)))
+            continuation.yield(.completed(SpeakSwiftly.Success(id: requestID, generationJobs: jobs, activeRequests: nil)))
             continuation.finish()
         }
         return RuntimeRequestHandle(id: requestID, operation: "list_generation_jobs", profileName: nil, events: events)
@@ -479,7 +479,7 @@ actor MockRuntime: ServerRuntimeProtocol {
         )
         let expiredJob = generationJobs[index]
         let events = AsyncThrowingStream<SpeakSwiftly.RequestEvent, Error> { continuation in
-            continuation.yield(.completed(SpeakSwiftly.Success(id: requestID, generationJob: expiredJob)))
+            continuation.yield(.completed(SpeakSwiftly.Success(id: requestID, generationJob: expiredJob, activeRequests: nil)))
             continuation.finish()
         }
         return RuntimeRequestHandle(id: requestID, operation: "expire_generation_job", profileName: nil, events: events)
@@ -489,7 +489,7 @@ actor MockRuntime: ServerRuntimeProtocol {
         let requestID = UUID().uuidString
         let file = generatedFiles.first { $0.artifactID == artifactID }
         let events = AsyncThrowingStream<SpeakSwiftly.RequestEvent, Error> { continuation in
-            continuation.yield(.completed(SpeakSwiftly.Success(id: requestID, generatedFile: file)))
+            continuation.yield(.completed(SpeakSwiftly.Success(id: requestID, generatedFile: file, activeRequests: nil)))
             continuation.finish()
         }
         return RuntimeRequestHandle(id: requestID, operation: "get_generated_file", profileName: nil, events: events)
@@ -499,7 +499,7 @@ actor MockRuntime: ServerRuntimeProtocol {
         let requestID = UUID().uuidString
         let files = generatedFiles
         let events = AsyncThrowingStream<SpeakSwiftly.RequestEvent, Error> { continuation in
-            continuation.yield(.completed(SpeakSwiftly.Success(id: requestID, generatedFiles: files)))
+            continuation.yield(.completed(SpeakSwiftly.Success(id: requestID, generatedFiles: files, activeRequests: nil)))
             continuation.finish()
         }
         return RuntimeRequestHandle(id: requestID, operation: "list_generated_files", profileName: nil, events: events)
@@ -509,7 +509,7 @@ actor MockRuntime: ServerRuntimeProtocol {
         let requestID = UUID().uuidString
         let batch = generatedBatches.first { $0.batchID == batchID }
         let events = AsyncThrowingStream<SpeakSwiftly.RequestEvent, Error> { continuation in
-            continuation.yield(.completed(SpeakSwiftly.Success(id: requestID, generatedBatch: batch)))
+            continuation.yield(.completed(SpeakSwiftly.Success(id: requestID, generatedBatch: batch, activeRequests: nil)))
             continuation.finish()
         }
         return RuntimeRequestHandle(id: requestID, operation: "get_generated_batch", profileName: nil, events: events)
@@ -519,7 +519,7 @@ actor MockRuntime: ServerRuntimeProtocol {
         let requestID = UUID().uuidString
         let batches = generatedBatches
         let events = AsyncThrowingStream<SpeakSwiftly.RequestEvent, Error> { continuation in
-            continuation.yield(.completed(SpeakSwiftly.Success(id: requestID, generatedBatches: batches)))
+            continuation.yield(.completed(SpeakSwiftly.Success(id: requestID, generatedBatches: batches, activeRequests: nil)))
             continuation.finish()
         }
         return RuntimeRequestHandle(id: requestID, operation: "list_generated_batches", profileName: nil, events: events)
@@ -529,7 +529,7 @@ actor MockRuntime: ServerRuntimeProtocol {
         let requestID = UUID().uuidString
         let status = SpeakSwiftly.StatusEvent(stage: .residentModelReady, residentState: .ready, speechBackend: .qwen3)
         let events = AsyncThrowingStream<SpeakSwiftly.RequestEvent, Error> { continuation in
-            continuation.yield(.completed(SpeakSwiftly.Success(id: requestID, status: status)))
+            continuation.yield(.completed(SpeakSwiftly.Success(id: requestID, activeRequests: nil, status: status)))
             continuation.finish()
         }
         return RuntimeRequestHandle(id: requestID, operation: "get_runtime_status", profileName: nil, events: events)
@@ -538,7 +538,7 @@ actor MockRuntime: ServerRuntimeProtocol {
     func switchSpeechBackend(to speechBackend: SpeakSwiftly.SpeechBackend) async -> RuntimeRequestHandle {
         let requestID = UUID().uuidString
         let events = AsyncThrowingStream<SpeakSwiftly.RequestEvent, Error> { continuation in
-            continuation.yield(.completed(SpeakSwiftly.Success(id: requestID, speechBackend: speechBackend)))
+            continuation.yield(.completed(SpeakSwiftly.Success(id: requestID, activeRequests: nil, speechBackend: speechBackend)))
             continuation.finish()
         }
         return RuntimeRequestHandle(id: requestID, operation: "switch_speech_backend", profileName: nil, events: events)
@@ -548,7 +548,7 @@ actor MockRuntime: ServerRuntimeProtocol {
         let requestID = UUID().uuidString
         let status = SpeakSwiftly.StatusEvent(stage: .residentModelReady, residentState: .ready, speechBackend: .qwen3)
         let events = AsyncThrowingStream<SpeakSwiftly.RequestEvent, Error> { continuation in
-            continuation.yield(.completed(SpeakSwiftly.Success(id: requestID, status: status)))
+            continuation.yield(.completed(SpeakSwiftly.Success(id: requestID, activeRequests: nil, status: status)))
             continuation.finish()
         }
         return RuntimeRequestHandle(id: requestID, operation: "reload_models", profileName: nil, events: events)
@@ -558,7 +558,7 @@ actor MockRuntime: ServerRuntimeProtocol {
         let requestID = UUID().uuidString
         let status = SpeakSwiftly.StatusEvent(stage: .residentModelsUnloaded, residentState: .unloaded, speechBackend: .qwen3)
         let events = AsyncThrowingStream<SpeakSwiftly.RequestEvent, Error> { continuation in
-            continuation.yield(.completed(SpeakSwiftly.Success(id: requestID, status: status)))
+            continuation.yield(.completed(SpeakSwiftly.Success(id: requestID, activeRequests: nil, status: status)))
             continuation.finish()
         }
         return RuntimeRequestHandle(id: requestID, operation: "unload_models", profileName: nil, events: events)
@@ -593,6 +593,7 @@ actor MockRuntime: ServerRuntimeProtocol {
                     SpeakSwiftly.Success(
                         id: requestID,
                         activeRequest: activeRequest,
+                        activeRequests: nil,
                         queue: queue
                     )
                 )
@@ -626,6 +627,7 @@ actor MockRuntime: ServerRuntimeProtocol {
                 .completed(
                     SpeakSwiftly.Success(
                         id: requestID,
+                        activeRequests: nil,
                         playbackState: playbackState
                     )
                 )
@@ -646,7 +648,7 @@ actor MockRuntime: ServerRuntimeProtocol {
             )
         }
         let events = AsyncThrowingStream<SpeakSwiftly.RequestEvent, Error> { continuation in
-            continuation.yield(.completed(SpeakSwiftly.Success(id: requestID, clearedCount: clearedCount)))
+            continuation.yield(.completed(SpeakSwiftly.Success(id: requestID, activeRequests: nil, clearedCount: clearedCount)))
             continuation.finish()
         }
         return RuntimeRequestHandle(id: requestID, operation: "clear_playback_queue", profileName: nil, events: events)
@@ -661,6 +663,7 @@ actor MockRuntime: ServerRuntimeProtocol {
                     .completed(
                         SpeakSwiftly.Success(
                             id: requestID,
+                            activeRequests: nil,
                             cancelledRequestID: cancelledRequestID
                         )
                     )
