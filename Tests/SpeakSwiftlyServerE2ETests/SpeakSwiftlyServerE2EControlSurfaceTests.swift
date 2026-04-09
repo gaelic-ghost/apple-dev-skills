@@ -1,0 +1,652 @@
+import Foundation
+import Testing
+#if canImport(Darwin)
+import Darwin
+#endif
+
+// MARK: - Control Surface End-to-End Tests
+
+extension SpeakSwiftlyServerE2ETests {
+    @Test func httpTextProfileLifecycleCoversStoredActiveEffectiveAndPersistenceFlows() async throws {
+        let sandbox = try ServerE2ESandbox()
+        defer { sandbox.cleanup() }
+
+        let server = try Self.makeServer(
+            port: Self.randomPort(in: 59_700..<59_800),
+            profileRootURL: sandbox.profileRootURL,
+            silentPlayback: true,
+            mcpEnabled: false
+        )
+        try server.start()
+        defer { server.stop() }
+
+        let client = E2EHTTPClient(baseURL: server.baseURL)
+        try await waitUntilWorkerReady(using: client, timeout: Self.e2eTimeout, server: server)
+
+        let initialTextProfiles = try decode(
+            E2ETextProfileListResponse.self,
+            from: try await client.request(path: "/text-profiles", method: "GET").data
+        ).textProfiles
+        #expect(initialTextProfiles.baseProfile.id.isEmpty == false)
+        #expect(initialTextProfiles.activeProfile.id.isEmpty == false)
+
+        let createdStored = try decode(
+            E2ETextProfileResponse.self,
+            from: try await client.request(
+                path: "/text-profiles/stored",
+                method: "POST",
+                jsonBody: [
+                    "id": "http-text-profile",
+                    "name": "HTTP Text Profile",
+                    "replacements": [
+                        Self.replacementJSON(
+                            id: "expand-swift",
+                            text: "SPM",
+                            replacement: "Swift Package Manager",
+                            formats: ["swift_source"]
+                        ),
+                    ],
+                ]
+            ).data
+        ).profile
+        #expect(createdStored.id == "http-text-profile")
+        #expect(createdStored.replacements.count == 1)
+
+        let storedRoute = try decode(
+            E2ETextProfileResponse.self,
+            from: try await client.request(path: "/text-profiles/stored/http-text-profile", method: "GET").data
+        ).profile
+        #expect(storedRoute.id == "http-text-profile")
+
+        let replacedStored = try decode(
+            E2ETextProfileResponse.self,
+            from: try await client.request(
+                path: "/text-profiles/stored/http-text-profile",
+                method: "PUT",
+                jsonBody: [
+                    "profile": [
+                        "id": "http-text-profile",
+                        "name": "HTTP Text Profile Updated",
+                        "replacements": [
+                            Self.replacementJSON(
+                                id: "expand-swift",
+                                text: "SPM",
+                                replacement: "Swift Package Manager",
+                                formats: ["swift_source"]
+                            ),
+                            Self.replacementJSON(
+                                id: "expand-mcp",
+                                text: "MCP",
+                                replacement: "Model Context Protocol"
+                            ),
+                        ],
+                    ],
+                ]
+            ).data
+        ).profile
+        #expect(replacedStored.name == "HTTP Text Profile Updated")
+        #expect(replacedStored.replacements.count == 2)
+
+        let storedWithAddedReplacement = try decode(
+            E2ETextProfileResponse.self,
+            from: try await client.request(
+                path: "/text-profiles/stored/http-text-profile/replacements",
+                method: "POST",
+                jsonBody: [
+                    "replacement": Self.replacementJSON(
+                        id: "expand-tts",
+                        text: "TTS",
+                        replacement: "text to speech"
+                    ),
+                ]
+            ).data
+        ).profile
+        #expect(storedWithAddedReplacement.replacements.contains { $0.id == "expand-tts" })
+
+        let storedWithReplacedReplacement = try decode(
+            E2ETextProfileResponse.self,
+            from: try await client.request(
+                path: "/text-profiles/stored/http-text-profile/replacements/expand-tts",
+                method: "PUT",
+                jsonBody: [
+                    "replacement": Self.replacementJSON(
+                        id: "expand-tts",
+                        text: "TTS",
+                        replacement: "text-to-speech",
+                        phase: "after_built_ins"
+                    ),
+                ]
+            ).data
+        ).profile
+        let replacedTTSRule = storedWithReplacedReplacement.replacements.first { $0.id == "expand-tts" }
+        #expect(replacedTTSRule?.replacement == "text-to-speech")
+        #expect(replacedTTSRule?.phase == "after_built_ins")
+
+        let activeProfile = try decode(
+            E2ETextProfileResponse.self,
+            from: try await client.request(
+                path: "/text-profiles/active",
+                method: "PUT",
+                jsonBody: [
+                    "profile": [
+                        "id": "http-session-profile",
+                        "name": "HTTP Session Profile",
+                        "replacements": [
+                            Self.replacementJSON(
+                                id: "expand-cwd",
+                                text: "cwd",
+                                replacement: "current working directory",
+                                match: "whole_token"
+                            ),
+                        ],
+                    ],
+                ]
+            ).data
+        ).profile
+        #expect(activeProfile.id == "http-session-profile")
+
+        let activeWithAddedReplacement = try decode(
+            E2ETextProfileResponse.self,
+            from: try await client.request(
+                path: "/text-profiles/active/replacements",
+                method: "POST",
+                jsonBody: [
+                    "replacement": Self.replacementJSON(
+                        id: "expand-repo",
+                        text: "repo",
+                        replacement: "repository"
+                    ),
+                ]
+            ).data
+        ).profile
+        #expect(activeWithAddedReplacement.replacements.contains { $0.id == "expand-repo" })
+
+        let activeWithReplacedReplacement = try decode(
+            E2ETextProfileResponse.self,
+            from: try await client.request(
+                path: "/text-profiles/active/replacements/expand-repo",
+                method: "PUT",
+                jsonBody: [
+                    "replacement": Self.replacementJSON(
+                        id: "expand-repo",
+                        text: "repo",
+                        replacement: "source repository",
+                        formats: ["markdown"]
+                    ),
+                ]
+            ).data
+        ).profile
+        #expect(activeWithReplacedReplacement.replacements.contains {
+            $0.id == "expand-repo" && $0.replacement == "source repository"
+        })
+
+        let activeAfterRemoval = try decode(
+            E2ETextProfileResponse.self,
+            from: try await client.request(
+                path: "/text-profiles/active/replacements/expand-repo",
+                method: "DELETE"
+            ).data
+        ).profile
+        #expect(activeAfterRemoval.replacements.contains { $0.id == "expand-repo" } == false)
+
+        let effectiveDefault = try decode(
+            E2ETextProfileResponse.self,
+            from: try await client.request(path: "/text-profiles/effective", method: "GET").data
+        ).profile
+        #expect(effectiveDefault.id == "http-session-profile")
+
+        let effectiveStored = try decode(
+            E2ETextProfileResponse.self,
+            from: try await client.request(path: "/text-profiles/effective/http-text-profile", method: "GET").data
+        ).profile
+        #expect(effectiveStored.id == "http-text-profile")
+
+        let baseProfile = try decode(
+            E2ETextProfileResponse.self,
+            from: try await client.request(path: "/text-profiles/base", method: "GET").data
+        ).profile
+        #expect(baseProfile.id.isEmpty == false)
+
+        let savedSnapshot = try decode(
+            E2ETextProfileListResponse.self,
+            from: try await client.request(path: "/text-profiles/save", method: "POST").data
+        ).textProfiles
+        #expect(savedSnapshot.storedProfiles.contains { $0.id == "http-text-profile" })
+
+        let loadedSnapshot = try decode(
+            E2ETextProfileListResponse.self,
+            from: try await client.request(path: "/text-profiles/load", method: "POST").data
+        ).textProfiles
+        #expect(loadedSnapshot.storedProfiles.contains { $0.id == "http-text-profile" })
+
+        let resetProfile = try decode(
+            E2ETextProfileResponse.self,
+            from: try await client.request(path: "/text-profiles/active/reset", method: "POST").data
+        ).profile
+        #expect(resetProfile.id == initialTextProfiles.activeProfile.id)
+
+        let storedAfterStoredRemoval = try decode(
+            E2ETextProfileResponse.self,
+            from: try await client.request(
+                path: "/text-profiles/stored/http-text-profile/replacements/expand-tts",
+                method: "DELETE"
+            ).data
+        ).profile
+        #expect(storedAfterStoredRemoval.replacements.contains { $0.id == "expand-tts" } == false)
+
+        let finalSnapshot = try decode(
+            E2ETextProfileListResponse.self,
+            from: try await client.request(path: "/text-profiles/stored/http-text-profile", method: "DELETE").data
+        ).textProfiles
+        #expect(finalSnapshot.storedProfiles.contains { $0.id == "http-text-profile" } == false)
+    }
+
+    @Test func mcpCatalogControlResourcesPromptsAndSubscriptionsStayLiveAndAccurate() async throws {
+        let sandbox = try ServerE2ESandbox()
+        defer { sandbox.cleanup() }
+
+        let server = try Self.makeServer(
+            port: Self.randomPort(in: 59_800..<59_900),
+            profileRootURL: sandbox.profileRootURL,
+            silentPlayback: true,
+            mcpEnabled: true
+        )
+        try server.start()
+        defer { server.stop() }
+
+        let client = try await E2EMCPClient.connect(
+            baseURL: server.baseURL,
+            path: "/mcp",
+            timeout: Self.e2eTimeout,
+            server: server
+        )
+        try await waitUntilWorkerReady(using: client, timeout: Self.e2eTimeout, server: server)
+
+        let resources = try await client.listResources()
+        let resourceURIs = Set(resources.compactMap { $0["uri"] as? String })
+        #expect(resourceURIs.contains("speak://runtime/overview"))
+        #expect(resourceURIs.contains("speak://voices"))
+        #expect(resourceURIs.contains("speak://text-profiles"))
+        #expect(resourceURIs.contains("speak://playback/guide"))
+
+        let templates = try await client.listResourceTemplates()
+        let templateURIs = Set(templates.compactMap { $0["uriTemplate"] as? String })
+        #expect(templateURIs.contains("speak://voices/{profile_name}"))
+        #expect(templateURIs.contains("speak://text-profiles/stored/{profile_id}"))
+        #expect(templateURIs.contains("speak://text-profiles/effective/{profile_id}"))
+        #expect(templateURIs.contains("speak://requests/{request_id}"))
+
+        let prompts = try await client.listPrompts()
+        let promptNames = Set(prompts.compactMap { $0["name"] as? String })
+        #expect(promptNames.contains("draft_profile_voice_description"))
+        #expect(promptNames.contains("draft_text_profile"))
+        #expect(promptNames.contains("draft_queue_playback_notice"))
+        #expect(promptNames.contains("choose_surface_action"))
+
+        let voicePrompt = try await client.getPrompt(
+            name: "draft_profile_voice_description",
+            arguments: [
+                "profile_goal": "gentle narration",
+                "voice_traits": "warm, steady, intimate",
+            ]
+        )
+        let voicePromptText = try Self.requirePromptText(in: voicePrompt)
+        #expect(voicePromptText.contains("gentle narration"))
+
+        let chooseSurfacePrompt = try await client.getPrompt(
+            name: "choose_surface_action",
+            arguments: [
+                "user_goal": "Help the user decide whether to clone a voice or create a synthetic profile.",
+                "current_context": "The user has not provided reference audio yet.",
+            ]
+        )
+        let chooseSurfaceText = try Self.requirePromptText(in: chooseSurfacePrompt)
+        #expect(chooseSurfaceText.contains("action_type"))
+        #expect(chooseSurfaceText.contains("create_voice_profile_from_description"))
+
+        let statusPayload = try Self.requireObjectPayload(
+            from: try await client.callToolJSON(name: "get_runtime_overview", arguments: [:])
+        )
+        #expect(statusPayload["worker_mode"] as? String == "ready")
+
+        let runtimePayload = try Self.requireObjectPayload(from: try await client.readResourceJSON(uri: "speak://runtime/overview"))
+        let runtimeTransports = try requireArray("transports", in: runtimePayload)
+        #expect(runtimeTransports.contains {
+            $0["name"] as? String == "mcp" && ($0["advertised_address"] as? String)?.contains("/mcp") == true
+        })
+
+        let textGuide = try await client.readResourceText(uri: "speak://text-profiles/guide")
+        #expect(textGuide.contains("text_profile_name"))
+        let voiceGuide = try await client.readResourceText(uri: "speak://voices/guide")
+        #expect(voiceGuide.contains("create_voice_profile_from_audio"))
+        let playbackGuide = try await client.readResourceText(uri: "speak://playback/guide")
+        #expect(playbackGuide.contains("clear_playback_queue"))
+
+        let eventStream = client.openEventStream()
+        try await eventStream.start()
+        defer { eventStream.stop() }
+
+        try await client.subscribe(to: "speak://text-profiles")
+        try await client.subscribe(to: "speak://voices")
+
+        _ = try await client.callTool(
+            name: "create_text_profile",
+            arguments: [
+                "id": "mcp-text-profile",
+                "name": "MCP Text Profile",
+                "replacements": [
+                    Self.replacementJSON(
+                        id: "expand-json",
+                        text: "json",
+                        replacement: "JSON",
+                        match: "whole_token"
+                    ),
+                ],
+            ]
+        )
+
+        let textProfileNotification: [String: Any]
+        do {
+            textProfileNotification = try await eventStream.waitForNotification(timeout: Duration.seconds(60)) {
+                guard $0["method"] as? String == "notifications/resources/updated" else {
+                    return false
+                }
+                guard let params = $0["params"] as? [String: Any] else {
+                    return false
+                }
+                return params["uri"] as? String == "speak://text-profiles"
+            }
+        } catch {
+            let textProfilesResource = try? await client.readResourceText(uri: "speak://text-profiles")
+            throw E2ETransportError(
+                """
+                The live MCP suite timed out while waiting for a text-profile resource update notification after `create_text_profile`.
+                Underlying error: \(error)
+
+                Current `speak://text-profiles` resource:
+                \(textProfilesResource ?? "unavailable")
+
+                Server stdout/stderr:
+                \(server.combinedOutput)
+                """
+            )
+        }
+        let textProfileNotificationParams = try requireDictionary("params", in: textProfileNotification)
+        #expect(textProfileNotificationParams["uri"] as? String == "speak://text-profiles")
+
+        let storedTextProfilesPayload = try Self.requireObjectPayload(
+            from: try await client.readResourceJSON(uri: "speak://text-profiles")
+        )
+        let storedProfiles = try requireArray("stored_profiles", in: storedTextProfilesPayload)
+        #expect(storedProfiles.contains { $0["id"] as? String == "mcp-text-profile" })
+
+        _ = try await client.callTool(
+            name: "store_text_profile",
+            arguments: [
+                "profile": [
+                    "id": "mcp-text-profile",
+                    "name": "MCP Text Profile Updated",
+                    "replacements": [
+                        Self.replacementJSON(
+                            id: "expand-json",
+                            text: "json",
+                            replacement: "JavaScript Object Notation",
+                            formats: ["markdown"]
+                        ),
+                    ],
+                ],
+            ]
+        )
+
+        _ = try await client.callTool(
+            name: "use_text_profile",
+            arguments: [
+                "profile": [
+                    "id": "mcp-session-profile",
+                    "name": "MCP Session Profile",
+                    "replacements": [
+                        Self.replacementJSON(
+                            id: "expand-cli",
+                            text: "CLI",
+                            replacement: "command line interface"
+                        ),
+                    ],
+                ],
+            ]
+        )
+
+        _ = try await client.callTool(
+            name: "add_text_replacement",
+            arguments: [
+                "replacement": Self.replacementJSON(
+                    id: "expand-rpc",
+                    text: "RPC",
+                    replacement: "remote procedure call"
+                ),
+            ]
+        )
+        _ = try await client.callTool(
+            name: "replace_text_replacement",
+            arguments: [
+                "replacement": Self.replacementJSON(
+                    id: "expand-rpc",
+                    text: "RPC",
+                    replacement: "Remote Procedure Call",
+                    phase: "after_built_ins"
+                ),
+            ]
+        )
+        _ = try await client.callTool(
+            name: "remove_text_replacement",
+            arguments: [
+                "replacement_id": "expand-rpc",
+            ]
+        )
+        _ = try await client.callTool(
+            name: "add_text_replacement",
+            arguments: [
+                "profile_id": "mcp-text-profile",
+                "replacement": Self.replacementJSON(
+                    id: "expand-ui",
+                    text: "UI",
+                    replacement: "user interface"
+                ),
+            ]
+        )
+        _ = try await client.callTool(
+            name: "replace_text_replacement",
+            arguments: [
+                "profile_id": "mcp-text-profile",
+                "replacement": Self.replacementJSON(
+                    id: "expand-ui",
+                    text: "UI",
+                    replacement: "User Interface"
+                ),
+            ]
+        )
+        _ = try await client.callTool(
+            name: "remove_text_replacement",
+            arguments: [
+                "profile_id": "mcp-text-profile",
+                "replacement_id": "expand-ui",
+            ]
+        )
+
+        let savedTextProfiles = try Self.requireObjectPayload(
+            from: try await client.callToolJSON(name: "save_text_profiles", arguments: [:])
+        )
+        let savedStoredProfiles = try requireArray("stored_profiles", in: savedTextProfiles)
+        #expect(savedStoredProfiles.contains { $0["id"] as? String == "mcp-text-profile" })
+
+        let loadedTextProfiles = try Self.requireObjectPayload(
+            from: try await client.callToolJSON(name: "load_text_profiles", arguments: [:])
+        )
+        let loadedStoredProfiles = try requireArray("stored_profiles", in: loadedTextProfiles)
+        #expect(loadedStoredProfiles.contains { $0["id"] as? String == "mcp-text-profile" })
+
+        let effectiveStoredProfile = try Self.requireObjectPayload(
+            from: try await client.readResourceJSON(uri: "speak://text-profiles/effective/mcp-text-profile")
+        )
+        #expect(effectiveStoredProfile["id"] as? String == "mcp-text-profile")
+
+        let storedProfileDetail = try Self.requireObjectPayload(
+            from: try await client.readResourceJSON(uri: "speak://text-profiles/stored/mcp-text-profile")
+        )
+        #expect(storedProfileDetail["id"] as? String == "mcp-text-profile")
+
+        let createdProfileName = "mcp-control-profile"
+        let createProfilePayload = try await client.callTool(
+            name: "create_voice_profile_from_description",
+            arguments: [
+                "profile_name": createdProfileName,
+                "vibe": "femme",
+                "text": Self.testingProfileText,
+                "voice_description": Self.testingProfileVoiceDescription,
+            ]
+        )
+        let createProfileJobID = try requireString("request_id", in: createProfilePayload)
+        _ = try await waitForTerminalJob(
+            id: createProfileJobID,
+            using: client,
+            timeout: Self.e2eTimeout,
+            server: server
+        )
+
+        let profileNotification = try await eventStream.waitForNotification(timeout: Duration.seconds(60)) {
+            guard $0["method"] as? String == "notifications/resources/updated" else {
+                return false
+            }
+            guard let params = $0["params"] as? [String: Any] else {
+                return false
+            }
+            return params["uri"] as? String == "speak://voices"
+        }
+        let profileNotificationParams = try requireDictionary("params", in: profileNotification)
+        #expect(profileNotificationParams["uri"] as? String == "speak://voices")
+
+        let profilesPayload = try requireProfiles(from: try await client.callToolJSON(name: "list_voice_profiles", arguments: [:]))
+        #expect(profilesPayload.contains { $0.profileName == createdProfileName })
+
+        let profileDetail = try Self.requireObjectPayload(
+            from: try await client.readResourceJSON(uri: "speak://voices/\(createdProfileName)")
+        )
+        #expect(profileDetail["profile_name"] as? String == createdProfileName)
+
+        let firstSpeechJobID = try requireString(
+            "request_id",
+            in: try await client.callTool(
+                name: "queue_speech_live",
+                arguments: [
+                    "text": String(repeating: Self.testingPlaybackText + " ", count: 12),
+                    "profile_name": createdProfileName,
+                ]
+            )
+        )
+        _ = try await Self.waitForMCPPlaybackState(
+            using: client,
+            timeout: .seconds(180),
+            matching: { $0.state == "playing" && $0.activeRequest?.id == firstSpeechJobID }
+        )
+        let pausedPayload = try Self.requireObjectPayload(from: try await client.callToolJSON(name: "pause_playback", arguments: [:]))
+        let pausedPlayback = try requireDictionary("playback", in: pausedPayload)
+        #expect(pausedPlayback["state"] as? String == "paused")
+        let resumedPayload = try Self.requireObjectPayload(from: try await client.callToolJSON(name: "resume_playback", arguments: [:]))
+        let resumedPlayback = try requireDictionary("playback", in: resumedPayload)
+        #expect(resumedPlayback["state"] as? String == "playing")
+
+        let secondSpeechJobID = try requireString(
+            "request_id",
+            in: try await client.callTool(
+                name: "queue_speech_live",
+                arguments: [
+                    "text": String(repeating: Self.testingPlaybackText + " ", count: 12),
+                    "profile_name": createdProfileName,
+                ]
+            )
+        )
+        _ = try await Self.waitForMCPGenerationQueue(
+            using: client,
+            timeout: .seconds(180),
+            matching: { queue in queue.queue.contains { $0.id == secondSpeechJobID } }
+        )
+        let cancelledPayload = try Self.requireObjectPayload(
+            from: try await client.callToolJSON(
+                name: "cancel_request",
+                arguments: ["request_id": secondSpeechJobID]
+            )
+        )
+        #expect(cancelledPayload["cancelled_request_id"] as? String == secondSpeechJobID)
+
+        let thirdSpeechJobID = try requireString(
+            "request_id",
+            in: try await client.callTool(
+                name: "queue_speech_live",
+                arguments: [
+                    "text": String(repeating: Self.testingPlaybackText + " ", count: 12),
+                    "profile_name": createdProfileName,
+                ]
+            )
+        )
+        let fourthSpeechJobID = try requireString(
+            "request_id",
+            in: try await client.callTool(
+                name: "queue_speech_live",
+                arguments: [
+                    "text": String(repeating: Self.testingPlaybackText + " ", count: 12),
+                    "profile_name": createdProfileName,
+                ]
+            )
+        )
+        _ = try await Self.waitForMCPGenerationQueue(
+            using: client,
+            timeout: .seconds(180),
+            matching: { queue in
+                let ids = Set(queue.queue.map(\.id))
+                return ids.contains(thirdSpeechJobID) && ids.contains(fourthSpeechJobID)
+            }
+        )
+        let clearedPayload = try Self.requireObjectPayload(from: try await client.callToolJSON(name: "clear_playback_queue", arguments: [:]))
+        #expect((clearedPayload["cleared_count"] as? Int) ?? 0 >= 2)
+
+        _ = try await waitForTerminalJob(
+            id: firstSpeechJobID,
+            using: client,
+            timeout: Self.e2eTimeout,
+            server: server
+        )
+        let jobsResourcePayload = try Self.requireArrayPayload(from: try await client.readResourceJSON(uri: "speak://requests"))
+        #expect(jobsResourcePayload.contains { $0["request_id"] as? String == firstSpeechJobID })
+
+        let removeProfilePayload = try await client.callTool(
+            name: "delete_voice_profile",
+            arguments: ["profile_name": createdProfileName]
+        )
+        let removeProfileJobID = try requireString("request_id", in: removeProfilePayload)
+        _ = try await waitForTerminalJob(
+            id: removeProfileJobID,
+            using: client,
+            timeout: Self.e2eTimeout,
+            server: server
+        )
+        let remainingProfiles = try requireProfiles(from: try await client.callToolJSON(name: "list_voice_profiles", arguments: [:]))
+        #expect(remainingProfiles.contains { $0.profileName == createdProfileName } == false)
+
+        _ = try await client.callToolJSON(name: "reset_active_text_profile", arguments: [:])
+        _ = try await client.callToolJSON(
+            name: "delete_text_profile",
+            arguments: ["profile_id": "mcp-text-profile"]
+        )
+        let finalTextProfiles = try Self.requireObjectPayload(
+            from: try await client.callToolJSON(name: "get_text_profiles_state", arguments: [:])
+        )
+        let finalStoredProfiles = try requireArray("stored_profiles", in: finalTextProfiles)
+        #expect(finalStoredProfiles.contains { $0["id"] as? String == "mcp-text-profile" } == false)
+
+        try await client.unsubscribe(from: "speak://text-profiles")
+        try await client.unsubscribe(from: "speak://voices")
+    }
+
+    // MARK: Lane Workflows
+
+
+}
