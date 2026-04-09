@@ -550,28 +550,17 @@ final class E2EMCPEventStream: @unchecked Sendable {
                 }
                 await connectionState.markConnected()
 
-                var dataLines = [String]()
                 for try await line in bytes.lines {
                     if Task.isCancelled {
                         return
                     }
 
-                    if line.isEmpty {
-                        if dataLines.isEmpty == false {
-                            let payload = dataLines.joined(separator: "\n")
-                            dataLines.removeAll(keepingCapacity: true)
-                            guard payload.isEmpty == false else {
-                                continue
-                            }
-                            if let data = payload.data(using: .utf8) {
-                                await buffer.append(data)
-                            }
-                        }
-                        continue
-                    }
-
                     if line.hasPrefix("data: ") {
-                        dataLines.append(String(line.dropFirst(6)))
+                        let payload = String(line.dropFirst(6))
+                        guard payload.isEmpty == false, let data = payload.data(using: .utf8) else {
+                            continue
+                        }
+                        await buffer.append(data)
                     }
                 }
             } catch is CancellationError {
@@ -598,18 +587,26 @@ final class E2EMCPEventStream: @unchecked Sendable {
         timeout: Duration,
         matching predicate: @escaping @Sendable ([String: Any]) -> Bool
     ) async throws -> [String: Any] {
-        try await e2eWaitUntil(timeout: timeout, pollInterval: .milliseconds(100)) {
-            guard let data = try await self.buffer.takeMatching(predicate) else {
-                return nil
+        let deadline = ContinuousClock.now + timeout
+        while ContinuousClock.now < deadline {
+            if let data = try await self.buffer.takeMatching(predicate) {
+                let json = try JSONSerialization.jsonObject(with: data)
+                guard let object = json as? [String: Any] else {
+                    throw E2ETransportError(
+                        "The live MCP event stream produced a notification payload that was not a JSON object."
+                    )
+                }
+                return object
             }
-            let json = try JSONSerialization.jsonObject(with: data)
-            guard let object = json as? [String: Any] else {
-                throw E2ETransportError(
-                    "The live MCP event stream produced a notification payload that was not a JSON object."
-                )
-            }
-            return object
+            try await Task.sleep(for: .milliseconds(100))
         }
+        let observedPayloads = await self.buffer.recentPayloads(limit: 12)
+        let preview = observedPayloads.isEmpty
+            ? "none"
+            : observedPayloads.joined(separator: "\n")
+        throw E2ETransportError(
+            "The live MCP event stream timed out after waiting \(timeout) for a matching notification. The GET SSE stream stayed connected, but no matching notification arrived. Recent raw notification payloads seen before timeout:\n\(preview)"
+        )
     }
 }
 
@@ -636,9 +633,15 @@ private actor E2EMCPEventStreamConnectionState {
 private actor E2ENotificationBuffer {
     private var notifications = [Data]()
     private var terminalError: Error?
+    private var payloadHistory = [String]()
+    private static let payloadHistoryLimit = 48
 
     func append(_ notification: Data) {
         notifications.append(notification)
+        payloadHistory.append(String(decoding: notification, as: UTF8.self))
+        if payloadHistory.count > Self.payloadHistoryLimit {
+            payloadHistory.removeFirst(payloadHistory.count - Self.payloadHistoryLimit)
+        }
     }
 
     func finish(with error: Error) {
@@ -660,6 +663,10 @@ private actor E2ENotificationBuffer {
             }
         }
         return nil
+    }
+
+    func recentPayloads(limit: Int) -> [String] {
+        Array(payloadHistory.suffix(limit))
     }
 }
 

@@ -76,14 +76,16 @@ actor ServerHost {
         activeCount: 0,
         queuedCount: 0,
         activeRequest: nil,
-        activeRequests: []
+        activeRequests: [],
+        queuedRequests: []
     )
     private var playbackQueueStatus = QueueStatusSnapshot(
         queueType: "playback",
         activeCount: 0,
         queuedCount: 0,
         activeRequest: nil,
-        activeRequests: []
+        activeRequests: [],
+        queuedRequests: []
     )
     private var playbackStatus = PlaybackStatusSnapshot(
         state: SpeakSwiftly.PlaybackState.idle.rawValue,
@@ -828,23 +830,14 @@ actor ServerHost {
 
     // MARK: - Immediate Control Operations
 
-    func generationQueueSnapshot() async throws -> QueueSnapshotResponse {
-        let handle = await runtime.generationQueue()
-        let success = try await awaitImmediateSuccess(
-            handle: handle,
-            missingTerminalMessage: "SpeakSwiftly finished the '\(handle.operation)' control request without yielding a terminal success payload.",
-            unexpectedFailureMessagePrefix: "SpeakSwiftly failed while processing the '\(handle.operation)' control request."
-        )
-        return .init(
-            queueType: "generation",
-            activeRequest: success.activeRequest.map(ActiveRequestSnapshot.init(summary:)),
-            activeRequests: queueActiveRequestSnapshots(from: success),
-            queue: success.queue?.map(QueuedRequestSnapshot.init(summary:)) ?? []
-        )
+    func generationQueueSnapshot() async -> QueueSnapshotResponse {
+        await refreshRuntimeDerivedStateIfNeeded()
+        return queueSnapshotResponse(from: generationQueueStatus)
     }
 
-    func playbackStateSnapshot() async throws -> PlaybackStateResponse {
-        try await playbackStateResponse(handle: await runtime.playbackState(), requestName: "playback-state")
+    func playbackStateSnapshot() async -> PlaybackStateResponse {
+        await refreshRuntimeDerivedStateIfNeeded()
+        return .init(playback: .init(status: playbackStatus))
     }
 
     func pausePlayback() async throws -> PlaybackStateResponse {
@@ -855,19 +848,9 @@ actor ServerHost {
         try await playbackStateResponse(handle: await runtime.resumePlayback(), requestName: "resume-playback")
     }
 
-    func playbackQueueSnapshot() async throws -> QueueSnapshotResponse {
-        let handle = await runtime.playbackQueue()
-        let success = try await awaitImmediateSuccess(
-            handle: handle,
-            missingTerminalMessage: "SpeakSwiftly finished the '\(handle.operation)' control request without yielding a terminal success payload.",
-            unexpectedFailureMessagePrefix: "SpeakSwiftly failed while processing the '\(handle.operation)' control request."
-        )
-        return .init(
-            queueType: "playback",
-            activeRequest: success.activeRequest.map(ActiveRequestSnapshot.init(summary:)),
-            activeRequests: queueActiveRequestSnapshots(from: success),
-            queue: success.queue?.map(QueuedRequestSnapshot.init(summary:)) ?? []
-        )
+    func playbackQueueSnapshot() async -> QueueSnapshotResponse {
+        await refreshRuntimeDerivedStateIfNeeded()
+        return queueSnapshotResponse(from: playbackQueueStatus)
     }
 
     func clearQueue() async throws -> QueueClearedResponse {
@@ -1412,6 +1395,14 @@ actor ServerHost {
         }
     }
 
+    private func refreshRuntimeDerivedStateIfNeeded() async {
+        guard pendingRuntimeRefresh else {
+            return
+        }
+        pendingRuntimeRefresh = false
+        await refreshRuntimeDerivedState()
+    }
+
     private func applyFallbackRuntimeDerivedState(
         sequenceID: Int,
         startedAt: Date,
@@ -1594,7 +1585,8 @@ actor ServerHost {
             },
             activeRequests: activeJobs.map {
                 .init(id: $0.jobID, op: $0.op, profileName: $0.profileName)
-            }
+            },
+            queuedRequests: queuedGenerationRequestSnapshots()
         )
     }
 
@@ -1608,7 +1600,8 @@ actor ServerHost {
             activeCount: activeRequests.count,
             queuedCount: max(liveJobs.count - (hasPlaybackWork ? 1 : 0), 0),
             activeRequest: activeRequest,
-            activeRequests: activeRequests
+            activeRequests: activeRequests,
+            queuedRequests: queuedPlaybackRequestSnapshots()
         )
     }
 
@@ -1860,7 +1853,57 @@ actor ServerHost {
             activeCount: activeRequests.count,
             queuedCount: summary.queue.count,
             activeRequest: activeRequests.first,
-            activeRequests: activeRequests
+            activeRequests: activeRequests,
+            queuedRequests: summary.queue.map(QueuedRequestSnapshot.init(summary:))
+        )
+    }
+
+    private func queuedGenerationRequestSnapshots() -> [QueuedRequestSnapshot] {
+        fallbackGenerationJobRecords()
+            .filter {
+                guard case .queued = latestOperationalEvent(for: $0) else {
+                    return false
+                }
+                return true
+            }
+            .enumerated()
+            .map { index, job in
+                .init(
+                    id: job.jobID,
+                    op: job.op,
+                    profileName: job.profileName,
+                    queuePosition: index + 1
+                )
+            }
+    }
+
+    private func queuedPlaybackRequestSnapshots() -> [QueuedRequestSnapshot] {
+        let activePlaybackID = inferredPlaybackActiveRequest()?.id
+        return currentLiveSpeechJobs()
+            .filter { $0.jobID != activePlaybackID }
+            .filter {
+                guard case .queued = latestOperationalEvent(for: $0) else {
+                    return false
+                }
+                return true
+            }
+            .enumerated()
+            .map { index, job in
+                .init(
+                    id: job.jobID,
+                    op: job.op,
+                    profileName: job.profileName,
+                    queuePosition: index + 1
+                )
+            }
+    }
+
+    private func queueSnapshotResponse(from snapshot: QueueStatusSnapshot) -> QueueSnapshotResponse {
+        .init(
+            queueType: snapshot.queueType,
+            activeRequest: snapshot.activeRequest,
+            activeRequests: snapshot.activeRequests,
+            queue: snapshot.queuedRequests
         )
     }
 

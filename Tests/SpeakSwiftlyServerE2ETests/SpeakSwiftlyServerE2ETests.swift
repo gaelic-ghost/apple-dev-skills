@@ -246,6 +246,189 @@ struct SpeakSwiftlyServerE2ETests {
         try await Self.assertProfileIsNotVisible(using: client, profileName: profileName)
     }
 
+    @Test func mcpOperatorControlSurfaceCoversPlaybackAndQueueMutationsWithoutCatalogSubscriptions() async throws {
+        let sandbox = try ServerE2ESandbox()
+        defer { sandbox.cleanup() }
+
+        let server = try Self.makeServer(
+            port: Self.randomPort(in: 59_600..<59_700),
+            profileRootURL: sandbox.profileRootURL,
+            silentPlayback: true,
+            mcpEnabled: true
+        )
+        try server.start()
+        defer { server.stop() }
+
+        let client = try await E2EMCPClient.connect(
+            baseURL: server.baseURL,
+            path: "/mcp",
+            timeout: Self.e2eTimeout,
+            server: server
+        )
+        try await waitUntilWorkerReady(using: client, timeout: Self.e2eTimeout, server: server)
+
+        let runtimeOverview = try Self.requireObjectPayload(
+            from: try await client.callToolJSON(name: "get_runtime_overview", arguments: [:])
+        )
+        #expect(runtimeOverview["worker_mode"] as? String == "ready")
+
+        let profileName = "mcp-operator-control-profile"
+        try await Self.createVoiceDesignProfile(
+            using: client,
+            server: server,
+            profileName: profileName,
+            text: Self.testingProfileText,
+            voiceDescription: Self.testingProfileVoiceDescription
+        )
+        try await Self.assertProfileIsVisible(using: client, profileName: profileName)
+
+        let longPlaybackText = String(repeating: Self.testingPlaybackText + " ", count: 12)
+        let firstJobID = try requireString(
+            "request_id",
+            in: try await client.callTool(
+                name: "queue_speech_live",
+                arguments: [
+                    "text": longPlaybackText,
+                    "profile_name": profileName,
+                ]
+            )
+        )
+
+        let playingState = try await Self.waitForMCPPlaybackState(
+            using: client,
+            timeout: .seconds(180),
+            matching: { $0.state == "playing" && $0.activeRequest?.id == firstJobID }
+        )
+        #expect(playingState.activeRequest?.op == "queue_speech_live")
+
+        let pausedPayload = try Self.requireObjectPayload(
+            from: try await client.callToolJSON(name: "pause_playback", arguments: [:])
+        )
+        let pausedPlayback = try requireDictionary("playback", in: pausedPayload)
+        #expect(pausedPlayback["state"] as? String == "paused")
+
+        let resumedPayload = try Self.requireObjectPayload(
+            from: try await client.callToolJSON(name: "resume_playback", arguments: [:])
+        )
+        let resumedPlayback = try requireDictionary("playback", in: resumedPayload)
+        #expect(resumedPlayback["state"] as? String == "playing")
+
+        let secondJobID = try requireString(
+            "request_id",
+            in: try await client.callTool(
+                name: "queue_speech_live",
+                arguments: [
+                    "text": longPlaybackText,
+                    "profile_name": profileName,
+                ]
+            )
+        )
+        let queuedSecond = try await Self.waitForMCPGenerationQueue(
+            using: client,
+            timeout: .seconds(180),
+            matching: { queue in
+                queue.queue.contains { $0.id == secondJobID }
+            }
+        )
+        #expect(queuedSecond.queueType == "generation")
+        #expect(queuedSecond.queue.contains { $0.id == secondJobID })
+
+        let cancelledPayload = try Self.requireObjectPayload(
+            from: try await client.callToolJSON(
+                name: "cancel_request",
+                arguments: ["request_id": secondJobID]
+            )
+        )
+        #expect(cancelledPayload["cancelled_request_id"] as? String == secondJobID)
+
+        let secondTerminal = try await waitForTerminalJob(
+            id: secondJobID,
+            using: client,
+            timeout: Self.e2eTimeout,
+            server: server
+        )
+        #expect(secondTerminal.terminalEvent?.cancelledRequestID == secondJobID)
+
+        let thirdJobID = try requireString(
+            "request_id",
+            in: try await client.callTool(
+                name: "queue_speech_live",
+                arguments: [
+                    "text": longPlaybackText,
+                    "profile_name": profileName,
+                ]
+            )
+        )
+        let fourthJobID = try requireString(
+            "request_id",
+            in: try await client.callTool(
+                name: "queue_speech_live",
+                arguments: [
+                    "text": longPlaybackText,
+                    "profile_name": profileName,
+                ]
+            )
+        )
+        _ = try await Self.waitForMCPGenerationQueue(
+            using: client,
+            timeout: .seconds(180),
+            matching: { queue in
+                let ids = Set(queue.queue.map(\.id))
+                return ids.contains(thirdJobID) && ids.contains(fourthJobID)
+            }
+        )
+
+        let clearedPayload = try Self.requireObjectPayload(
+            from: try await client.callToolJSON(name: "clear_playback_queue", arguments: [:])
+        )
+        #expect((clearedPayload["cleared_count"] as? Int) ?? 0 >= 2)
+
+        _ = try await Self.waitForMCPGenerationQueue(
+            using: client,
+            timeout: .seconds(180),
+            matching: { $0.queue.isEmpty }
+        )
+
+        let thirdTerminal = try await waitForTerminalJob(
+            id: thirdJobID,
+            using: client,
+            timeout: Self.e2eTimeout,
+            server: server
+        )
+        let fourthTerminal = try await waitForTerminalJob(
+            id: fourthJobID,
+            using: client,
+            timeout: Self.e2eTimeout,
+            server: server
+        )
+        #expect(thirdTerminal.terminalEvent?.cancelledRequestID == thirdJobID)
+        #expect(fourthTerminal.terminalEvent?.cancelledRequestID == fourthJobID)
+
+        let firstTerminal = try await waitForTerminalJob(
+            id: firstJobID,
+            using: client,
+            timeout: Self.e2eTimeout,
+            server: server
+        )
+        Self.assertSpeechJobCompleted(firstTerminal, expectedJobID: firstJobID)
+        #expect(firstTerminal.history.contains { $0.event == "progress" && $0.stage == "playback_finished" })
+
+        let removeProfilePayload = try await client.callTool(
+            name: "delete_voice_profile",
+            arguments: ["profile_name": profileName]
+        )
+        let removeProfileJobID = try requireString("request_id", in: removeProfilePayload)
+        let removeSnapshot = try await waitForTerminalJob(
+            id: removeProfileJobID,
+            using: client,
+            timeout: Self.e2eTimeout,
+            server: server
+        )
+        #expect(removeSnapshot.status == "completed")
+        let remainingProfiles = try requireProfiles(from: try await client.callToolJSON(name: "list_voice_profiles", arguments: [:]))
+        #expect(remainingProfiles.contains { $0.profileName == profileName } == false)
+    }
+
     @Test func httpTextProfileLifecycleCoversStoredActiveEffectiveAndPersistenceFlows() async throws {
         let sandbox = try ServerE2ESandbox()
         defer { sandbox.cleanup() }
@@ -487,7 +670,7 @@ struct SpeakSwiftlyServerE2ETests {
         let server = try Self.makeServer(
             port: Self.randomPort(in: 59_800..<59_900),
             profileRootURL: sandbox.profileRootURL,
-            silentPlayback: false,
+            silentPlayback: true,
             mcpEnabled: true
         )
         try server.start()
@@ -584,14 +767,31 @@ struct SpeakSwiftlyServerE2ETests {
             ]
         )
 
-        let textProfileNotification = try await eventStream.waitForNotification(timeout: Duration.seconds(60)) {
-            guard $0["method"] as? String == "notifications/resources/updated" else {
-                return false
+        let textProfileNotification: [String: Any]
+        do {
+            textProfileNotification = try await eventStream.waitForNotification(timeout: Duration.seconds(60)) {
+                guard $0["method"] as? String == "notifications/resources/updated" else {
+                    return false
+                }
+                guard let params = $0["params"] as? [String: Any] else {
+                    return false
+                }
+                return params["uri"] as? String == "speak://text-profiles"
             }
-            guard let params = $0["params"] as? [String: Any] else {
-                return false
-            }
-            return params["uri"] as? String == "speak://text-profiles"
+        } catch {
+            let textProfilesResource = try? await client.readResourceText(uri: "speak://text-profiles")
+            throw E2ETransportError(
+                """
+                The live MCP suite timed out while waiting for a text-profile resource update notification after `create_text_profile`.
+                Underlying error: \(error)
+
+                Current `speak://text-profiles` resource:
+                \(textProfilesResource ?? "unavailable")
+
+                Server stdout/stderr:
+                \(server.combinedOutput)
+                """
+            )
         }
         let textProfileNotificationParams = try requireDictionary("params", in: textProfileNotification)
         #expect(textProfileNotificationParams["uri"] as? String == "speak://text-profiles")
@@ -770,9 +970,11 @@ struct SpeakSwiftlyServerE2ETests {
             matching: { $0.state == "playing" && $0.activeRequest?.id == firstSpeechJobID }
         )
         let pausedPayload = try Self.requireObjectPayload(from: try await client.callToolJSON(name: "pause_playback", arguments: [:]))
-        #expect(pausedPayload["state"] as? String == "paused")
+        let pausedPlayback = try requireDictionary("playback", in: pausedPayload)
+        #expect(pausedPlayback["state"] as? String == "paused")
         let resumedPayload = try Self.requireObjectPayload(from: try await client.callToolJSON(name: "resume_playback", arguments: [:]))
-        #expect(resumedPayload["state"] as? String == "playing")
+        let resumedPlayback = try requireDictionary("playback", in: resumedPayload)
+        #expect(resumedPlayback["state"] as? String == "playing")
 
         let secondSpeechJobID = try requireString(
             "request_id",
@@ -2182,7 +2384,7 @@ struct SpeakSwiftlyServerE2ETests {
     ) async throws -> E2EPlaybackStateSnapshot {
         try await e2eWaitUntil(timeout: timeout, pollInterval: .milliseconds(200)) {
             let payload = try requireObjectPayload(
-                from: try await client.callToolJSON(name: "playback_state", arguments: [:])
+                from: try await client.callToolJSON(name: "get_playback_state", arguments: [:])
             )
             let snapshot: E2EPlaybackStateSnapshot
             if let playback = payload["playback"] as? [String: Any] {
@@ -2201,7 +2403,7 @@ struct SpeakSwiftlyServerE2ETests {
     ) async throws -> E2EQueueSnapshotResponse {
         try await e2eWaitUntil(timeout: timeout, pollInterval: .milliseconds(200)) {
             let payload = try requireObjectPayload(
-                from: try await client.callToolJSON(name: "list_queue_generation", arguments: [:])
+                from: try await client.callToolJSON(name: "list_generation_queue", arguments: [:])
             )
             let snapshot = try decodePayload(E2EQueueSnapshotResponse.self, from: payload)
             return predicate(snapshot) ? snapshot : nil

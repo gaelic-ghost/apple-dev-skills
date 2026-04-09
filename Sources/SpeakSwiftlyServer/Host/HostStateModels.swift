@@ -38,6 +38,7 @@ public struct QueueStatusSnapshot: Codable, Sendable, Equatable {
     public let queuedCount: Int
     public let activeRequest: ActiveRequestSnapshot?
     public let activeRequests: [ActiveRequestSnapshot]
+    public let queuedRequests: [QueuedRequestSnapshot]
 
     enum CodingKeys: String, CodingKey {
         case queueType = "queue_type"
@@ -45,6 +46,7 @@ public struct QueueStatusSnapshot: Codable, Sendable, Equatable {
         case queuedCount = "queued_count"
         case activeRequest = "active_request"
         case activeRequests = "active_requests"
+        case queuedRequests = "queued_requests"
     }
 }
 

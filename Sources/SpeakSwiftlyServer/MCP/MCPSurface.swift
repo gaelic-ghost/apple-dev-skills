@@ -217,71 +217,111 @@ struct MCPSurface {
                 return try toolResult(await host.textProfilesSnapshot())
 
             case "create_text_profile":
-                return try toolResult(
-                    try await host.createTextProfile(
-                        id: requiredString("id", in: arguments),
-                        name: requiredString("name", in: arguments),
-                        replacements: try decodeOptionalArgument("replacements", in: arguments, default: [TextReplacementSnapshot]())
-                            .map { try $0.model() }
-                    )
+                let result = try await host.createTextProfile(
+                    id: requiredString("id", in: arguments),
+                    name: requiredString("name", in: arguments),
+                    replacements: try decodeOptionalArgument("replacements", in: arguments, default: [TextReplacementSnapshot]())
+                        .map { try $0.model() }
                 )
+                await subscriptionBroker.notifyResourceChanges(
+                    for: .textProfiles,
+                    using: server
+                )
+                return try toolResult(result)
 
             case "load_text_profiles":
-                return try toolResult(try await host.loadTextProfiles())
+                let result = try await host.loadTextProfiles()
+                await subscriptionBroker.notifyResourceChanges(
+                    for: .textProfiles,
+                    using: server
+                )
+                return try toolResult(result)
 
             case "save_text_profiles":
-                return try toolResult(try await host.saveTextProfiles())
+                let result = try await host.saveTextProfiles()
+                await subscriptionBroker.notifyResourceChanges(
+                    for: .textProfiles,
+                    using: server
+                )
+                return try toolResult(result)
 
             case "store_text_profile":
                 let profile: TextProfileSnapshot = try decodeArgument("profile", in: arguments)
-                return try toolResult(try await host.storeTextProfile(try profile.model()))
+                let result = try await host.storeTextProfile(try profile.model())
+                await subscriptionBroker.notifyResourceChanges(
+                    for: .textProfiles,
+                    using: server
+                )
+                return try toolResult(result)
 
             case "use_text_profile":
                 let profile: TextProfileSnapshot = try decodeArgument("profile", in: arguments)
-                return try toolResult(try await host.useTextProfile(try profile.model()))
+                let result = try await host.useTextProfile(try profile.model())
+                await subscriptionBroker.notifyResourceChanges(
+                    for: .textProfiles,
+                    using: server
+                )
+                return try toolResult(result)
 
             case "delete_text_profile":
-                return try toolResult(
-                    try await host.removeTextProfile(id: requiredString("profile_id", in: arguments))
+                let result = try await host.removeTextProfile(id: requiredString("profile_id", in: arguments))
+                await subscriptionBroker.notifyResourceChanges(
+                    for: .textProfiles,
+                    using: server
                 )
+                return try toolResult(result)
 
             case "reset_active_text_profile":
-                return try toolResult(try await host.resetTextProfile())
+                let result = try await host.resetTextProfile()
+                await subscriptionBroker.notifyResourceChanges(
+                    for: .textProfiles,
+                    using: server
+                )
+                return try toolResult(result)
 
             case "add_text_replacement":
                 let replacement: TextReplacementSnapshot = try decodeArgument("replacement", in: arguments)
-                return try toolResult(
-                    try await host.addTextReplacement(
-                        try replacement.model(),
-                        toStoredTextProfileID: optionalString("profile_id", in: arguments)
-                    )
+                let result = try await host.addTextReplacement(
+                    try replacement.model(),
+                    toStoredTextProfileID: optionalString("profile_id", in: arguments)
                 )
+                await subscriptionBroker.notifyResourceChanges(
+                    for: .textProfiles,
+                    using: server
+                )
+                return try toolResult(result)
 
             case "replace_text_replacement":
                 let replacement: TextReplacementSnapshot = try decodeArgument("replacement", in: arguments)
-                return try toolResult(
-                    try await host.replaceTextReplacement(
-                        try replacement.model(),
-                        inStoredTextProfileID: optionalString("profile_id", in: arguments)
-                    )
+                let result = try await host.replaceTextReplacement(
+                    try replacement.model(),
+                    inStoredTextProfileID: optionalString("profile_id", in: arguments)
                 )
+                await subscriptionBroker.notifyResourceChanges(
+                    for: .textProfiles,
+                    using: server
+                )
+                return try toolResult(result)
 
             case "remove_text_replacement":
-                return try toolResult(
-                    try await host.removeTextReplacement(
-                        id: requiredString("replacement_id", in: arguments),
-                        fromStoredTextProfileID: optionalString("profile_id", in: arguments)
-                    )
+                let result = try await host.removeTextReplacement(
+                    id: requiredString("replacement_id", in: arguments),
+                    fromStoredTextProfileID: optionalString("profile_id", in: arguments)
                 )
+                await subscriptionBroker.notifyResourceChanges(
+                    for: .textProfiles,
+                    using: server
+                )
+                return try toolResult(result)
 
             case "list_generation_queue":
-                return try toolResult(try await host.generationQueueSnapshot())
+                return try toolResult(await host.generationQueueSnapshot())
 
             case "list_playback_queue":
-                return try toolResult(try await host.playbackQueueSnapshot())
+                return try toolResult(await host.playbackQueueSnapshot())
 
             case "get_playback_state":
-                return try toolResult(try await host.playbackStateSnapshot())
+                return try toolResult(await host.playbackStateSnapshot())
 
             case "pause_playback":
                 return try toolResult(try await host.pausePlayback())
@@ -793,11 +833,66 @@ private actor MCPSession {
 // MARK: - Subscription Handling
 
 private actor MCPSubscriptionBroker {
+    enum ResourceChange {
+        case textProfiles
+        case voices
+        case runtimeOverview
+    }
+
     private var subscribedResourceURIs = Set<String>()
     private var eventTask: Task<Void, Never>?
+    private var host: ServerHost?
+    private var server: Server?
 
     func start(host: ServerHost, server: Server) {
-        guard eventTask == nil else {
+        self.host = host
+        self.server = server
+    }
+
+    func stop() {
+        eventTask?.cancel()
+        eventTask = nil
+        host = nil
+        server = nil
+        subscribedResourceURIs.removeAll()
+    }
+
+    func subscribe(to uri: String) {
+        subscribedResourceURIs.insert(uri)
+        startEventTaskIfNeeded()
+    }
+
+    func unsubscribe(from uri: String) {
+        subscribedResourceURIs.remove(uri)
+        if subscribedResourceURIs.isEmpty {
+            eventTask?.cancel()
+            eventTask = nil
+        }
+    }
+
+    func notifyResourceChanges(
+        for change: ResourceChange,
+        using server: Server
+    ) async {
+        await notifySubscribedURIs(candidateURIs(for: change), using: server)
+    }
+
+    private func notifySubscribedURIs(
+        _ uris: [String],
+        using server: Server
+    ) async {
+        for uri in uris {
+            do {
+                try await server.notify(ResourceUpdatedNotification.message(.init(uri: uri)))
+            } catch {
+                // The shared transport may be stopping or may not have a connected SSE stream yet.
+                continue
+            }
+        }
+    }
+
+    private func startEventTaskIfNeeded() {
+        guard eventTask == nil, subscribedResourceURIs.isEmpty == false, let host, let server else {
             return
         }
 
@@ -808,34 +903,13 @@ private actor MCPSubscriptionBroker {
                 if Task.isCancelled {
                     break
                 }
-                let updatedURIs = resourceURIsToNotify(for: event)
+                let updatedURIs = self.resourceURIsToNotify(for: event)
                 guard updatedURIs.isEmpty == false else {
                     continue
                 }
-                for uri in updatedURIs {
-                    do {
-                        try await server.notify(ResourceUpdatedNotification.message(.init(uri: uri)))
-                    } catch {
-                        // The shared transport may be stopping or may not have a connected SSE stream yet.
-                        continue
-                    }
-                }
+                await self.notifySubscribedURIs(updatedURIs, using: server)
             }
         }
-    }
-
-    func stop() {
-        eventTask?.cancel()
-        eventTask = nil
-        subscribedResourceURIs.removeAll()
-    }
-
-    func subscribe(to uri: String) {
-        subscribedResourceURIs.insert(uri)
-    }
-
-    func unsubscribe(from uri: String) {
-        subscribedResourceURIs.remove(uri)
     }
 
     private func resourceURIsToNotify(for event: HostEvent) -> [String] {
@@ -877,6 +951,32 @@ private actor MCPSubscriptionBroker {
         return candidateURIs
             .intersection(subscribedResourceURIs)
             .sorted()
+    }
+
+    private func candidateURIs(for change: ResourceChange) -> [String] {
+        let candidateURIs: Set<String>
+        switch change {
+        case .textProfiles:
+            candidateURIs = Set(
+                [
+                    "speak://text-profiles",
+                    "speak://text-profiles/base",
+                    "speak://text-profiles/active",
+                    "speak://text-profiles/effective",
+                ] + subscribedResourceURIs.filter(isStoredTextProfileURI)
+                    + subscribedResourceURIs.filter(isEffectiveTextProfileURI)
+            )
+        case .voices:
+            candidateURIs = Set(
+                [
+                    "speak://voices",
+                    "speak://runtime/overview",
+                ] + subscribedResourceURIs.filter(isVoiceProfileURI)
+            )
+        case .runtimeOverview:
+            candidateURIs = ["speak://runtime/overview"]
+        }
+        return candidateURIs.intersection(subscribedResourceURIs).sorted()
     }
 }
 

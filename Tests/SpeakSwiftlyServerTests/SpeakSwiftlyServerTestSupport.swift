@@ -354,7 +354,7 @@ func waitUntil<T: Sendable>(
 @available(macOS 14, *)
 func waitForActiveRequestID(on host: ServerHost) async throws -> String {
     try await waitUntil(timeout: .seconds(1), pollInterval: .milliseconds(10)) {
-        let snapshot = try await host.generationQueueSnapshot()
+        let snapshot = await host.generationQueueSnapshot()
         return snapshot.activeRequest?.id
     }
 }

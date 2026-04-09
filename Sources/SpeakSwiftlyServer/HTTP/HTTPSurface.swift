@@ -269,7 +269,7 @@ private func registerHTTPRoutes(
     }
 
     router.get("generation/queue") { _, _ -> QueueSnapshotResponse in
-        try await host.generationQueueSnapshot()
+        await host.generationQueueSnapshot()
     }
 
     router.get("generation/jobs") { request, _ -> Response in
@@ -305,11 +305,11 @@ private func registerHTTPRoutes(
     }
 
     router.get("playback/state") { _, _ -> PlaybackStateResponse in
-        try await host.playbackStateSnapshot()
+        await host.playbackStateSnapshot()
     }
 
     router.get("playback/queue") { _, _ -> QueueSnapshotResponse in
-        try await host.playbackQueueSnapshot()
+        await host.playbackQueueSnapshot()
     }
 
     router.post("playback/pause") { _, _ -> PlaybackStateResponse in

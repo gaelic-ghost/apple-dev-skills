@@ -404,6 +404,13 @@ public struct QueuedRequestSnapshot: Codable, Sendable, Equatable {
         self.profileName = summary.profileName
         self.queuePosition = summary.queuePosition
     }
+
+    init(id: String, op: String, profileName: String?, queuePosition: Int) {
+        self.id = id
+        self.op = op
+        self.profileName = profileName
+        self.queuePosition = queuePosition
+    }
 }
 
 struct QueueSnapshotResponse: ResponseEncodable, Sendable {
@@ -449,6 +456,17 @@ public struct PlaybackStateSnapshot: Codable, Sendable, Equatable {
 
 struct PlaybackStateResponse: ResponseEncodable, Sendable {
     let playback: PlaybackStateSnapshot
+}
+
+extension PlaybackStateSnapshot {
+    init(status: PlaybackStatusSnapshot) {
+        self.state = status.state
+        self.activeRequest = status.activeRequest
+        self.isStableForConcurrentGeneration = status.isStableForConcurrentGeneration
+        self.isRebuffering = status.isRebuffering
+        self.stableBufferedAudioMS = status.stableBufferedAudioMS
+        self.stableBufferTargetMS = status.stableBufferTargetMS
+    }
 }
 
 struct QueueClearedResponse: ResponseEncodable, Sendable {

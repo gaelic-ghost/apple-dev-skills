@@ -25,7 +25,8 @@ public final class ServerState {
         activeCount: 0,
         queuedCount: 0,
         activeRequest: nil,
-        activeRequests: []
+        activeRequests: [],
+        queuedRequests: []
     )
 
     public internal(set) var playbackQueue = QueueStatusSnapshot(
@@ -33,7 +34,8 @@ public final class ServerState {
         activeCount: 0,
         queuedCount: 0,
         activeRequest: nil,
-        activeRequests: []
+        activeRequests: [],
+        queuedRequests: []
     )
 
     public internal(set) var playback = PlaybackStatusSnapshot(
