@@ -1128,6 +1128,10 @@ struct E2EQueueCancellationResponse: Decodable, Sendable {
     }
 }
 
+struct E2ERequestListResponse: Decodable, Sendable {
+    let requests: [E2EJobSnapshot]
+}
+
 struct E2ETextProfileListResponse: Decodable, Sendable {
     let textProfiles: E2ETextProfilesSnapshot
 

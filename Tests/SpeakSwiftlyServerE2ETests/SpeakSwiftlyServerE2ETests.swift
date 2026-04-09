@@ -1436,36 +1436,45 @@ struct SpeakSwiftlyServerE2ETests {
             )
             #expect(queued.queueType == "generation")
 
-            let firstSnapshot = try await waitForTerminalJob(
-                id: jobIDs[0],
-                using: client,
-                timeout: e2eTimeout,
-                server: server
-            )
-            assertSpeechJobCompleted(firstSnapshot, expectedJobID: jobIDs[0])
-            #expect(!firstSnapshot.history.contains { $0.event == "queued" })
+            do {
+                let firstSnapshot = try await waitForTerminalJob(
+                    id: jobIDs[0],
+                    using: client,
+                    timeout: e2eTimeout,
+                    server: server
+                )
+                assertSpeechJobCompleted(firstSnapshot, expectedJobID: jobIDs[0])
+                #expect(!firstSnapshot.history.contains { $0.event == "queued" })
 
-            let secondSnapshot = try await waitForTerminalJob(
-                id: jobIDs[1],
-                using: client,
-                timeout: e2eTimeout,
-                server: server
-            )
-            assertSpeechJobCompleted(secondSnapshot, expectedJobID: jobIDs[1])
-            #expect(secondSnapshot.history.contains {
-                $0.event == "queued" && $0.reason == "waiting_for_active_request"
-            })
+                let secondSnapshot = try await waitForTerminalJob(
+                    id: jobIDs[1],
+                    using: client,
+                    timeout: e2eTimeout,
+                    server: server
+                )
+                assertSpeechJobCompleted(secondSnapshot, expectedJobID: jobIDs[1])
+                #expect(secondSnapshot.history.contains {
+                    $0.event == "queued" && $0.reason == "waiting_for_active_request"
+                })
 
-            let thirdSnapshot = try await waitForTerminalJob(
-                id: jobIDs[2],
-                using: client,
-                timeout: e2eTimeout,
-                server: server
-            )
-            assertSpeechJobCompleted(thirdSnapshot, expectedJobID: jobIDs[2])
-            #expect(thirdSnapshot.history.contains {
-                $0.event == "queued" && $0.reason == "waiting_for_active_request"
-            })
+                let thirdSnapshot = try await waitForTerminalJob(
+                    id: jobIDs[2],
+                    using: client,
+                    timeout: e2eTimeout,
+                    server: server
+                )
+                assertSpeechJobCompleted(thirdSnapshot, expectedJobID: jobIDs[2])
+                #expect(thirdSnapshot.history.contains {
+                    $0.event == "queued" && $0.reason == "waiting_for_active_request"
+                })
+            } catch {
+                await recordQueuedMarvisHTTPDiagnostics(
+                    using: client,
+                    requestIDs: jobIDs,
+                    expectedProfiles: lanes.map(\.profileName)
+                )
+                throw error
+            }
 
             try await assertMarvisPlaybackStartedInOrder(on: server, requestIDs: jobIDs)
 
@@ -2081,6 +2090,78 @@ struct SpeakSwiftlyServerE2ETests {
             #expect(index > previousIndex)
             previousIndex = index
         }
+    }
+
+    private static func recordQueuedMarvisHTTPDiagnostics(
+        using client: E2EHTTPClient,
+        requestIDs: [String],
+        expectedProfiles: [String]
+    ) async {
+        do {
+            let requestList = try decode(
+                E2ERequestListResponse.self,
+                from: try await client.request(path: "/requests", method: "GET").data
+            )
+            let hostState = try jsonObject(
+                from: try await client.request(path: "/runtime/host", method: "GET").data
+            )
+
+            let retainedRequests = requestList.requests
+                .filter { requestIDs.contains($0.requestID) }
+                .sorted { lhs, rhs in
+                    requestIDs.firstIndex(of: lhs.requestID) ?? .max
+                        < requestIDs.firstIndex(of: rhs.requestID) ?? .max
+                }
+                .map(requestDiagnosticSummary)
+                .joined(separator: "\n")
+
+            let playbackQueue = try diagnosticJSONString(from: hostState["playback_queue"])
+            let generationQueue = try diagnosticJSONString(from: hostState["generation_queue"])
+            let currentGenerationJob = try diagnosticJSONString(from: hostState["current_generation_job"])
+
+            Issue.record(
+                """
+                Queued Marvis HTTP diagnostics
+                expected_profiles: \(expectedProfiles.joined(separator: ", "))
+                request_ids: \(requestIDs.joined(separator: ", "))
+                playback_queue: \(playbackQueue)
+                generation_queue: \(generationQueue)
+                current_generation_job: \(currentGenerationJob)
+                retained_requests:
+                \(retainedRequests.isEmpty ? "none" : retainedRequests)
+                """
+            )
+        } catch {
+            Issue.record(
+                "Queued Marvis HTTP diagnostics could not be captured after a live-playback failure. Likely cause: \(error.localizedDescription)"
+            )
+        }
+    }
+
+    private static func requestDiagnosticSummary(_ snapshot: E2EJobSnapshot) -> String {
+        let latestEvent = snapshot.history.last?.event ?? "nil"
+        let latestStage = snapshot.history.last?.stage ?? "nil"
+        let terminalEvent = snapshot.terminalEvent?.event ?? "nil"
+        let historySummary = snapshot.history
+            .map {
+                [
+                    $0.event ?? "message",
+                    $0.stage,
+                    $0.reason,
+                    $0.op,
+                ]
+                .compactMap { $0 }
+                .joined(separator: ":")
+            }
+            .joined(separator: " -> ")
+
+        return "- \(snapshot.requestID) status=\(snapshot.status) latest=\(latestEvent):\(latestStage) terminal=\(terminalEvent) history=\(historySummary)"
+    }
+
+    private static func diagnosticJSONString(from value: Any?) throws -> String {
+        guard let value else { return "null" }
+        let data = try JSONSerialization.data(withJSONObject: value, options: [.sortedKeys])
+        return String(decoding: data, as: UTF8.self)
     }
 
     private static func waitForMCPPlaybackState(
