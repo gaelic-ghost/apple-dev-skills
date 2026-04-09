@@ -55,6 +55,26 @@ public struct PlaybackStatusSnapshot: Codable, Sendable, Equatable {
     }
 }
 
+public struct RuntimeRefreshSnapshot: Codable, Sendable, Equatable {
+    public let sequenceID: Int
+    public let source: String
+    public let startedAt: String
+    public let generationQueueRefreshedAt: String
+    public let playbackQueueRefreshedAt: String
+    public let playbackStateRefreshedAt: String
+    public let completedAt: String
+
+    enum CodingKeys: String, CodingKey {
+        case sequenceID = "sequence_id"
+        case source
+        case startedAt = "started_at"
+        case generationQueueRefreshedAt = "generation_queue_refreshed_at"
+        case playbackQueueRefreshedAt = "playback_queue_refreshed_at"
+        case playbackStateRefreshedAt = "playback_state_refreshed_at"
+        case completedAt = "completed_at"
+    }
+}
+
 public struct CurrentGenerationJobSnapshot: Codable, Sendable, Equatable {
     public let jobID: String
     public let op: String
@@ -141,6 +161,7 @@ public struct RuntimeConfigurationSnapshot: Codable, ResponseEncodable, Sendable
 
 public struct HostStateSnapshot: Codable, Sendable, Equatable {
     public let overview: HostOverviewSnapshot
+    public let runtimeRefresh: RuntimeRefreshSnapshot?
     public let generationQueue: QueueStatusSnapshot
     public let playbackQueue: QueueStatusSnapshot
     public let playback: PlaybackStatusSnapshot
@@ -151,6 +172,7 @@ public struct HostStateSnapshot: Codable, Sendable, Equatable {
 
     enum CodingKeys: String, CodingKey {
         case overview
+        case runtimeRefresh = "runtime_refresh"
         case generationQueue = "generation_queue"
         case playbackQueue = "playback_queue"
         case playback

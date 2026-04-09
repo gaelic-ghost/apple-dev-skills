@@ -957,6 +957,17 @@ actor MockRuntime: ServerRuntimeProtocol {
         #expect(healthJSON["status"] as? String == "ok")
         #expect(healthJSON["worker_ready"] as? Bool == true)
 
+        let runtimeHostResponse = try await client.execute(uri: "/runtime/host", method: .get)
+        let runtimeHostJSON = try jsonObject(from: runtimeHostResponse.body)
+        let runtimeRefresh = try #require(runtimeHostJSON["runtime_refresh"] as? [String: Any])
+        #expect((runtimeRefresh["sequence_id"] as? Int ?? 0) > 0)
+        #expect(runtimeRefresh["source"] as? String == "runtime")
+        #expect((runtimeRefresh["started_at"] as? String)?.isEmpty == false)
+        #expect((runtimeRefresh["generation_queue_refreshed_at"] as? String)?.isEmpty == false)
+        #expect((runtimeRefresh["playback_queue_refreshed_at"] as? String)?.isEmpty == false)
+        #expect((runtimeRefresh["playback_state_refreshed_at"] as? String)?.isEmpty == false)
+        #expect((runtimeRefresh["completed_at"] as? String)?.isEmpty == false)
+
         let runtimeConfigResponse = try await client.execute(uri: "/runtime/configuration", method: .get)
         let runtimeConfigJSON = try jsonObject(from: runtimeConfigResponse.body)
         #expect(runtimeConfigResponse.status == .ok)
@@ -1462,6 +1473,9 @@ actor MockRuntime: ServerRuntimeProtocol {
     let runtimePayload = try jsonObject(from: Data(runtimeText.utf8))
     let runtimeTransports = try #require(runtimePayload["transports"] as? [[String: Any]])
     #expect(runtimeTransports.contains { $0["name"] as? String == "mcp" && $0["advertised_address"] as? String == "http://127.0.0.1:7337/mcp" })
+    let runtimeRefresh = try #require(runtimePayload["runtime_refresh"] as? [String: Any])
+    #expect((runtimeRefresh["sequence_id"] as? Int ?? 0) > 0)
+    #expect(runtimeRefresh["source"] as? String == "runtime")
     let runtimeConfiguration = try #require(runtimePayload["runtime_configuration"] as? [String: Any])
     #expect(runtimeConfiguration["next_runtime_speech_backend"] as? String == "marvis")
 
@@ -2221,6 +2235,7 @@ actor MockRuntime: ServerRuntimeProtocol {
     let degradedHostState = await host.hostStateSnapshot()
     #expect(degradedHostState.playback.state == "playing")
     #expect(degradedHostState.playbackQueue.activeRequest?.id == activeJobID)
+    #expect(degradedHostState.runtimeRefresh?.source == "fallback")
 
     let activeSnapshot = try await waitUntil(timeout: .seconds(1), pollInterval: .milliseconds(10)) {
         let snapshot = try await host.jobSnapshot(id: activeJobID)

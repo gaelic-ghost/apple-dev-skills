@@ -516,6 +516,7 @@ struct StatusSnapshot: ResponseEncodable, Sendable {
     let lastProfileRefreshAt: String?
     let host: String
     let port: Int
+    let runtimeRefresh: RuntimeRefreshSnapshot?
     let generationQueue: QueueStatusSnapshot
     let playbackQueue: QueueStatusSnapshot
     let playback: PlaybackStatusSnapshot
@@ -537,6 +538,7 @@ struct StatusSnapshot: ResponseEncodable, Sendable {
         case lastProfileRefreshAt = "last_profile_refresh_at"
         case host
         case port
+        case runtimeRefresh = "runtime_refresh"
         case generationQueue = "generation_queue"
         case playbackQueue = "playback_queue"
         case playback

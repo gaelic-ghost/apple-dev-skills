@@ -363,14 +363,21 @@ import TextForSpeech
     }
     let liveState = try #require(publishedState)
 
+    let runtimeRefresh = try #require(liveState.runtimeRefresh)
     #expect(liveState.playback.state == "playing")
+    #expect(runtimeRefresh.sequenceID > 0)
+    #expect(runtimeRefresh.source == "runtime")
+    #expect(runtimeRefresh.startedAt.isEmpty == false)
+    #expect(runtimeRefresh.completedAt.isEmpty == false)
     #expect(liveState.transports.contains { $0.name == "http" && $0.advertisedAddress == "http://127.0.0.1:7337" })
     #expect(liveState.transports.contains { $0.name == "mcp" && $0.advertisedAddress == "http://127.0.0.1:7337/mcp" })
 
     let uiOverview = await MainActor.run { state.overview }
+    let uiRuntimeRefresh = await MainActor.run { state.runtimeRefresh }
     let uiCurrentJob = await MainActor.run { state.currentGenerationJob }
     let uiPlayback = await MainActor.run { state.playback }
     #expect(uiOverview.workerReady == true)
+    #expect(uiRuntimeRefresh == runtimeRefresh)
     #expect(uiCurrentJob?.jobID == jobID)
     #expect(uiPlayback.state == "playing")
 

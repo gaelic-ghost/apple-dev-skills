@@ -39,6 +39,7 @@ public final class ServerState {
         activeRequest: nil
     )
 
+    public internal(set) var runtimeRefresh: RuntimeRefreshSnapshot?
     public internal(set) var currentGenerationJob: CurrentGenerationJobSnapshot?
     public internal(set) var runtimeConfiguration = RuntimeConfigurationSnapshot(
         activeRuntimeSpeechBackend: "qwen3",

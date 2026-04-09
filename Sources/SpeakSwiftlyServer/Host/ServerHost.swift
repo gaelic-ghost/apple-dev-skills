@@ -74,9 +74,11 @@ actor ServerHost {
     private var generationQueueStatus = QueueStatusSnapshot(queueType: "generation", activeCount: 0, queuedCount: 0, activeRequest: nil)
     private var playbackQueueStatus = QueueStatusSnapshot(queueType: "playback", activeCount: 0, queuedCount: 0, activeRequest: nil)
     private var playbackStatus = PlaybackStatusSnapshot(state: SpeakSwiftly.PlaybackState.idle.rawValue, activeRequest: nil)
+    private var runtimeRefreshSnapshot: RuntimeRefreshSnapshot?
     private var transportStatuses = [String: TransportStatusSnapshot]()
     private var recentErrors = [RecentErrorSnapshot]()
     private var latestPublishedState: HostStateSnapshot?
+    private var nextRuntimeRefreshSequenceID = 1
     private var pendingRuntimeRefresh = true
     private var jobs = [String: JobRecord]()
     private var hasRequestedStartupProfileRefresh = false
@@ -329,6 +331,7 @@ actor ServerHost {
 
         return .init(
             overview: overview,
+            runtimeRefresh: runtimeRefreshSnapshot,
             generationQueue: generationQueueStatus,
             playbackQueue: playbackQueueStatus,
             playback: playbackStatus,
@@ -394,6 +397,7 @@ actor ServerHost {
             lastProfileRefreshAt: overview.lastProfileRefreshAt,
             host: httpConfig.host,
             port: httpConfig.port,
+            runtimeRefresh: hostState.runtimeRefresh,
             generationQueue: hostState.generationQueue,
             playbackQueue: hostState.playbackQueue,
             playback: hostState.playback,
@@ -1295,6 +1299,7 @@ actor ServerHost {
 
         await MainActor.run {
             state.overview = hostState.overview
+            state.runtimeRefresh = hostState.runtimeRefresh
             state.generationQueue = hostState.generationQueue
             state.playbackQueue = hostState.playbackQueue
             state.playback = hostState.playback
@@ -1326,18 +1331,34 @@ actor ServerHost {
 
     private func refreshRuntimeDerivedState() async {
         let previousPlaybackStatus = playbackStatus
+        let refreshSequenceID = nextRuntimeRefreshSequenceID
+        nextRuntimeRefreshSequenceID += 1
+        let startedAt = Date()
         guard workerMode == "ready" else {
+            let refreshedAt = Date()
             generationQueueStatus = deriveGenerationQueueStatusFallback()
             playbackQueueStatus = derivePlaybackQueueStatusFallback()
             playbackStatus = derivePlaybackStatusFallback()
+            runtimeRefreshSnapshot = .init(
+                sequenceID: refreshSequenceID,
+                source: "fallback",
+                startedAt: TimestampFormatter.string(from: startedAt),
+                generationQueueRefreshedAt: TimestampFormatter.string(from: refreshedAt),
+                playbackQueueRefreshedAt: TimestampFormatter.string(from: refreshedAt),
+                playbackStateRefreshedAt: TimestampFormatter.string(from: refreshedAt),
+                completedAt: TimestampFormatter.string(from: refreshedAt)
+            )
             if playbackStatus != previousPlaybackStatus {
                 hostEventContinuation.yield(.playbackChanged(playbackStatus))
             }
             return
         }
 
+        var usedFallback = false
+        var generationQueueRefreshedAt = Date()
         do {
             generationQueueStatus = try await fetchQueueStatus(.generation)
+            generationQueueRefreshedAt = Date()
         } catch {
             recordRecentError(
                 source: "queue:generation",
@@ -1345,10 +1366,14 @@ actor ServerHost {
                 message: "SpeakSwiftlyServer could not refresh the generation queue snapshot. Likely cause: \(error.localizedDescription)"
             )
             generationQueueStatus = deriveGenerationQueueStatusFallback()
+            generationQueueRefreshedAt = Date()
+            usedFallback = true
         }
 
+        var playbackQueueRefreshedAt = Date()
         do {
             playbackQueueStatus = try await fetchQueueStatus(.playback)
+            playbackQueueRefreshedAt = Date()
         } catch {
             recordRecentError(
                 source: "queue:playback",
@@ -1356,10 +1381,14 @@ actor ServerHost {
                 message: "SpeakSwiftlyServer could not refresh the playback queue snapshot. Likely cause: \(error.localizedDescription)"
             )
             playbackQueueStatus = derivePlaybackQueueStatusFallback()
+            playbackQueueRefreshedAt = Date()
+            usedFallback = true
         }
 
+        var playbackStateRefreshedAt = Date()
         do {
             playbackStatus = try await fetchPlaybackStatus()
+            playbackStateRefreshedAt = Date()
         } catch {
             recordRecentError(
                 source: "playback",
@@ -1367,7 +1396,19 @@ actor ServerHost {
                 message: "SpeakSwiftlyServer could not refresh the playback state snapshot. Likely cause: \(error.localizedDescription)"
             )
             playbackStatus = derivePlaybackStatusFallback()
+            playbackStateRefreshedAt = Date()
+            usedFallback = true
         }
+
+        runtimeRefreshSnapshot = .init(
+            sequenceID: refreshSequenceID,
+            source: usedFallback ? "mixed" : "runtime",
+            startedAt: TimestampFormatter.string(from: startedAt),
+            generationQueueRefreshedAt: TimestampFormatter.string(from: generationQueueRefreshedAt),
+            playbackQueueRefreshedAt: TimestampFormatter.string(from: playbackQueueRefreshedAt),
+            playbackStateRefreshedAt: TimestampFormatter.string(from: playbackStateRefreshedAt),
+            completedAt: TimestampFormatter.string(from: Date())
+        )
 
         if playbackStatus != previousPlaybackStatus {
             hostEventContinuation.yield(.playbackChanged(playbackStatus))
@@ -1469,7 +1510,7 @@ actor ServerHost {
 
     private func playbackCandidateRecords() -> [JobRecord] {
         currentLiveSpeechJobs().filter { job in
-            guard case .progress(let event) = job.latestEvent else {
+            guard case .progress(let event) = latestOperationalEvent(for: job) else {
                 return false
             }
 
@@ -1496,7 +1537,7 @@ actor ServerHost {
     }
 
     private func generationPriority(for job: JobRecord) -> Int {
-        switch job.latestEvent {
+        switch latestOperationalEvent(for: job) {
         case .progress, .started:
             3
         case .acknowledged:
@@ -1521,13 +1562,22 @@ actor ServerHost {
         }
     }
 
+    private func latestOperationalEvent(for job: JobRecord) -> ServerJobEvent? {
+        job.history.reversed().first { event in
+            if case .workerStatus = event {
+                return false
+            }
+            return true
+        }
+    }
+
     private func deriveGenerationQueueStatusFallback() -> QueueStatusSnapshot {
         let activeJob = fallbackGenerationJobRecord()
         let queuedCount = jobs.values.filter {
             guard isGenerationOperation($0.op), $0.terminalEvent == nil else {
                 return false
             }
-            if case .queued = $0.latestEvent {
+            if case .queued = latestOperationalEvent(for: $0) {
                 return true
             }
             return false
