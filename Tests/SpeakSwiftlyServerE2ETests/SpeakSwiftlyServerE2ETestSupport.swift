@@ -837,7 +837,15 @@ func loadStoredProfileManifest(named profileName: String, from rootURL: URL) thr
 // MARK: - JSON Helpers
 
 func decode<Value: Decodable>(_ type: Value.Type, from data: Data) throws -> Value {
-    try JSONDecoder().decode(Value.self, from: data)
+    do {
+        return try JSONDecoder().decode(Value.self, from: data)
+    } catch {
+        let body = String(decoding: data, as: UTF8.self)
+        let preview = body.isEmpty ? "<empty body>" : body
+        throw E2ETransportError(
+            "The live end-to-end helper could not decode \(Value.self) from the server response. Raw body preview: \(preview)"
+        )
+    }
 }
 
 func jsonObject(from data: Data) throws -> [String: Any] {

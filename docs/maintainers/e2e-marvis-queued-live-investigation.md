@@ -158,3 +158,67 @@ That focused rerun shifts the problem statement:
 - Once those upstream changes land, re-check this server before adding more local queue or playback heuristics.
 - Prefer deleting host inference and fallback shaping where the upstream runtime can expose the same truth directly in a clearer, typed form.
 - Treat upstream simplification as the preferred path for any remaining queue-state, playback-state, or multi-lane generation ambiguity in this repository.
+
+## Follow-Up Progress: 2026-04-09
+
+### Cleanup checkpoint landed
+
+- Commit `d46a320` reduced extra MCP-side churn while live speech is in flight:
+  - host-backed queue and playback read surfaces now use the shared host snapshot instead of issuing extra runtime queue and playback requests on every HTTP or MCP read
+  - queued request details now survive through host snapshots instead of flattening to only counts
+  - the MCP subscription broker now starts consuming host events only after the first actual resource subscription instead of eagerly on every session
+- Those changes removed obvious local read-path pressure, but they did not eliminate the live-stall shape.
+
+### Focused MCP operator-control rerun still stalls in the first live request
+
+- Focused command:
+  - `SPEAKSWIFTLYSERVER_E2E=1 SPEAKSWIFTLY_PLAYBACK_TRACE=1 swift test --filter mcpOperatorControlSurfaceCoversPlaybackAndQueueMutationsWithoutCatalogSubscriptions`
+- The focused rerun reached the same stuck shape after pause, resume, cancel, and queue-clear control calls had already succeeded.
+- Observed server state while stalled:
+  - active request:
+    - `FB9AA7DB-7060-44FA-8191-DD4352681A56`
+  - playback:
+    - `state: playing`
+    - `active_request.id: FB9AA7DB-7060-44FA-8191-DD4352681A56`
+    - `is_stable_for_concurrent_generation: true`
+    - `is_rebuffering: false`
+    - `stable_buffered_audio_ms: 13120`
+    - `stable_buffer_target_ms: 13120`
+  - generation queue:
+    - one active request
+    - zero queued requests
+  - current generation jobs:
+    - latest stage: `preroll_ready`
+- Retained request history for the active request still stopped at:
+  - `started`
+  - `progress.loading_profile`
+  - `progress.starting_playback`
+  - `progress.buffering_audio`
+  - `progress.preroll_ready`
+- No `progress.playback_finished` or terminal success event arrived.
+
+### Sample evidence from the stalled MCP operator-control lane
+
+- Sample file:
+  - `/tmp/SpeakSwiftlyServerTool_mcp_operator_trace.sample.txt`
+- The hot stack was inside `Qwen3TTSModel.generateStream(...)` and MLX eval work, not parked in the MCP transport or server event loop.
+- That means the process was still burning real generation work while the retained request snapshot remained stuck at `preroll_ready`.
+
+### Important side finding: the operator-control test payload itself was bad
+
+- The operator-control E2E had been building its long live request by repeating the exact same playback sentence 12 times.
+- That matches the audible symptom Gale heard during local runs and was poor diagnostic input because it bakes obvious repetition into the generated speech.
+- The test input has now been switched to a single longer varied passage instead of a repeated sentence block.
+
+### Stale HTTP route expectations were still present in the operator-control E2E
+
+- After updating that payload, the HTTP operator-control lane exposed a separate stale-surface regression in the test itself:
+  - the test was still calling the old `DELETE /queue/{request_id}` and `DELETE /queue` routes
+  - the server had already been realigned to `DELETE /playback/requests/{request_id}` and `DELETE /playback/queue`
+- Those stale test calls are now updated to the current HTTP surface names.
+
+### Current read
+
+- The live stall still looks like a real runtime or integration issue rather than a host snapshot artifact.
+- The new cleanup pass did remove extra host-side read churn and eager MCP event consumption.
+- The operator-control E2E also still needed stale-route cleanup and better test input, so not every remaining failure signal was trustworthy until that cleanup landed.

@@ -120,6 +120,7 @@ Post-1.0 note: this is the current alignment plan for the newer `SpeakSwiftly` r
 - [x] Expose the persisted `SpeakSwiftly.Configuration` surface across host state, HTTP, and MCP so operators can inspect and change the active speech backend without reaching into the runtime process manually.
 - [ ] Debug the queued-Marvis live playback E2E stall in `httpMarvisQueuedLivePlaybackDrainsInOrder`, including the stuck first request terminal state and the generation-versus-playback ordering mismatch captured in `docs/maintainers/e2e-marvis-queued-live-investigation.md`.
 - [ ] Re-check the server against Gale's forthcoming `SpeakSwiftly` simplification work and delete any remaining local queue, playback, or host-state inference that upstream can now expose directly in a clearer typed form.
+- [ ] Finish the operator-control E2E realignment so it uses the renamed HTTP surface consistently and validates long live playback with varied text instead of repeated-sentence filler.
 - [ ] Add generated-file reads across host, HTTP, MCP, and shared resources so saved artifacts can be listed and fetched through the server instead of only inside the sibling library.
 - [ ] Add generation-job reads and expiry controls across host, HTTP, MCP, and shared resources so persisted file and batch jobs can be inspected and managed directly.
 - [ ] Add batch-generation submission plus batch-read surfaces across host, HTTP, MCP, and shared resources, including artifact-id shaping and the existing text-format / source-format context support for each batch item.

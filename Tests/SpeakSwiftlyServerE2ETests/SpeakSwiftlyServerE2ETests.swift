@@ -25,6 +25,9 @@ struct SpeakSwiftlyServerE2ETests {
     private static let testingPlaybackText = """
     Hello from the real resident SpeakSwiftlyServer playback path. This end to end test uses a longer utterance so we can observe startup buffering, queue floor recovery, drain timing, and steady streaming behavior with enough generated audio to make the diagnostics useful instead of noisy.
     """
+    private static let operatorControlPlaybackText = """
+    Hello from the SpeakSwiftlyServer operator control lane. This coverage keeps the first request alive long enough to exercise pause and resume without falling into a trivially short utterance. After the opening section, the text shifts topics so the generated audio does not just repeat one sentence over and over while we are listening for queue mutations. We then move into a calmer wrap up that still leaves enough duration for queued cancellation and queue clearing to happen while the first playback-owned request continues draining toward completion.
+    """
 
     // MARK: Sequential End-to-End Workflows
 
@@ -123,7 +126,7 @@ struct SpeakSwiftlyServerE2ETests {
         #expect(status.cachedProfiles.contains { $0.profileName == profileName })
         #expect(status.transports.contains { $0.name == "http" && $0.state == "listening" })
 
-        let longPlaybackText = String(repeating: Self.testingPlaybackText + " ", count: 12)
+        let longPlaybackText = Self.operatorControlPlaybackText
         let firstJobID = try await Self.submitSpeechJob(
             using: client,
             text: longPlaybackText,
@@ -168,7 +171,7 @@ struct SpeakSwiftlyServerE2ETests {
 
         let cancelled = try decode(
             E2EQueueCancellationResponse.self,
-            from: try await client.request(path: "/queue/\(secondJobID)", method: "DELETE").data
+            from: try await client.request(path: "/playback/requests/\(secondJobID)", method: "DELETE").data
         )
         #expect(cancelled.cancelledRequestID == secondJobID)
 
@@ -201,7 +204,7 @@ struct SpeakSwiftlyServerE2ETests {
 
         let cleared = try decode(
             E2EQueueClearedResponse.self,
-            from: try await client.request(path: "/queue", method: "DELETE").data
+            from: try await client.request(path: "/playback/queue", method: "DELETE").data
         )
         #expect(cleared.clearedCount >= 2)
 
@@ -282,7 +285,7 @@ struct SpeakSwiftlyServerE2ETests {
         )
         try await Self.assertProfileIsVisible(using: client, profileName: profileName)
 
-        let longPlaybackText = String(repeating: Self.testingPlaybackText + " ", count: 12)
+        let longPlaybackText = Self.operatorControlPlaybackText
         let firstJobID = try requireString(
             "request_id",
             in: try await client.callTool(
