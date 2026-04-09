@@ -84,8 +84,31 @@ There are two plausible explanations that still need to be separated:
 2. The secondary bug is queue/lifecycle mismatch.
    Generation-side work may be allowed to advance independently of playback completion, which may be correct internally but still leaves the server-side retained request lifecycle inconsistent with the E2E expectation that a queued-live request becomes terminal after playback finishes.
 
+## Focused Lane Rerun
+
+A later focused rerun of only `httpMarvisQueuedLivePlaybackDrainsInOrder` produced a stronger signal:
+
+- first request:
+  - `53A3932B-0F18-435D-B449-F684B57712A0`
+  - reached `progress.playback_finished`
+  - reached a terminal success event
+- second request:
+  - `D68325FD-D4B8-4EE6-93F5-812CF48B4944`
+  - advanced through `progress.preroll_ready`
+  - remained `running`
+- third request:
+  - `60B73D71-3996-4C94-8BE5-4A319DF03D0B`
+  - started after the first request completed
+  - advanced to `progress.starting_playback` while the second request was still only at `preroll_ready`
+
+That focused rerun shifts the problem statement:
+
+- the failure is not strictly "the first queued-live request always stalls"
+- the stronger invariant break is that a later queued-live request can begin advancing while an earlier playback-owned request is still non-terminal
+- once that happens, the earlier request can remain parked at `preroll_ready` indefinitely
+
 ## Likely Next Checks
 
-1. Re-run the focused queued-Marvis HTTP lane now that it records retained `/requests` and `/runtime/host` diagnostics automatically on terminal-job timeouts.
-2. Trace where `generate_speech_live` is expected to emit `playback_finished` and `completed` for a queued-live request after `preroll_ready`.
-3. Decide whether the E2E expectation is too strict, or whether the runtime really is failing to close the first playback-owned request.
+1. Trace where `generate_speech_live` is expected to emit `playback_finished` and `completed` for each queued-live request after `preroll_ready`.
+2. Verify whether queued live speech is allowed to overlap generation progress for later requests before the active playback request becomes terminal.
+3. Decide whether the server should continue treating queued-live request completion as a strict terminal playback boundary, or whether the retained-job model needs to distinguish generation completion from playback completion more explicitly.
