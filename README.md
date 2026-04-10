@@ -38,7 +38,7 @@ That means this package intentionally stays narrow: Hummingbird for transport ho
 
 ### Current SpeakSwiftly Alignment
 
-This server is aligned to the current public library surface of its resolved [`SpeakSwiftly`](https://github.com/gaelic-ghost/SpeakSwiftly) `2.2.1` package dependency rather than an older private worker boundary.
+This server is aligned to the current public library surface of its resolved [`SpeakSwiftly`](https://github.com/gaelic-ghost/SpeakSwiftly) `2.2.7` package dependency rather than an older private worker boundary.
 
 Today the server relies on the current typed runtime capabilities that matter for transport hosting:
 

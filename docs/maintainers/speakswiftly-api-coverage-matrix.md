@@ -10,7 +10,7 @@ It answers three concrete questions:
 2. Which public capabilities are intentionally adapted instead of mirrored exactly?
 3. Which transport is the right client contract for each capability: HTTP, MCP, both, or neither?
 
-Current baseline checked against the `SpeakSwiftly 2.2.1` dependency resolved by this repository on `2026-04-09`.
+Current baseline checked against the `SpeakSwiftly 2.2.7` dependency resolved by this repository on `2026-04-10`.
 
 ## Summary
 
