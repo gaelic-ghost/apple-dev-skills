@@ -194,6 +194,10 @@ extension SpeakSwiftlyServerE2ETests {
         mcpEnabled: Bool,
         speechBackend: String? = nil
     ) throws -> ServerProcess {
+        if !silentPlayback {
+            try stabilizeBuiltInAudioRouteForAudiblePlayback()
+        }
+
         let publishedRuntimeArtifacts = try speakSwiftlyPublishedRuntimeArtifacts(configuration: "Debug")
         let executableURL = try serverToolExecutableURL()
         try stageMetallibForServerBinary(

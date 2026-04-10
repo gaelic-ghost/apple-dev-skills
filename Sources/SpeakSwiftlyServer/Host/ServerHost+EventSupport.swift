@@ -130,7 +130,7 @@ extension ServerHost {
     }
 
     func mapStartedEvent(_ event: SpeakSwiftly.StartedEvent) -> ServerJobEvent {
-        .started(.init(id: event.id, op: event.op))
+        .started(.init(id: event.id, op: canonicalOperationName(event.op)))
     }
 
     func mapProgressEvent(_ event: SpeakSwiftly.ProgressEvent) -> ServerJobEvent {

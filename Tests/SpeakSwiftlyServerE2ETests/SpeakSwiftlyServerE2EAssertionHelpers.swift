@@ -78,6 +78,20 @@ extension SpeakSwiftlyServerE2ETests {
     }
 
     static func assertSpeechJobCompleted(_ snapshot: E2EJobSnapshot, expectedJobID jobID: String) {
+        if snapshot.status != "completed" || snapshot.terminalEvent?.ok != true {
+            let terminalCode = snapshot.terminalEvent?.code ?? "nil"
+            let terminalMessage = snapshot.terminalEvent?.message ?? "nil"
+            Issue.record(
+                """
+                Audible speech job did not complete successfully.
+                request_id: \(jobID)
+                status: \(snapshot.status)
+                terminal_code: \(terminalCode)
+                terminal_message: \(terminalMessage)
+                summary: \(requestDiagnosticSummary(snapshot))
+                """
+            )
+        }
         #expect(snapshot.status == "completed")
         #expect(snapshot.terminalEvent?.id == jobID)
         #expect(snapshot.terminalEvent?.ok == true)

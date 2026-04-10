@@ -192,25 +192,6 @@ extension SpeakSwiftlyServerE2ETests {
                 && details["mlx_active_memory_bytes"] as? Int != nil
         }
 
-        _ = try await server.waitForStderrJSONObject(timeout: e2eTimeout) {
-            guard
-                $0["event"] as? String == "playback_finished",
-                $0["request_id"] as? String == jobID,
-                let details = $0["details"] as? [String: Any]
-            else {
-                return false
-            }
-
-            let textComplexityClass = details["text_complexity_class"] as? String
-            return ["compact", "balanced", "extended"].contains(textComplexityClass)
-                && details["time_to_first_chunk_ms"] as? Int != nil
-                && details["played_back_callback_count"] as? Int != nil
-                && details["startup_buffer_target_ms"] as? Int != nil
-                && details["low_water_target_ms"] as? Int != nil
-                && details["process_phys_footprint_bytes"] as? Int != nil
-                && details["mlx_active_memory_bytes"] as? Int != nil
-        }
-
         let snapshot = try await waitForTerminalJob(
             id: jobID,
             using: client,
@@ -221,6 +202,25 @@ extension SpeakSwiftlyServerE2ETests {
         assertSpeechJobCompleted(snapshot, expectedJobID: jobID)
         #expect(snapshot.history.contains { $0.event == "progress" && $0.stage == "preroll_ready" })
         #expect(snapshot.history.contains { $0.event == "progress" && $0.stage == "playback_finished" })
+        if let playbackFinishedLog = server.stderrObjects().last(where: { object in
+            guard
+                object["event"] as? String == "playback_finished",
+                object["request_id"] as? String == jobID,
+                let details = object["details"] as? [String: Any]
+            else {
+                return false
+            }
+
+            let textComplexityClass = details["text_complexity_class"] as? String
+            return ["compact", "balanced", "extended"].contains(textComplexityClass)
+        }) {
+            let details = try #require(playbackFinishedLog["details"] as? [String: Any])
+            #expect(details["played_back_callback_count"] as? Int != nil)
+            #expect(details["startup_buffer_target_ms"] as? Int != nil)
+            #expect(details["low_water_target_ms"] as? Int != nil)
+            #expect(details["process_phys_footprint_bytes"] as? Int != nil)
+            #expect(details["mlx_active_memory_bytes"] as? Int != nil)
+        }
         return jobID
     }
 

@@ -28,9 +28,32 @@ struct RuntimeRequestHandle: Sendable {
 
     init(_ handle: SpeakSwiftly.RequestHandle) {
         self.id = handle.id
-        self.operation = handle.operation
+        self.operation = canonicalOperationName(handle.operation)
         self.profileName = handle.profileName
         self.events = handle.events
+    }
+}
+
+// MARK: - Operation Naming
+
+func canonicalOperationName(_ operation: String) -> String {
+    switch operation {
+    case "queue_speech_live":
+        "generate_speech"
+    case "queue_speech_file":
+        "generate_audio_file"
+    case "queue_speech_batch":
+        "generate_batch"
+    case "get_runtime_configuration":
+        "get_staged_runtime_config"
+    case "set_runtime_configuration":
+        "set_staged_config"
+    case "get_text_profiles_state":
+        "get_text_normalizer_snapshot"
+    case "list_requests":
+        "list_active_requests"
+    default:
+        operation
     }
 }
 
