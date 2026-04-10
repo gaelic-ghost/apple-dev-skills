@@ -15,6 +15,7 @@ import Testing
         launchAgentsDirectoryURL: tempDirectory.appendingPathComponent("LaunchAgents", isDirectory: true),
         launchAgentPlistURL: tempDirectory.appendingPathComponent("LaunchAgents/com.example.test.plist", isDirectory: false),
         serverConfigFileURL: tempDirectory.appendingPathComponent("Application Support/server.yaml", isDirectory: false),
+        launchAgentConfigAliasURL: tempDirectory.appendingPathComponent("Caches/launch-agent-server.yaml", isDirectory: false),
         runtimeBaseDirectoryURL: tempDirectory.appendingPathComponent("Application Support/runtime", isDirectory: true),
         runtimeProfileRootURL: tempDirectory.appendingPathComponent("Application Support/runtime/profiles", isDirectory: true),
         runtimeConfigurationFileURL: tempDirectory.appendingPathComponent("Application Support/runtime/configuration.json", isDirectory: false),
@@ -66,6 +67,7 @@ import Testing
         launchAgentsDirectoryURL: tempDirectory.appendingPathComponent("LaunchAgents", isDirectory: true),
         launchAgentPlistURL: tempDirectory.appendingPathComponent("LaunchAgents/com.example.test.plist", isDirectory: false),
         serverConfigFileURL: tempDirectory.appendingPathComponent("Application Support/server.yaml", isDirectory: false),
+        launchAgentConfigAliasURL: tempDirectory.appendingPathComponent("Caches/launch-agent-server.yaml", isDirectory: false),
         runtimeBaseDirectoryURL: tempDirectory.appendingPathComponent("Application Support/runtime", isDirectory: true),
         runtimeProfileRootURL: tempDirectory.appendingPathComponent("Application Support/runtime/profiles", isDirectory: true),
         runtimeConfigurationFileURL: tempDirectory.appendingPathComponent("Application Support/runtime/configuration.json", isDirectory: false),
@@ -79,6 +81,34 @@ import Testing
     #expect(snapshot.stderr.exists == false)
     #expect(snapshot.stdout.text.isEmpty)
     #expect(snapshot.stderr.lines.isEmpty)
+}
+
+@Test func launchAgentEnvironmentUsesCacheAliasWhenConfigPathContainsSpaces() throws {
+    let tempDirectory = try makeTemporaryDirectory()
+    let layout = ServerInstallLayout(
+        launchAgentLabel: "com.example.test",
+        workingDirectoryURL: tempDirectory,
+        applicationSupportDirectoryURL: tempDirectory.appendingPathComponent("Application Support", isDirectory: true),
+        cacheDirectoryURL: tempDirectory.appendingPathComponent("Caches", isDirectory: true),
+        logsDirectoryURL: tempDirectory.appendingPathComponent("Logs", isDirectory: true),
+        launchAgentsDirectoryURL: tempDirectory.appendingPathComponent("LaunchAgents", isDirectory: true),
+        launchAgentPlistURL: tempDirectory.appendingPathComponent("LaunchAgents/com.example.test.plist", isDirectory: false),
+        serverConfigFileURL: tempDirectory.appendingPathComponent("Application Support/server.yaml", isDirectory: false),
+        launchAgentConfigAliasURL: tempDirectory.appendingPathComponent("Caches/launch-agent-server.yaml", isDirectory: false),
+        runtimeBaseDirectoryURL: tempDirectory.appendingPathComponent("Application Support/runtime", isDirectory: true),
+        runtimeProfileRootURL: tempDirectory.appendingPathComponent("Application Support/runtime/profiles", isDirectory: true),
+        runtimeConfigurationFileURL: tempDirectory.appendingPathComponent("Application Support/runtime/configuration.json", isDirectory: false),
+        standardOutLogURL: tempDirectory.appendingPathComponent("Logs/stdout.log", isDirectory: false),
+        standardErrorLogURL: tempDirectory.appendingPathComponent("Logs/stderr.log", isDirectory: false)
+    )
+
+    let environmentVariables = layout.launchAgentEnvironmentVariables(
+        configFilePath: layout.serverConfigFileURL.path,
+        reloadIntervalSeconds: nil
+    )
+
+    #expect(environmentVariables["APP_CONFIG_FILE"] == layout.launchAgentConfigAliasURL.path)
+    #expect(environmentVariables["SPEAKSWIFTLY_PROFILE_ROOT"] == layout.runtimeProfileRootURL.path)
 }
 
 private func makeTemporaryDirectory() throws -> URL {

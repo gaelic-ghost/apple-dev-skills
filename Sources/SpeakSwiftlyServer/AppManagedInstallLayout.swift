@@ -15,6 +15,7 @@ public struct ServerInstallLayout: Codable, Sendable, Equatable {
     public let launchAgentsDirectoryURL: URL
     public let launchAgentPlistURL: URL
     public let serverConfigFileURL: URL
+    public let launchAgentConfigAliasURL: URL
     public let runtimeBaseDirectoryURL: URL
     public let runtimeProfileRootURL: URL
     public let runtimeConfigurationFileURL: URL
@@ -30,6 +31,7 @@ public struct ServerInstallLayout: Codable, Sendable, Equatable {
         launchAgentsDirectoryURL: URL,
         launchAgentPlistURL: URL,
         serverConfigFileURL: URL,
+        launchAgentConfigAliasURL: URL,
         runtimeBaseDirectoryURL: URL,
         runtimeProfileRootURL: URL,
         runtimeConfigurationFileURL: URL,
@@ -44,6 +46,7 @@ public struct ServerInstallLayout: Codable, Sendable, Equatable {
         self.launchAgentsDirectoryURL = launchAgentsDirectoryURL
         self.launchAgentPlistURL = launchAgentPlistURL
         self.serverConfigFileURL = serverConfigFileURL
+        self.launchAgentConfigAliasURL = launchAgentConfigAliasURL
         self.runtimeBaseDirectoryURL = runtimeBaseDirectoryURL
         self.runtimeProfileRootURL = runtimeProfileRootURL
         self.runtimeConfigurationFileURL = runtimeConfigurationFileURL
@@ -87,6 +90,7 @@ public struct ServerInstallLayout: Codable, Sendable, Equatable {
             launchAgentsDirectoryURL: launchAgentsDirectoryURL,
             launchAgentPlistURL: launchAgentPlistURL,
             serverConfigFileURL: applicationSupportDirectoryURL.appendingPathComponent("server.yaml", isDirectory: false),
+            launchAgentConfigAliasURL: cacheDirectoryURL.appendingPathComponent("launch-agent-server.yaml", isDirectory: false),
             runtimeBaseDirectoryURL: runtimeBaseDirectoryURL,
             runtimeProfileRootURL: runtimeProfileRootURL,
             runtimeConfigurationFileURL: runtimeConfigurationFileURL,
@@ -101,13 +105,21 @@ public struct ServerInstallLayout: Codable, Sendable, Equatable {
     ) -> [String: String] {
         var environmentVariables = [String: String]()
         if let configFilePath, !configFilePath.isEmpty {
-            environmentVariables["APP_CONFIG_FILE"] = configFilePath
+            environmentVariables["APP_CONFIG_FILE"] = launchAgentConfigPath(for: configFilePath)
         }
         if let reloadIntervalSeconds, !reloadIntervalSeconds.isEmpty {
             environmentVariables["APP_CONFIG_RELOAD_INTERVAL_SECONDS"] = reloadIntervalSeconds
         }
         environmentVariables["SPEAKSWIFTLY_PROFILE_ROOT"] = runtimeProfileRootURL.path
         return environmentVariables
+    }
+
+    func launchAgentConfigPath(for configFilePath: String) -> String {
+        let standardizedPath = URL(fileURLWithPath: configFilePath).standardizedFileURL.path
+        if standardizedPath.contains(" ") {
+            return launchAgentConfigAliasURL.path
+        }
+        return standardizedPath
     }
 }
 

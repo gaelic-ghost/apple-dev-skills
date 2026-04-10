@@ -175,10 +175,12 @@ struct LaunchAgentOptions {
     // MARK: - Install
 
     func install() throws {
+        let layout = ServerInstallLayout.defaultForCurrentUser(launchAgentLabel: label)
         try ensureParentDirectory(for: plistPath)
         try FileManager.default.createDirectory(atPath: profileRootPath, withIntermediateDirectories: true)
         try ensureParentDirectory(for: standardOutPath)
         try ensureParentDirectory(for: standardErrorPath)
+        try stageLaunchAgentConfigAliasIfNeeded(layout: layout)
 
         try propertyListData().write(to: URL(fileURLWithPath: plistPath), options: .atomic)
         try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: plistPath)
@@ -285,6 +287,37 @@ struct LaunchAgentOptions {
         } catch {
             throw LaunchAgentCommandError(
                 "\(speakSwiftlyServerToolName) could not create the directory '\(directoryURL.path)' needed for LaunchAgent support. Likely cause: \(error.localizedDescription)"
+            )
+        }
+    }
+
+    private func stageLaunchAgentConfigAliasIfNeeded(layout: ServerInstallLayout) throws {
+        guard let configFilePath, !configFilePath.isEmpty else { return }
+
+        let canonicalConfigURL = URL(fileURLWithPath: configFilePath).standardizedFileURL
+        guard FileManager.default.fileExists(atPath: canonicalConfigURL.path) else {
+            throw LaunchAgentCommandError(
+                "\(speakSwiftlyServerToolName) could not install the LaunchAgent because the config file '\(canonicalConfigURL.path)' does not exist."
+            )
+        }
+
+        let aliasedConfigPath = layout.launchAgentConfigPath(for: canonicalConfigURL.path)
+        guard aliasedConfigPath != canonicalConfigURL.path else { return }
+
+        let aliasURL = URL(fileURLWithPath: aliasedConfigPath)
+        try ensureParentDirectory(for: aliasURL.path)
+
+        do {
+            if FileManager.default.fileExists(atPath: aliasURL.path) {
+                try FileManager.default.removeItem(at: aliasURL)
+            }
+            try FileManager.default.copyItem(at: canonicalConfigURL, to: aliasURL)
+        } catch {
+            throw LaunchAgentCommandError(
+                """
+                \(speakSwiftlyServerToolName) could not stage the LaunchAgent config copy at '\(aliasURL.path)' from canonical config '\(canonicalConfigURL.path)'.
+                Likely cause: \(error.localizedDescription)
+                """
             )
         }
     }
