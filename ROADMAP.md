@@ -128,3 +128,15 @@ Post-2.0 note: this is the current alignment plan for the newer `SpeakSwiftly` r
 - [ ] Add batch-generation submission plus batch-read surfaces across host, HTTP, MCP, and shared resources, including artifact-id shaping and the existing text-format / source-format context support for each batch item.
 - [ ] Revisit server-local job and snapshot shaping so the new immediate generation-control operations and persisted generation-job reads map directly to runtime concepts instead of keeping legacy server-only wrappers around them.
 - [x] Expand README, MCP tool docs, shared resources, and opt-in live E2E coverage so `marvis` vs `qwen3`, explicit `vibe`, generated files, generation jobs, and batch generation are all documented and verified end to end.
+
+## Milestone 12: Live Service Reliability And Testing Ergonomics
+
+Post-`v2.0.4` note: these items capture the next hardening pass after the LaunchAgent config-path repair. Detailed maintainer guidance lives in `docs/maintainers/live-service-reliability-follow-ups.md`.
+
+- [ ] Add an app-managed LaunchAgent smoke test that starts from a canonical config path with spaces and verifies both `GET /runtime/host` and MCP `initialize`.
+- [ ] Add explicit startup logging for canonical config paths, LaunchAgent alias staging, and the exact config file path the runtime loader opened.
+- [ ] Add a first-class operator health-check command that verifies HTTP and MCP transport health without ad hoc curl or one-off JSON-RPC scripts.
+- [ ] Decide whether LaunchAgent-owned startup config should keep using a reloading provider or move to a simpler startup-open path with reload support layered on intentionally later.
+- [ ] Promote the existing MCP E2E client utilities into a reusable repo-owned smoke helper for local checks, CI, and release verification.
+- [ ] Add a maintainer-facing release verification path that confirms the staged release artifact, LaunchAgent install, runtime host overview, and MCP initialize flow all agree.
+- [ ] Split transport smoke coverage more clearly from long audible-playback E2E coverage so failures localize faster.
