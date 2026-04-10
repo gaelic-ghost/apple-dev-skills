@@ -122,7 +122,7 @@ actor MockRuntime: ServerRuntimeProtocol {
         sourceFormat: TextForSpeech.SourceFormat?,
     ) async -> RuntimeRequestHandle {
         let requestID = UUID().uuidString
-        let request = MockRequest(id: requestID, operation: "queue_speech_live", profileName: profileName)
+        let request = MockRequest(id: requestID, operation: "generate_speech", profileName: profileName)
         queuedSpeechInvocations.append(
             .init(
                 text: text,
@@ -222,7 +222,7 @@ actor MockRuntime: ServerRuntimeProtocol {
             continuation.yield(.completed(SpeakSwiftly.Success(id: requestID, generatedFile: generatedFile, activeRequests: nil)))
             continuation.finish()
         }
-        return RuntimeRequestHandle(id: requestID, operation: "queue_speech_file", profileName: profileName, events: events)
+        return RuntimeRequestHandle(id: requestID, operation: "generate_audio_file", profileName: profileName, events: events)
     }
 
     func queueSpeechBatch(
@@ -310,7 +310,7 @@ actor MockRuntime: ServerRuntimeProtocol {
             continuation.yield(.completed(SpeakSwiftly.Success(id: requestID, generatedBatch: generatedBatch, activeRequests: nil)))
             continuation.finish()
         }
-        return RuntimeRequestHandle(id: requestID, operation: "queue_speech_batch", profileName: profileName, events: events)
+        return RuntimeRequestHandle(id: requestID, operation: "generate_batch", profileName: profileName, events: events)
     }
 
     func createVoiceProfileFromDescription(

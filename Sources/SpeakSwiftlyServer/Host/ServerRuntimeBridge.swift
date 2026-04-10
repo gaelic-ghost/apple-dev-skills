@@ -149,7 +149,7 @@ actor ServerRuntimeAdapter: ServerRuntimeProtocol {
             textContext: normalizationContext,
             sourceFormat: sourceFormat
         )
-        return .init(id: handle.id, operation: "queue_speech_live", profileName: profileName, events: handle.events)
+        return .init(id: handle.id, operation: "generate_speech", profileName: profileName, events: handle.events)
     }
 
     func queueSpeechFile(
@@ -166,7 +166,7 @@ actor ServerRuntimeAdapter: ServerRuntimeProtocol {
             textContext: normalizationContext,
             sourceFormat: sourceFormat
         )
-        return .init(id: handle.id, operation: "queue_speech_file", profileName: profileName, events: handle.events)
+        return .init(id: handle.id, operation: "generate_audio_file", profileName: profileName, events: handle.events)
     }
 
     func queueSpeechBatch(
@@ -174,7 +174,7 @@ actor ServerRuntimeAdapter: ServerRuntimeProtocol {
         with profileName: String
     ) async -> RuntimeRequestHandle {
         let handle = await runtime.generate.batch(items, with: profileName)
-        return .init(id: handle.id, operation: "queue_speech_batch", profileName: profileName, events: handle.events)
+        return .init(id: handle.id, operation: "generate_batch", profileName: profileName, events: handle.events)
     }
 
     func createVoiceProfileFromDescription(

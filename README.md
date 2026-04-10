@@ -369,21 +369,21 @@ The runtime routes are also state-oriented. `GET /runtime/host` returns the shar
 
 The current MCP surface is optional and mounts on the same shared Hummingbird process at `APP_MCP_PATH` when `APP_MCP_ENABLED=true`. It currently exposes these tools:
 
-- `queue_speech_live`
-- `queue_speech_file`
-- `queue_speech_batch`
+- `generate_speech`
+- `generate_audio_file`
+- `generate_batch`
 - `create_voice_profile_from_description`
 - `create_voice_profile_from_audio`
 - `get_runtime_overview`
 - `get_runtime_status`
-- `get_runtime_configuration`
-- `set_runtime_configuration`
+- `get_staged_runtime_config`
+- `set_staged_config`
 - `switch_speech_backend`
 - `reload_models`
 - `unload_models`
 - `list_voice_profiles`
 - `delete_voice_profile`
-- `get_text_profiles_state`
+- `get_text_normalizer_snapshot`
 - `list_generation_queue`
 - `list_playback_queue`
 - `pause_playback`
@@ -401,7 +401,7 @@ The current MCP surface is optional and mounts on the same shared Hummingbird pr
 - `add_text_replacement`
 - `replace_text_replacement`
 - `remove_text_replacement`
-- `list_requests`
+- `list_active_requests`
 - `list_generation_jobs`
 - `get_generation_job`
 - `expire_generation_job`

@@ -138,7 +138,7 @@ struct SpeakSwiftlyServerE2ETests {
             timeout: .seconds(180),
             matching: { $0.state == "playing" && $0.activeRequest?.id == firstJobID }
         )
-        #expect(playingState.activeRequest?.op == "queue_speech_live")
+        #expect(playingState.activeRequest?.op == "generate_speech")
 
         let paused = try decode(
             E2EPlaybackStateResponse.self,
@@ -289,7 +289,7 @@ struct SpeakSwiftlyServerE2ETests {
         let firstJobID = try requireString(
             "request_id",
             in: try await client.callTool(
-                name: "queue_speech_live",
+                name: "generate_speech",
                 arguments: [
                     "text": longPlaybackText,
                     "profile_name": profileName,
@@ -302,7 +302,7 @@ struct SpeakSwiftlyServerE2ETests {
             timeout: .seconds(180),
             matching: { $0.state == "playing" && $0.activeRequest?.id == firstJobID }
         )
-        #expect(playingState.activeRequest?.op == "queue_speech_live")
+        #expect(playingState.activeRequest?.op == "generate_speech")
 
         let pausedPayload = try Self.requireObjectPayload(
             from: try await client.callToolJSON(name: "pause_playback", arguments: [:])
@@ -319,7 +319,7 @@ struct SpeakSwiftlyServerE2ETests {
         let secondJobID = try requireString(
             "request_id",
             in: try await client.callTool(
-                name: "queue_speech_live",
+                name: "generate_speech",
                 arguments: [
                     "text": longPlaybackText,
                     "profile_name": profileName,
@@ -355,7 +355,7 @@ struct SpeakSwiftlyServerE2ETests {
         let thirdJobID = try requireString(
             "request_id",
             in: try await client.callTool(
-                name: "queue_speech_live",
+                name: "generate_speech",
                 arguments: [
                     "text": longPlaybackText,
                     "profile_name": profileName,
@@ -365,7 +365,7 @@ struct SpeakSwiftlyServerE2ETests {
         let fourthJobID = try requireString(
             "request_id",
             in: try await client.callTool(
-                name: "queue_speech_live",
+                name: "generate_speech",
                 arguments: [
                     "text": longPlaybackText,
                     "profile_name": profileName,

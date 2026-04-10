@@ -276,8 +276,8 @@ private func voiceProfilesGuideMarkdown() -> String {
     2. Use `create_voice_profile_from_description` when the user wants a new synthetic profile from source text plus a voice description.
     3. Use `create_voice_profile_from_audio` when the user already has reference audio and wants SpeakSwiftly to capture that voice.
     4. Provide `transcript` to `create_voice_profile_from_audio` when the user knows the spoken words already; omit it only when transcription is actually needed.
-    5. Pass `text_format`, `nested_source_format`, or `source_format` to `queue_speech_live` when the input needs explicit format-aware normalization instead of automatic detection.
-    6. Use `queue_speech_live` after the user has chosen the correct voice profile, then read `speak://requests/{request_id}` or `speak://runtime/overview` for progress.
+    5. Pass `text_format`, `nested_source_format`, or `source_format` to `generate_speech` when the input needs explicit format-aware normalization instead of automatic detection.
+    6. Use `generate_speech` after the user has chosen the correct voice profile, then read `speak://requests/{request_id}` or `speak://runtime/overview` for progress.
     7. Use `delete_voice_profile` only after confirming the exact `profile_name`, especially when multiple similar profiles exist.
 
     Drafting guidance:

@@ -47,7 +47,7 @@ That means the server is best understood as a transport-oriented adapter over th
 | `SpeakSwiftly.Runtime.start()` | Indirect | No direct route | No direct tool | Starts during process boot. Correctly host-local for this server architecture. |
 | `SpeakSwiftly.Runtime.shutdown()` | Indirect | No direct route | No direct tool | Runs during process shutdown. Correctly host-local. |
 | `SpeakSwiftly.Runtime.statusEvents()` | Adapted | `GET /healthz`, `GET /readyz`, `GET /status`, `GET /jobs/{job_id}/events` | `status` tool, `speak://status`, `speak://runtime`, subscriptions | Exposed as derived host snapshots and worker-status events rather than raw stream subscription. |
-| `SpeakSwiftly.Runtime.speak(text:with:as:textProfileName:textContext:sourceFormat:id:)` | Full for current public job cases | `POST /speak` | `queue_speech_live` | `job` is fixed to `.live`, which matches current public enum cases. Normalization context is exposed through `cwd`, `repo_root`, `text_format`, and `nested_source_format`, one-shot stored text-profile selection is exposed through `text_profile_name`, and whole-source normalization is exposed through `source_format`. |
+| `SpeakSwiftly.Runtime.speak(text:with:as:textProfileName:textContext:sourceFormat:id:)` | Full for current public job cases | `POST /speak` | `generate_speech` | `job` is fixed to `.live`, which matches current public enum cases. Normalization context is exposed through `cwd`, `repo_root`, `text_format`, and `nested_source_format`, one-shot stored text-profile selection is exposed through `text_profile_name`, and whole-source normalization is exposed through `source_format`. |
 | `SpeakSwiftly.Runtime.createProfile(named:from:voice:outputPath:id:)` | Full | `POST /profiles` | `create_profile` | Full control-plane exposure. |
 | `SpeakSwiftly.Runtime.createClone(named:from:transcript:id:)` | Full | `POST /profiles/clone` | `create_clone` | Exposed as a retained voice-profile job flow just like profile creation and removal. |
 | `SpeakSwiftly.Runtime.profiles(id:)` | Full | `GET /profiles` | `list_profiles`, `speak://profiles` | Exposed as cached host view rather than raw request handle. Appropriate. |
@@ -81,7 +81,7 @@ That means the server is best understood as a transport-oriented adapter over th
 | `SpeakSwiftly.PlaybackStateSnapshot` | Adapted | playback/status payloads | playback tools/resources | Good translation. |
 | `SpeakSwiftly.Success` terminal payloads | Adapted | job snapshots and SSE | tool results and resources indirectly | Correctly translated into stable server response models. |
 | `SpeakSwiftly.Failure` / `SpeakSwiftly.Error` / `SpeakSwiftly.ErrorCode` | Adapted | HTTP errors, job failure events | MCP errors and failed job resources indirectly | Exposed semantically, not one-to-one structurally. |
-| `SpeakSwiftly.Job.live` | Full | `POST /speak` | `queue_speech_live` | Currently only public job case, fully supported. |
+| `SpeakSwiftly.Job.live` | Full | `POST /speak` | `generate_speech` | Currently only public job case, fully supported. |
 | `SpeakSwiftly.Queue.generation` / `.playback` | Full | queue routes | queue tools | Fully supported. |
 | `SpeakSwiftly.PlaybackAction.pause` / `.resume` / `.state` | Full | playback routes | playback tools | Fully supported. |
 | `SpeakSwiftly.PlaybackState.idle` / `.playing` / `.paused` | Full | playback/status/job payloads | playback/status resources | Fully supported. |
@@ -104,7 +104,7 @@ These items should stay server-internal or transport-adapted unless the product 
 
 ### 1. MCP tool naming still follows worker-op vocabulary
 
-Names such as `queue_speech_live`, `list_queue_generation`, and `playback_state` are perfectly valid, but they still read like protocol operation names. That makes sense historically because they line up with the worker op names, but it is slightly less ergonomic for higher-level clients than a more product-shaped vocabulary.
+Names such as `list_queue_generation` and `playback_state` are perfectly valid, but they still read like protocol operation names. That makes sense historically because they line up with the worker op names, but it is slightly less ergonomic for higher-level clients than a more product-shaped vocabulary.
 
 This is not a correctness issue. It is mainly a polish and ergonomics issue.
 
@@ -160,7 +160,7 @@ Main weaknesses:
 
 The highest-value library-alignment follow-through items from the previous review are now landed:
 
-1. `POST /speak` and `queue_speech_live` both accept normalization context through `cwd`, `repo_root`, `text_format`, and `nested_source_format`, plus one-shot stored-profile selection through `text_profile_name` and explicit whole-source normalization through `source_format`.
+1. `POST /speak` and `generate_speech` both accept normalization context through `cwd`, `repo_root`, `text_format`, and `nested_source_format`, plus one-shot stored-profile selection through `text_profile_name` and explicit whole-source normalization through `source_format`.
 2. HTTP now exposes `GET /jobs`.
 3. Accepted-job MCP results now include `job_resource_uri`.
 4. Voice clone creation now has matching HTTP and MCP job flows.

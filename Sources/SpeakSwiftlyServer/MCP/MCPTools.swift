@@ -8,7 +8,7 @@ import TextForSpeech
 enum MCPToolCatalog {
     static let definitions: [Tool] = [
         Tool(
-            name: "queue_speech_live",
+            name: "generate_speech",
             description: "Queue live speech playback with a stored SpeakSwiftly voice profile. Use this when the user wants audible output now, and optionally provide text_profile_name plus explicit normalization-format arguments when the input should not rely on automatic format detection.",
             inputSchema: [
                 "type": "object",
@@ -26,7 +26,7 @@ enum MCPToolCatalog {
             ]
         ),
         Tool(
-            name: "queue_speech_file",
+            name: "generate_audio_file",
             description: "Queue one retained generated-audio file instead of live playback. Use this when the user wants a saved artifact they can inspect or reuse later.",
             inputSchema: [
                 "type": "object",
@@ -44,7 +44,7 @@ enum MCPToolCatalog {
             ]
         ),
         Tool(
-            name: "queue_speech_batch",
+            name: "generate_batch",
             description: "Queue a retained generated-audio batch from multiple items under one voice profile. Use this when the user wants several output files produced together.",
             inputSchema: [
                 "type": "object",
@@ -116,13 +116,13 @@ enum MCPToolCatalog {
             annotations: .init(readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false)
         ),
         Tool(
-            name: "get_runtime_configuration",
-            description: "Return the persisted runtime-configuration snapshot, including the active backend, the next-start backend, and any environment override.",
+            name: "get_staged_runtime_config",
+            description: "Return the staged persisted runtime-configuration snapshot that will apply on the next runtime start, including the active backend, the next-start backend, and any environment override.",
             inputSchema: ["type": "object", "properties": [:]],
             annotations: .init(readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false)
         ),
         Tool(
-            name: "set_runtime_configuration",
+            name: "set_staged_config",
             description: "Persist one speech_backend value for the next runtime start without hot-swapping the current worker.",
             inputSchema: [
                 "type": "object",
@@ -154,8 +154,8 @@ enum MCPToolCatalog {
             inputSchema: ["type": "object", "properties": [:]]
         ),
         Tool(
-            name: "get_text_profiles_state",
-            description: "Return the full SpeakSwiftly text-profile snapshot, including base, active, stored, and effective profiles.",
+            name: "get_text_normalizer_snapshot",
+            description: "Return the full SpeakSwiftly text-normalizer snapshot, including base, active, stored, and effective profiles.",
             inputSchema: ["type": "object", "properties": [:]],
             annotations: .init(readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false)
         ),
@@ -303,8 +303,8 @@ enum MCPToolCatalog {
             annotations: .init(readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false)
         ),
         Tool(
-            name: "list_requests",
-            description: "Return the shared-host retained request snapshots for live server operations such as generation, voice creation, and playback control.",
+            name: "list_active_requests",
+            description: "Return the shared-host retained request snapshots for active and recently tracked live server operations such as generation, voice creation, and playback control.",
             inputSchema: ["type": "object", "properties": [:]],
             annotations: .init(readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false)
         ),
@@ -392,7 +392,7 @@ extension MCPSurface {
             let arguments = params.arguments ?? [:]
 
             switch params.name {
-            case "queue_speech_live":
+            case "generate_speech":
                 let requestID = try await host.queueSpeechLive(
                     text: requiredString("text", in: arguments),
                     profileName: requiredString("profile_name", in: arguments),
@@ -407,7 +407,7 @@ extension MCPSurface {
                     )
                 )
 
-            case "queue_speech_file":
+            case "generate_audio_file":
                 let requestID = try await host.queueSpeechFile(
                     text: requiredString("text", in: arguments),
                     profileName: requiredString("profile_name", in: arguments),
@@ -422,7 +422,7 @@ extension MCPSurface {
                     )
                 )
 
-            case "queue_speech_batch":
+            case "generate_batch":
                 let items: [BatchItemRequestPayload] = try decodeArgument("items", in: arguments)
                 let requestID = try await host.queueSpeechBatch(
                     items: try items.map { try $0.model() },
@@ -486,10 +486,10 @@ extension MCPSurface {
             case "get_runtime_status":
                 return try toolResult(try await host.runtimeStatus())
 
-            case "get_runtime_configuration":
+            case "get_staged_runtime_config":
                 return try toolResult(await host.runtimeConfigurationSnapshot())
 
-            case "set_runtime_configuration":
+            case "set_staged_config":
                 return try toolResult(
                     try await host.saveRuntimeConfiguration(
                         speechBackend: try requiredSpeechBackend("speech_backend", in: arguments)
@@ -509,7 +509,7 @@ extension MCPSurface {
             case "unload_models":
                 return try toolResult(try await host.unloadModels())
 
-            case "get_text_profiles_state":
+            case "get_text_normalizer_snapshot":
                 return try toolResult(await host.textProfilesSnapshot())
 
             case "create_text_profile":
@@ -635,7 +635,7 @@ extension MCPSurface {
                     )
                 )
 
-            case "list_requests":
+            case "list_active_requests":
                 return try toolResult(await host.jobSnapshots())
 
             case "list_generation_jobs":

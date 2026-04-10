@@ -535,7 +535,7 @@ extension SpeakSwiftlyServerE2ETests {
         let firstSpeechJobID = try requireString(
             "request_id",
             in: try await client.callTool(
-                name: "queue_speech_live",
+                name: "generate_speech",
                 arguments: [
                     "text": String(repeating: Self.testingPlaybackText + " ", count: 12),
                     "profile_name": createdProfileName,
@@ -557,7 +557,7 @@ extension SpeakSwiftlyServerE2ETests {
         let secondSpeechJobID = try requireString(
             "request_id",
             in: try await client.callTool(
-                name: "queue_speech_live",
+                name: "generate_speech",
                 arguments: [
                     "text": String(repeating: Self.testingPlaybackText + " ", count: 12),
                     "profile_name": createdProfileName,
@@ -580,7 +580,7 @@ extension SpeakSwiftlyServerE2ETests {
         let thirdSpeechJobID = try requireString(
             "request_id",
             in: try await client.callTool(
-                name: "queue_speech_live",
+                name: "generate_speech",
                 arguments: [
                     "text": String(repeating: Self.testingPlaybackText + " ", count: 12),
                     "profile_name": createdProfileName,
@@ -590,7 +590,7 @@ extension SpeakSwiftlyServerE2ETests {
         let fourthSpeechJobID = try requireString(
             "request_id",
             in: try await client.callTool(
-                name: "queue_speech_live",
+                name: "generate_speech",
                 arguments: [
                     "text": String(repeating: Self.testingPlaybackText + " ", count: 12),
                     "profile_name": createdProfileName,
@@ -637,7 +637,7 @@ extension SpeakSwiftlyServerE2ETests {
             arguments: ["profile_id": "mcp-text-profile"]
         )
         let finalTextProfiles = try Self.requireObjectPayload(
-            from: try await client.callToolJSON(name: "get_text_profiles_state", arguments: [:])
+            from: try await client.callToolJSON(name: "get_text_normalizer_snapshot", arguments: [:])
         )
         let finalStoredProfiles = try requireArray("stored_profiles", in: finalTextProfiles)
         #expect(finalStoredProfiles.contains { $0["id"] as? String == "mcp-text-profile" } == false)

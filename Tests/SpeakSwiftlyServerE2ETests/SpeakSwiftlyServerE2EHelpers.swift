@@ -136,7 +136,7 @@ extension SpeakSwiftlyServerE2ETests {
         )
 
         assertSpeechJobCompleted(snapshot, expectedJobID: jobID)
-        #expect(snapshot.history.contains { $0.event == "started" && $0.op == "queue_speech_live" })
+        #expect(snapshot.history.contains { $0.event == "started" && $0.op == "generate_speech" })
         #expect(snapshot.history.contains { $0.event == "progress" && $0.stage == "playback_finished" })
         #expect(!snapshot.history.contains { $0.event == "queued" })
 
@@ -372,7 +372,7 @@ extension SpeakSwiftlyServerE2ETests {
         profileName: String
     ) async throws {
         let payload = try await client.callTool(
-            name: "queue_speech_live",
+            name: "generate_speech",
             arguments: [
                 "text": text,
                 "profile_name": profileName,
@@ -389,7 +389,7 @@ extension SpeakSwiftlyServerE2ETests {
         )
 
         assertSpeechJobCompleted(snapshot, expectedJobID: jobID)
-        #expect(snapshot.history.contains { $0.event == "started" && $0.op == "queue_speech_live" })
+        #expect(snapshot.history.contains { $0.event == "started" && $0.op == "generate_speech" })
         #expect(snapshot.history.contains { $0.event == "progress" && $0.stage == "playback_finished" })
         #expect(!snapshot.history.contains { $0.event == "queued" })
     }
@@ -414,7 +414,7 @@ extension SpeakSwiftlyServerE2ETests {
         #expect(engineReadyLog["event"] as? String == "playback_engine_ready")
 
         let payload = try await client.callTool(
-            name: "queue_speech_live",
+            name: "generate_speech",
             arguments: [
                 "text": text,
                 "profile_name": profileName,

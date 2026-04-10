@@ -75,17 +75,17 @@ extension SpeakSwiftlyServerTests {
         let tools = try #require(listToolsResult["tools"] as? [[String: Any]])
         let toolNames = Set(tools.compactMap { $0["name"] as? String })
         #expect(toolNames == Set(MCPToolCatalog.definitions.map(\.name)))
-        #expect(tools.contains { $0["name"] as? String == "queue_speech_live" })
+        #expect(tools.contains { $0["name"] as? String == "generate_speech" })
         #expect(tools.contains { $0["name"] as? String == "create_voice_profile_from_audio" })
-        #expect(tools.contains { $0["name"] as? String == "get_runtime_configuration" })
-        #expect(tools.contains { $0["name"] as? String == "set_runtime_configuration" })
+        #expect(tools.contains { $0["name"] as? String == "get_staged_runtime_config" })
+        #expect(tools.contains { $0["name"] as? String == "set_staged_config" })
         #expect(tools.contains { $0["name"] as? String == "get_runtime_overview" })
 
         let queueSpeechToolEnvelope = try await mcpEnvelope(
             from: await mcpSurface.handle(
                 mcpPOSTRequest(
                     body: mcpCallToolRequestJSON(
-                        name: "queue_speech_live",
+                        name: "generate_speech",
                         arguments: [
                             "text": "Inspect MCP resources",
                             "profile_name": "default",
@@ -197,7 +197,7 @@ extension SpeakSwiftlyServerTests {
             from: await mcpSurface.handle(
                 mcpPOSTRequest(
                     body: mcpCallToolRequestJSON(
-                        name: "get_text_profiles_state",
+                        name: "get_text_normalizer_snapshot",
                         arguments: [:]
                     ),
                     sessionID: initializeSessionID
@@ -317,7 +317,7 @@ extension SpeakSwiftlyServerTests {
         let getRuntimeConfigEnvelope = try await mcpEnvelope(
             from: await mcpSurface.handle(
                 mcpPOSTRequest(
-                    body: mcpCallToolRequestJSON(name: "get_runtime_configuration", arguments: [:]),
+                    body: mcpCallToolRequestJSON(name: "get_staged_runtime_config", arguments: [:]),
                     sessionID: initializeSessionID
                 )
             )
@@ -330,7 +330,7 @@ extension SpeakSwiftlyServerTests {
             from: await mcpSurface.handle(
                 mcpPOSTRequest(
                     body: mcpCallToolRequestJSON(
-                        name: "set_runtime_configuration",
+                        name: "set_staged_config",
                         arguments: ["speech_backend": "marvis"]
                     ),
                     sessionID: initializeSessionID
@@ -460,7 +460,7 @@ extension SpeakSwiftlyServerTests {
         let voiceProfilesGuideContents = try #require(voiceProfilesGuideResult["contents"] as? [[String: Any]])
         let voiceProfilesGuideText = try #require(voiceProfilesGuideContents.first?["text"] as? String)
         #expect(voiceProfilesGuideText.contains("create_voice_profile_from_audio"))
-        #expect(voiceProfilesGuideText.contains("queue_speech_live"))
+        #expect(voiceProfilesGuideText.contains("generate_speech"))
 
         let playbackGuideEnvelope = try await mcpEnvelope(
             from: await mcpSurface.handle(
@@ -731,7 +731,7 @@ extension SpeakSwiftlyServerTests {
             from: await mcpSurface.handle(
                 mcpPOSTRequest(
                     body: mcpCallToolRequestJSON(
-                        name: "queue_speech_live",
+                        name: "generate_speech",
                         arguments: [
                             "text": "Bad format",
                             "profile_name": "default",

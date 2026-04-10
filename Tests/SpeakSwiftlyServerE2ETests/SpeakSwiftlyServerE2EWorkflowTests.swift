@@ -658,7 +658,7 @@ extension SpeakSwiftlyServerE2ETests {
             var jobIDs = [String]()
             for lane in lanes {
                 let payload = try await client.callTool(
-                    name: "queue_speech_live",
+                    name: "generate_speech",
                     arguments: [
                         "text": testingPlaybackText,
                         "profile_name": lane.profileName,

@@ -366,9 +366,9 @@ extension ServerHost {
     }
 
     func isGenerationOperation(_ operation: String) -> Bool {
-        operation == "queue_speech_live"
-            || operation == "queue_speech_file"
-            || operation == "queue_speech_batch"
+        operation == "generate_speech"
+            || operation == "generate_audio_file"
+            || operation == "generate_batch"
     }
 
     func runtimeStatusResponse(
