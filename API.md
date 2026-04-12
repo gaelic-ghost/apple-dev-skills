@@ -1,5 +1,13 @@
 # API
 
+## Table of Contents
+
+- [Overview](#overview)
+- [Configuration Notes](#configuration-notes)
+- [HTTP Surface](#http-surface)
+- [MCP Surface](#mcp-surface)
+- [Transport Status Notes](#transport-status-notes)
+
 ## Overview
 
 This document is the dense transport reference for `SpeakSwiftlyServer`. Keep the operator-facing summary in [README.md](README.md) concise and move detailed contract inventory here instead.
@@ -27,14 +35,29 @@ Changes to bind addresses, ports, HTTP enablement, MCP enablement, MCP path, or 
 
 ## HTTP Surface
 
-The current HTTP surface is:
+### Health And Runtime Endpoints
 
 - `GET /healthz`
 - `GET /readyz`
 - `GET /runtime/host`
 - `GET /runtime/status`
 - `GET /runtime/configuration`
+- `POST /runtime/backend`
+- `POST /runtime/models/reload`
+- `POST /runtime/models/unload`
+- `PUT /runtime/configuration`
+
+### Voice Endpoints
+
 - `GET /voices`
+- `POST /voices/from-description`
+- `POST /voices/from-audio`
+- `POST /voices/{profile_name}/reroll`
+- `PUT /voices/{profile_name}/name`
+- `DELETE /voices/{profile_name}`
+
+### Text Profile Endpoints
+
 - `GET /text-profiles`
 - `GET /text-profiles/style`
 - `GET /text-profiles/base`
@@ -42,6 +65,29 @@ The current HTTP surface is:
 - `GET /text-profiles/effective`
 - `GET /text-profiles/effective/{profile_id}`
 - `GET /text-profiles/stored/{profile_id}`
+- `POST /text-profiles/stored`
+- `POST /text-profiles/load`
+- `POST /text-profiles/save`
+- `POST /text-profiles/active/reset`
+- `POST /text-profiles/active/replacements`
+- `POST /text-profiles/stored/{profile_id}/replacements`
+- `PUT /text-profiles/stored/{profile_id}`
+- `PUT /text-profiles/style`
+- `PUT /text-profiles/active`
+- `PUT /text-profiles/active/replacements/{replacement_id}`
+- `PUT /text-profiles/stored/{profile_id}/replacements/{replacement_id}`
+- `DELETE /text-profiles/stored/{profile_id}`
+- `DELETE /text-profiles/active/replacements/{replacement_id}`
+- `DELETE /text-profiles/stored/{profile_id}/replacements/{replacement_id}`
+
+### Speech, Request, And Artifact Endpoints
+
+- `POST /speech/live`
+- `POST /speech/files`
+- `POST /speech/batches`
+- `GET /requests`
+- `GET /requests/{request_id}`
+- `GET /requests/{request_id}/events`
 - `GET /generation/queue`
 - `GET /generation/jobs`
 - `GET /generation/jobs/{job_id}`
@@ -49,41 +95,15 @@ The current HTTP surface is:
 - `GET /generation/files/{artifact_id}`
 - `GET /generation/batches`
 - `GET /generation/batches/{batch_id}`
+
+### Playback Endpoints
+
 - `GET /playback/state`
 - `GET /playback/queue`
-- `GET /requests`
-- `GET /requests/{request_id}`
-- `GET /requests/{request_id}/events`
-- `POST /voices/from-description`
-- `POST /voices/from-audio`
-- `POST /voices/{profile_name}/reroll`
-- `POST /speech/live`
-- `POST /speech/files`
-- `POST /speech/batches`
 - `POST /playback/pause`
 - `POST /playback/resume`
-- `POST /text-profiles/stored`
-- `POST /text-profiles/load`
-- `POST /text-profiles/save`
-- `POST /text-profiles/active/reset`
-- `POST /text-profiles/active/replacements`
-- `POST /text-profiles/stored/{profile_id}/replacements`
-- `POST /runtime/backend`
-- `POST /runtime/models/reload`
-- `POST /runtime/models/unload`
-- `PUT /voices/{profile_name}/name`
-- `PUT /text-profiles/stored/{profile_id}`
-- `PUT /text-profiles/style`
-- `PUT /text-profiles/active`
-- `PUT /text-profiles/active/replacements/{replacement_id}`
-- `PUT /text-profiles/stored/{profile_id}/replacements/{replacement_id}`
-- `PUT /runtime/configuration`
-- `DELETE /voices/{profile_name}`
 - `DELETE /playback/queue`
 - `DELETE /playback/requests/{request_id}`
-- `DELETE /text-profiles/stored/{profile_id}`
-- `DELETE /text-profiles/active/replacements/{replacement_id}`
-- `DELETE /text-profiles/stored/{profile_id}/replacements/{replacement_id}`
 
 ### Accepted Request Semantics
 
@@ -126,34 +146,34 @@ The MCP surface is optional and mounts on the same shared Hummingbird process at
 
 ### MCP Tools
 
-The current MCP tools are:
+#### Speech And Artifact Tools
 
 - `generate_speech`
 - `generate_audio_file`
 - `generate_batch`
+- `list_active_requests`
+- `list_generation_jobs`
+- `get_generation_job`
+- `expire_generation_job`
+- `list_generated_files`
+- `get_generated_file`
+- `list_generated_batches`
+- `get_generated_batch`
+
+#### Voice Tools
+
 - `create_voice_profile_from_description`
 - `create_voice_profile_from_audio`
 - `update_voice_profile_name`
 - `reroll_voice_profile`
-- `get_runtime_overview`
-- `get_runtime_status`
-- `get_staged_runtime_config`
-- `set_staged_config`
-- `switch_speech_backend`
-- `reload_models`
-- `unload_models`
 - `list_voice_profiles`
 - `delete_voice_profile`
+
+#### Text Profile Tools
+
 - `get_text_normalizer_snapshot`
 - `get_text_profile_style`
 - `set_text_profile_style`
-- `list_generation_queue`
-- `list_playback_queue`
-- `pause_playback`
-- `resume_playback`
-- `get_playback_state`
-- `clear_playback_queue`
-- `cancel_request`
 - `load_text_profiles`
 - `save_text_profiles`
 - `create_text_profile`
@@ -164,41 +184,59 @@ The current MCP tools are:
 - `add_text_replacement`
 - `replace_text_replacement`
 - `remove_text_replacement`
-- `list_active_requests`
-- `list_generation_jobs`
-- `get_generation_job`
-- `expire_generation_job`
-- `list_generated_files`
-- `get_generated_file`
-- `list_generated_batches`
-- `get_generated_batch`
+
+#### Playback And Runtime Tools
+
+- `get_runtime_overview`
+- `get_runtime_status`
+- `get_staged_runtime_config`
+- `set_staged_config`
+- `switch_speech_backend`
+- `reload_models`
+- `unload_models`
+- `list_generation_queue`
+- `list_playback_queue`
+- `pause_playback`
+- `resume_playback`
+- `get_playback_state`
+- `clear_playback_queue`
+- `cancel_request`
 
 ### MCP Resources
 
-The embedded MCP resources are:
+#### Runtime Resources
 
 - `speak://runtime/overview`
 - `speak://runtime/status`
 - `speak://runtime/configuration`
+
+#### Voice Resources
+
 - `speak://voices`
 - `speak://voices/guide`
+- `speak://voices/{profile_name}`
+
+#### Text Profile Resources
+
 - `speak://text-profiles`
 - `speak://text-profiles/style`
 - `speak://text-profiles/base`
 - `speak://text-profiles/active`
 - `speak://text-profiles/effective`
-- `speak://requests`
-- `speak://generation/jobs`
-- `speak://generation/files`
-- `speak://generation/batches`
-- `speak://voices/{profile_name}`
-- `speak://requests/{request_id}`
-- `speak://generation/jobs/{job_id}`
-- `speak://generation/files/{artifact_id}`
-- `speak://generation/batches/{batch_id}`
 - `speak://text-profiles/effective/{profile_id}`
 - `speak://text-profiles/stored/{profile_id}`
 - `speak://text-profiles/guide`
+
+#### Request, Artifact, And Playback Resources
+
+- `speak://requests`
+- `speak://requests/{request_id}`
+- `speak://generation/jobs`
+- `speak://generation/jobs/{job_id}`
+- `speak://generation/files`
+- `speak://generation/files/{artifact_id}`
+- `speak://generation/batches`
+- `speak://generation/batches/{batch_id}`
 - `speak://playback/guide`
 
 Those MCP tools and resources are intentionally thin adapters over the same `ServerHost` snapshots and mutations used by the HTTP API and the app-facing `ServerState`.
