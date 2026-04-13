@@ -1,5 +1,5 @@
 {
-  "originHash" : "b1e942279b005f647773a676f0268db5f178b39e95ae1359fc645f16251ea1ad",
+  "originHash" : "580f49f6031ed622408469d943c4b2acad43fb0cb5e73e94e76d3282fd6a8119",
   "pins" : [
     {
       "identity" : "async-http-client",
@@ -60,8 +60,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/gaelic-ghost/SpeakSwiftly.git",
       "state" : {
-        "revision" : "b6b7e06ed210d580735b7af2e25e1f60c922fc6e",
-        "version" : "3.0.0"
+        "revision" : "7fea42cd2086349e261f770d127cd022ce02793f",
+        "version" : "3.0.3"
       }
     },
     {
@@ -303,8 +303,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/gaelic-ghost/TextForSpeech.git",
       "state" : {
-        "revision" : "6c2d563a259bc94485d1a2510b90c602867fd9f0",
-        "version" : "0.15.0"
+        "revision" : "8e3318de1b7d3e741adac43d525eda7b6eca2c31",
+        "version" : "0.16.0"
       }
     },
     {
