@@ -136,6 +136,16 @@ Current note: this milestone tracks the server-side adoption work for the newer 
 - [ ] Revisit server-local job and snapshot shaping so the new immediate generation-control operations and persisted generation-job reads map directly to runtime concepts instead of keeping legacy server-only wrappers around them.
 - [x] Expand README, MCP tool docs, shared resources, and opt-in live E2E coverage so `marvis` vs `qwen3`, explicit `vibe`, generated files, generation jobs, and batch generation are all documented and verified end to end.
 
+## Milestone 12: Standalone Read-Model Parity
+
+Current note: the embedded-session path now has the clearest app-facing read model through `ServerState`. This milestone tracks bringing the standalone executable and tool-owned path up to parity so foreground operators and app-owned wrappers do not have to reason about two different state stories.
+
+- [ ] Decide what the standalone parity surface actually is: structured stdout, a local file-backed snapshot surface, a first-class CLI inspection command family, or another typed repo-owned read-model lane.
+- [ ] Expose the same core shared-host snapshot families the embedded path already projects, including host overview, queue state, playback state, runtime configuration, transport state, recent errors, jobs, and voice-profile cache state.
+- [ ] Keep the standalone read model sourced from the same `ServerHost` snapshot and event machinery the embedded, HTTP, and MCP paths already use instead of adding a second inference path.
+- [ ] Re-check whether any embedded-only naming or shaping in `ServerState` should move down into a more shared read-model primitive before the standalone parity surface lands.
+- [ ] Document the final parity boundary clearly across embedded sessions, the foreground executable, HTTP, and MCP so operators know which surface to reach for when they need the current shared host picture.
+
 ## Milestone 13: SpeakSwiftly 3.x Follow-On Consideration
 
 Current note: these are intentionally deferred adoption candidates from the broader `SpeakSwiftly 3.x` runtime surface. They are worth revisiting after the current release ships, but they are not required to make the present server release coherent.
@@ -144,7 +154,7 @@ Current note: these are intentionally deferred adoption candidates from the broa
 - [ ] Revisit whether text-profile persistence state, repair, and storage diagnostics need a more explicit operator-facing surface than the current snapshot plus load/save controls.
 - [ ] Decide whether any newer voice-profile maintenance operations beyond create, clone, list, rename, reroll, and delete belong in the public server contract or should stay library-only until a downstream operator use case is concrete.
 
-## Milestone 12: Live Service Reliability And Testing Ergonomics
+## Milestone 14: Live Service Reliability And Testing Ergonomics
 
 Post-`v2.0.4` note: these items capture the next hardening pass after the LaunchAgent config-path repair. Detailed maintainer guidance lives in `docs/maintainers/live-service-reliability-follow-ups.md`.
 
@@ -156,7 +166,7 @@ Post-`v2.0.4` note: these items capture the next hardening pass after the Launch
 - [ ] Add a maintainer-facing release verification path that confirms the staged release artifact, LaunchAgent install, runtime host overview, and MCP initialize flow all agree.
 - [ ] Split transport smoke coverage more clearly from long audible-playback E2E coverage so failures localize faster.
 
-## Milestone 14: Toolchain Repro And Upstream Follow-Through
+## Milestone 15: Toolchain Repro And Upstream Follow-Through
 
 Current note: repo-local guidance and automation now prefer `xcrun swift ...` because the standalone Swiftly-selected Swift 6.3 toolchain currently reproduces a transitive `_NumericsShims` module-loading failure during full-package SwiftPM builds that does not reproduce under Xcode's selected toolchain.
 
