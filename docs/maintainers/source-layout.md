@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document is the maintainer map for the post-`SpeakSwiftly 2.2.1` source split. The goal is to keep future cleanup, review, and feature work landing in the smallest file family that already owns the relevant concern, instead of letting `ServerHost.swift`, one host extension, or one mixed test file grow back into a monolith.
+This document is the maintainer map for the current `SpeakSwiftly 3.x`-aligned source split. The goal is to keep future cleanup, review, and feature work landing in the smallest file family that already owns the relevant concern, instead of letting `ServerHost.swift`, one host extension, or one mixed test file grow back into a monolith.
 
 ## Host Sources
 

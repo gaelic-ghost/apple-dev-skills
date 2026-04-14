@@ -4,6 +4,7 @@ import SpeakSwiftly
 
 // MARK: - Job Event Models
 
+/// Worker readiness or mode change emitted on the shared job event stream.
 public struct ServerWorkerStatusEvent: Encodable, Sendable, Equatable {
     public let event = "worker_status"
     public let stage: String
@@ -16,6 +17,7 @@ public struct ServerWorkerStatusEvent: Encodable, Sendable, Equatable {
     }
 }
 
+/// Queue-placement event emitted when a request cannot start immediately.
 public struct ServerQueuedEvent: Encodable, Sendable, Equatable {
     public let id: String
     public let event = "queued"
@@ -30,18 +32,21 @@ public struct ServerQueuedEvent: Encodable, Sendable, Equatable {
     }
 }
 
+/// Start event emitted when a queued request begins execution.
 public struct ServerStartedEvent: Encodable, Sendable, Equatable {
     public let id: String
     public let event = "started"
     public let op: String
 }
 
+/// Progress event emitted while a request advances through runtime stages.
 public struct ServerProgressEvent: Encodable, Sendable, Equatable {
     public let id: String
     public let event = "progress"
     public let stage: String
 }
 
+/// Success-shaped event payload used for acknowledgements and completions.
 public struct ServerSuccessEvent: Encodable, Sendable, Equatable {
     public let id: String
     public let ok = true
@@ -92,6 +97,7 @@ public struct ServerSuccessEvent: Encodable, Sendable, Equatable {
     }
 }
 
+/// Failure-shaped event payload emitted when a request cannot complete successfully.
 public struct ServerFailureEvent: Encodable, Sendable, Equatable {
     public let id: String
     public let ok = false
@@ -99,6 +105,7 @@ public struct ServerFailureEvent: Encodable, Sendable, Equatable {
     public let message: String
 }
 
+/// Union event type for one job's lifecycle on the shared event stream.
 public enum ServerJobEvent: Sendable, Equatable, Encodable {
     case workerStatus(ServerWorkerStatusEvent)
     case queued(ServerQueuedEvent)
@@ -108,6 +115,7 @@ public enum ServerJobEvent: Sendable, Equatable, Encodable {
     case completed(ServerSuccessEvent)
     case failed(ServerFailureEvent)
 
+    /// Indicates whether the event ends the request lifecycle.
     public var isTerminal: Bool {
         switch self {
         case .completed, .failed:
@@ -117,6 +125,7 @@ public enum ServerJobEvent: Sendable, Equatable, Encodable {
         }
     }
 
+    /// Returns the request identifier carried by the event, when the event is request-specific.
     public var id: String? {
         switch self {
         case .workerStatus:
@@ -156,6 +165,7 @@ public enum ServerJobEvent: Sendable, Equatable, Encodable {
     }
 }
 
+/// Snapshot of one retained request lifecycle, including latest and terminal events.
 public struct JobSnapshot: ResponseEncodable, Sendable {
     public let requestID: String
     public let op: String

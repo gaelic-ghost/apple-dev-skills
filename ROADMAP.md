@@ -1,10 +1,10 @@
 # ROADMAP
 
-## Current Release Gate: v2.0.0 Follow-Through
+## Current Roadmap Baseline
 
 - [x] Document the app-managed install and configuration contract the macOS app will rely on.
 - [x] Decide and document how app-managed installs own logs, profile roots, and cache paths.
-- [x] Trim the roadmap so the remaining unchecked items are clearly split between the v2.0.0 release repair work and post-2.0 follow-up work.
+- [x] Trim the roadmap so the remaining unchecked items are clearly split between shipped work and active follow-up work.
 
 ## Milestone 1: Bootstrap And Repo Hygiene
 
@@ -88,7 +88,7 @@
 
 ## Milestone 8: Config Reload Policy
 
-Post-2.0 note: these are important transport-policy decisions, but they are not part of the current `v2.0.0` release repair gate.
+Current note: these are important transport-policy decisions, but they are not blocking the current package state.
 
 - [x] Adopt `swift-configuration` reloading providers for YAML-backed server config.
 - [x] Keep malformed reloads non-fatal so the watcher survives bad file edits.
@@ -98,7 +98,7 @@ Post-2.0 note: these are important transport-policy decisions, but they are not 
 
 ## Milestone 9: Formatting And Linting
 
-Post-2.0 note: repo-discipline and CI-hardening work, not a current product-correctness blocker for `v2.0.0`.
+Current note: repo-discipline and CI-hardening work, not a current product-correctness blocker.
 
 - [ ] Add SwiftFormat configuration and a maintainer-facing formatting command.
 - [ ] Decide whether SwiftLint should join SwiftFormat as a required local and CI check.
@@ -106,24 +106,28 @@ Post-2.0 note: repo-discipline and CI-hardening work, not a current product-corr
 
 ## Milestone 10: Swift Package Index Readiness
 
-Post-2.0 note: distribution polish for discovery and packaging, not part of the current `v2.0.0` gate.
+Current note: distribution polish for discovery and packaging, not a current release blocker.
 
-- [ ] Add a project `.spi.yml` file with an intentionally minimal initial configuration.
-- [ ] Re-check README, package metadata, and release guidance against Swift Package Index expectations after `.spi.yml` lands.
-- [ ] Submit the package to Swift Package Index once license, metadata, and CI state are ready.
+- [x] Add a project `.spi.yml` file with an intentionally minimal initial configuration.
+- [x] Re-check README, package metadata, and release guidance against Swift Package Index expectations after `.spi.yml` lands.
+- [x] Add a first DocC catalog and the initial package-level article set described in `docs/maintainers/docc-spi-hosting-plan.md`.
+- [x] Add a deliberately small executable-oriented companion article set for `SpeakSwiftlyServerTool` without duplicating the full repository operator docs.
+- [x] Add the short tutorial-style walkthrough described in `docs/maintainers/docc-spi-hosting-plan.md` so the hosted docs have a concrete embedded-session first-use path.
+- [x] Add a DocC build check both locally through `scripts/repo-maintenance/validate-all.sh` and in GitHub Actions before the package is submitted to Swift Package Index.
+- [ ] Submit the package to Swift Package Index once the next minor release candidate (`v3.1.0`) is tagged, pushed, and checked against the maintainer SPI submission checklist.
 
-## Milestone 11: SpeakSwiftly 2.2 And 2.3 Surface Adoption
+## Milestone 11: SpeakSwiftly 3.x Surface Adoption
 
-Post-2.0 note: this milestone tracks the server-side adoption work for the newer `SpeakSwiftly` runtime surface through the current `2.3.1` alignment pass.
+Current note: this milestone tracks the server-side adoption work for the newer `SpeakSwiftly` runtime surface through the current `3.0.3` alignment pass.
 
-- [x] Bump the resolved `SpeakSwiftly` dependency to `2.2.1` and carry explicit `vibe` through the existing profile and clone creation surfaces instead of preserving the older implicit-profile behavior.
+- [x] Carry explicit `vibe` through the existing profile and clone creation surfaces instead of preserving the older implicit-profile behavior as the server moved onto the newer `SpeakSwiftly` runtime surface.
 - [x] Expose the persisted `SpeakSwiftly.Configuration` surface across host state, HTTP, and MCP so operators can inspect and change the active speech backend without reaching into the runtime process manually.
 - [x] Debug the queued-Marvis live playback E2E stall in `httpMarvisQueuedLivePlaybackDrainsInOrder`, including the stuck first request terminal state and the generation-versus-playback ordering mismatch captured in `docs/maintainers/e2e-marvis-queued-live-investigation.md`.
 - [x] Re-check the server against Gale's `SpeakSwiftly` simplification work and delete the remaining local queue, playback, and host-state inference that upstream now exposes directly through the atomic runtime overview.
 - [x] Split the oversized host, model, and mixed route-test sources into concern-focused files and refresh the maintainer docs around that layout so future cleanup does not regrow monoliths.
 - [x] Finish the operator-control E2E realignment so it uses the renamed HTTP surface consistently and validates long live playback with varied text instead of repeated-sentence filler.
-- [x] Re-run the full live E2E suite after the `2.2.1` resource-bundling update and verify the renamed MCP surface and operator-control flows end to end.
-- [x] Bump the resolved `SpeakSwiftly` dependency to the current `v2.3.1` package state, including the `TextForSpeech 0.15.x` compatibility updates that follow from that runtime surface.
+- [x] Re-run the full live E2E suite after the resource-bundling and transport-surface realignment updates and verify the renamed MCP surface and operator-control flows end to end.
+- [x] Bump the resolved `SpeakSwiftly` dependency to the current `v3.0.3` package state, including the `TextForSpeech 0.16.x` compatibility updates that follow from that runtime surface.
 - [x] Expose `runtime.voices.rename(_:to:)` and `runtime.voices.reroll(_:)` across host, HTTP, MCP, docs, and controlled-runtime tests.
 - [ ] Add generated-file reads across host, HTTP, MCP, and shared resources so saved artifacts can be listed and fetched through the server instead of only inside the sibling library.
 - [ ] Add generation-job reads and expiry controls across host, HTTP, MCP, and shared resources so persisted file and batch jobs can be inspected and managed directly.
@@ -131,9 +135,9 @@ Post-2.0 note: this milestone tracks the server-side adoption work for the newer
 - [ ] Revisit server-local job and snapshot shaping so the new immediate generation-control operations and persisted generation-job reads map directly to runtime concepts instead of keeping legacy server-only wrappers around them.
 - [x] Expand README, MCP tool docs, shared resources, and opt-in live E2E coverage so `marvis` vs `qwen3`, explicit `vibe`, generated files, generation jobs, and batch generation are all documented and verified end to end.
 
-## Milestone 13: SpeakSwiftly 2.3.x Follow-On Consideration
+## Milestone 13: SpeakSwiftly 3.x Follow-On Consideration
 
-Post-`v2.1.0` note: these are intentionally deferred adoption candidates from the broader `SpeakSwiftly 2.3.x` runtime surface. They are worth revisiting after the current release ships, but they are not required to make the present server release coherent.
+Current note: these are intentionally deferred adoption candidates from the broader `SpeakSwiftly 3.x` runtime surface. They are worth revisiting after the current release ships, but they are not required to make the present server release coherent.
 
 - [ ] Decide whether the runtime's request-update and generation-event stream surfaces should gain first-class HTTP and MCP exposure, or whether the retained request snapshots remain the cleaner operator contract.
 - [ ] Revisit whether text-profile persistence state, repair, and storage diagnostics need a more explicit operator-facing surface than the current snapshot plus load/save controls.
@@ -150,3 +154,11 @@ Post-`v2.0.4` note: these items capture the next hardening pass after the Launch
 - [ ] Promote the existing MCP E2E client utilities into a reusable repo-owned smoke helper for local checks, CI, and release verification.
 - [ ] Add a maintainer-facing release verification path that confirms the staged release artifact, LaunchAgent install, runtime host overview, and MCP initialize flow all agree.
 - [ ] Split transport smoke coverage more clearly from long audible-playback E2E coverage so failures localize faster.
+
+## Milestone 14: Toolchain Repro And Upstream Follow-Through
+
+Current note: repo-local guidance and automation now prefer `xcrun swift ...` because the standalone Swiftly-selected Swift 6.3 toolchain currently reproduces a transitive `_NumericsShims` module-loading failure during full-package SwiftPM builds that does not reproduce under Xcode's selected toolchain.
+
+- [ ] Build a minimal reproduction that distinguishes the standalone Swiftly-selected Swift 6.3 toolchain failure from the matching Xcode toolchain success.
+- [ ] Capture the exact module-loading boundary that turns the wider package graph into a `_NumericsShims` failure so the issue report is concrete instead of anecdotal.
+- [ ] Decide whether to file the repro upstream against the standalone Swift 6.3 toolchain, SwiftPM module loading, or a specific dependency once the minimal failing graph is proven.

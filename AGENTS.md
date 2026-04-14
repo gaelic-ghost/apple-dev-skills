@@ -18,7 +18,7 @@
 ## Repo Workflow
 
 - Treat this standalone `SpeakSwiftlyServer` repository as the source of truth for development, tags, and releases.
-- Treat the resolved `SpeakSwiftly` dependency declared in `Package.swift` and locked in `Package.resolved` as the source of truth for normal `swift build` and `swift test` runs here.
+- Treat the resolved `SpeakSwiftly` dependency declared in `Package.swift` and locked in `Package.resolved` as the source of truth for normal `xcrun swift build` and `xcrun swift test` runs here.
 - Do not retarget this package to a local `../SpeakSwiftly` checkout unless the manifest is being changed intentionally for a specific local-integration task.
 - If unreleased `SpeakSwiftly` changes are needed here, prefer stabilizing and tagging them in `SpeakSwiftly` first, then update this repository to that release instead of integrating against half-finished sibling checkout work.
 - Treat `macOS 15` as the current standalone package baseline and keep the host and state model friendly to a near-future `iOS 18` reuse path.
@@ -34,7 +34,7 @@
 
 ## Swift Package Workflow
 
-- Use `swift build` and `swift test` as the default first-pass validation commands.
+- Use `xcrun swift build` and `xcrun swift test` as the default first-pass validation commands so repo-local SwiftPM work stays on the Xcode-selected toolchain.
 - Use `bootstrap-swift-package` only when a brand-new Swift package repository still needs to be created from scratch.
 - Use `sync-swift-package-guidance` when this repo guidance drifts and needs a deliberate refresh against the current Swift package baseline.
 - Use `swift-package-build-run-workflow` for manifest, dependency, build, run, resource, and packaging work when `Package.swift` is the source of truth.

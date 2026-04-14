@@ -38,6 +38,14 @@ ensure_git_repo() {
   git -C "$REPO_ROOT" rev-parse --is-inside-work-tree >/dev/null 2>&1 || die "The repo-maintenance toolkit must run inside a git worktree rooted at $REPO_ROOT."
 }
 
+swiftpm() {
+  if command -v xcrun >/dev/null 2>&1; then
+    xcrun swift "$@"
+    return
+  fi
+  swift "$@"
+}
+
 release_artifacts_root() {
   printf '%s\n' "$REPO_ROOT/.release-artifacts"
 }

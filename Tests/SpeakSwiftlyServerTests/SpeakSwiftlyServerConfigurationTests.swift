@@ -8,12 +8,26 @@ import Testing
 @Test func configurationLoadsDefaultsAndRejectsInvalidValues() async throws {
     let defaults = try await AppConfig.load(environment: [:])
     #expect(defaults.server.host == "127.0.0.1")
-    #expect(defaults.server.port == 7337)
+    #expect(defaults.server.port == 7338)
     #expect(defaults.http.host == "127.0.0.1")
-    #expect(defaults.http.port == 7337)
+    #expect(defaults.http.port == 7338)
     #expect(defaults.http.sseHeartbeatSeconds == 10)
     #expect(defaults.server.sseHeartbeatSeconds == 10)
     #expect(defaults.server.completedJobTTLSeconds == 900)
+
+    let launchAgentDefaults = try await AppConfig.load(
+        environment: [:],
+        defaultProfile: .launchAgent
+    )
+    #expect(launchAgentDefaults.server.port == 7337)
+    #expect(launchAgentDefaults.http.port == 7337)
+
+    let embeddedDefaults = try await AppConfig.load(
+        environment: [:],
+        defaultProfile: .embeddedSession
+    )
+    #expect(embeddedDefaults.server.port == 7339)
+    #expect(embeddedDefaults.http.port == 7339)
 
     let appConfig = try await AppConfig.load(environment: [
         "APP_PORT": "7550",
@@ -115,7 +129,7 @@ import Testing
       name: initial-server
       environment: development
       host: 127.0.0.1
-      port: 7337
+      port: 7338
       sseHeartbeatSeconds: 4
       completedJobTTLSeconds: 30
       completedJobMaxCount: 25
@@ -123,7 +137,7 @@ import Testing
       http:
         enabled: true
         host: 127.0.0.1
-        port: 7337
+        port: 7338
         sseHeartbeatSeconds: 4
       mcp:
         enabled: false

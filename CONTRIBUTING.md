@@ -19,6 +19,7 @@ Start with [AGENTS.md](AGENTS.md) for the repo's package, architecture, and mono
 - [README.md](README.md) is the operator-facing entrypoint.
 - [API.md](API.md) is the detailed HTTP and MCP contract reference.
 - [docs/maintainers/source-layout.md](docs/maintainers/source-layout.md) is the maintainer map for the current source split.
+- [docs/maintainers/docc-spi-hosting-plan.md](docs/maintainers/docc-spi-hosting-plan.md) tracks the first DocC pass and the SPI-hosted documentation plan.
 - [ROADMAP.md](ROADMAP.md) tracks planned work and release-gate follow-through.
 
 When the HTTP, MCP, LaunchAgent, release, or source-layout story changes, update the matching docs in the same pass instead of leaving the repo half-realigned.
@@ -28,9 +29,11 @@ When the HTTP, MCP, LaunchAgent, release, or source-layout story changes, update
 The default first-pass package validation path is still:
 
 ```bash
-swift build
-swift test
+xcrun swift build
+xcrun swift test
 ```
+
+Use the `xcrun` form intentionally. In this repo, the standalone Swiftly-selected Swift 6.3 toolchain currently reproduces a transitive `_NumericsShims` module-loading failure that does not appear when SwiftPM runs through Xcode's selected toolchain.
 
 The maintainer wrapper around that baseline is:
 
@@ -41,18 +44,20 @@ scripts/repo-maintenance/validate-all.sh
 Use the unified tool smoke path when you want to verify the operator surface directly:
 
 ```bash
-swift run SpeakSwiftlyServerTool help
-swift run SpeakSwiftlyServerTool launch-agent print-plist
+xcrun swift run SpeakSwiftlyServerTool help
+xcrun swift run SpeakSwiftlyServerTool launch-agent print-plist
 ```
+
+The `help` path now also has CI coverage so obvious executable-surface regressions are less likely to escape into release or Swift Package Index builds. The `help` path is expected to exit with the tool's usage-error status while still printing the supported command surface.
 
 ## Live End-To-End Verification
 
 The opt-in live E2E coverage now runs as three serialized suites so maintainers can isolate transport and runtime failures without burning time on one giant rerun:
 
 ```bash
-SPEAKSWIFTLYSERVER_E2E=1 swift test --filter SpeakSwiftlyServerE2EHTTPWorkflowEntryTests
-SPEAKSWIFTLYSERVER_E2E=1 swift test --filter SpeakSwiftlyServerE2EMCPWorkflowEntryTests
-SPEAKSWIFTLYSERVER_E2E=1 swift test --filter SpeakSwiftlyServerE2EControlSurfaceTests
+SPEAKSWIFTLYSERVER_E2E=1 xcrun swift test --filter SpeakSwiftlyServerE2EHTTPWorkflowEntryTests
+SPEAKSWIFTLYSERVER_E2E=1 xcrun swift test --filter SpeakSwiftlyServerE2EMCPWorkflowEntryTests
+SPEAKSWIFTLYSERVER_E2E=1 xcrun swift test --filter SpeakSwiftlyServerE2EControlSurfaceTests
 ```
 
 Run those commands one at a time. Add `SPEAKSWIFTLY_PLAYBACK_TRACE=1` when you want the underlying playback trace logs too.
@@ -85,6 +90,8 @@ scripts/repo-maintenance/release.sh
 That path builds `SpeakSwiftlyServerTool` in `release` mode, stages the binary under `.release-artifacts/<tag>/SpeakSwiftlyServerTool`, copies the adjacent `Resources/default.metallib` into that staged artifact directory, and refreshes `.release-artifacts/current` to the tagged build. The live LaunchAgent install path is expected to consume that staged release artifact by default.
 
 The same release flow now also refreshes the live per-user LaunchAgent-backed service by default with `~/Library/Application Support/SpeakSwiftlyServer/server.yaml` after the tagged artifact is staged and the release push succeeds. Use `--skip-live-service-refresh` when you need a tag-only or artifact-only release pass, or `--live-service-config-file /absolute/path/to/server.yaml` when the live service should be refreshed against a different config file.
+
+For the current next-minor release target and the first Swift Package Index submission pass, use [docs/maintainers/v3.1.0-release-and-spi-checklist.md](docs/maintainers/v3.1.0-release-and-spi-checklist.md) instead of reconstructing that flow from memory.
 
 ## Monorepo And Submodule Handoff
 

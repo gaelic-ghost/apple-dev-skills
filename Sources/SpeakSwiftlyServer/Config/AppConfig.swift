@@ -30,8 +30,11 @@ struct AppConfig: Sendable {
 
     // MARK: - Loading
 
-    static func load(environment: [String: String] = ProcessInfo.processInfo.environment) async throws -> AppConfig {
-        let store = try await ConfigStore(environment: environment)
+    static func load(
+        environment: [String: String] = ProcessInfo.processInfo.environment,
+        defaultProfile: AppRuntimeDefaultProfile? = nil
+    ) async throws -> AppConfig {
+        let store = try await ConfigStore(environment: environment, defaultProfile: defaultProfile)
         return try store.loadAppConfig()
     }
 }

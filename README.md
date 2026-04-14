@@ -37,7 +37,7 @@ The package stays intentionally narrow. Hummingbird owns transport hosting, `Spe
 
 ### Current SpeakSwiftly Alignment
 
-This server is aligned to the current public library surface of its resolved [`SpeakSwiftly`](https://github.com/gaelic-ghost/SpeakSwiftly) `3.0.0` package dependency.
+This server is aligned to the current public library surface of its resolved [`SpeakSwiftly`](https://github.com/gaelic-ghost/SpeakSwiftly) `3.0.3` package dependency.
 
 Today the server relies on the current typed runtime capabilities that matter for transport hosting:
 
@@ -101,54 +101,62 @@ That narrowness also informs platform policy. The package should prefer maintain
 
 ## Setup
 
-This package resolves its SwiftPM dependencies from GitHub source control in [`Package.swift`](https://github.com/gaelic-ghost/SpeakSwiftlyServer/blob/main/Package.swift) and locks the resolved revisions in [`Package.resolved`](https://github.com/gaelic-ghost/SpeakSwiftlyServer/blob/main/Package.resolved). `SpeakSwiftly` now uses a normal semantic-version requirement, and this package follows it with an up-to-next-major constraint starting at `3.0.0`.
+This package resolves its SwiftPM dependencies from GitHub source control in [`Package.swift`](https://github.com/gaelic-ghost/SpeakSwiftlyServer/blob/main/Package.swift) and locks the resolved revisions in [`Package.resolved`](https://github.com/gaelic-ghost/SpeakSwiftlyServer/blob/main/Package.resolved). `SpeakSwiftly` uses a normal semantic-version requirement here, and this package currently follows it with an up-to-next-major constraint starting at `3.0.3`.
 
-Build the package with SwiftPM:
+Build the package with SwiftPM through Xcode's selected toolchain:
 
 ```bash
-swift build
+xcrun swift build
 ```
 
 Run the test suite:
 
 ```bash
-swift test
+xcrun swift test
 ```
+
+The repository intentionally documents `xcrun swift ...` as the default path because the standalone Swiftly-selected Swift 6.3 toolchain in this environment currently reproduces a transitive `_NumericsShims` module-loading failure that does not appear under Xcode's matching Swift toolchain.
+
+The repository also now carries a minimal [`.spi.yml`](https://github.com/gaelic-ghost/SpeakSwiftlyServer/blob/main/.spi.yml) so Swift Package Index can build and host documentation for the `SpeakSwiftlyServer` library target once the package is indexed. The follow-on DocC content plan lives in [`docs/maintainers/docc-spi-hosting-plan.md`](https://github.com/gaelic-ghost/SpeakSwiftlyServer/blob/main/docs/maintainers/docc-spi-hosting-plan.md).
 
 ## Usage
 
 Run the server locally:
 
 ```bash
-swift run SpeakSwiftlyServerTool
+xcrun swift run SpeakSwiftlyServerTool
 ```
 
-The shared server binds to `127.0.0.1:7337` by default.
+The package now uses distinct default localhost ports by entrypoint:
+
+- direct executable startup defaults to `127.0.0.1:7338`
+- LaunchAgent installs default to `127.0.0.1:7337`
+- embedded app-owned sessions default to `127.0.0.1:7339`
 
 The package now ships one operator-facing executable product with both the foreground server entrypoint and the LaunchAgent maintenance surface:
 
 ```bash
-swift run SpeakSwiftlyServerTool help
+xcrun swift run SpeakSwiftlyServerTool help
 ```
 
 Running the tool without subcommands defaults to `serve`, and the same binary also exposes `launch-agent` subcommands for install, inspection, and maintenance work.
 
 The most common local operator path is:
 
-1. `swift run SpeakSwiftlyServerTool help`
-2. `swift run SpeakSwiftlyServerTool launch-agent print-plist`
-3. `swift run SpeakSwiftlyServerTool launch-agent install --config-file ./server.yaml`
+1. `xcrun swift run SpeakSwiftlyServerTool help`
+2. `xcrun swift run SpeakSwiftlyServerTool launch-agent print-plist`
+3. `xcrun swift run SpeakSwiftlyServerTool launch-agent install --config-file ./server.yaml`
 
 To render the current per-user LaunchAgent property list without installing it:
 
 ```bash
-swift run SpeakSwiftlyServerTool launch-agent print-plist
+xcrun swift run SpeakSwiftlyServerTool launch-agent print-plist
 ```
 
 To install or refresh the current user's LaunchAgent with a config file:
 
 ```bash
-swift run SpeakSwiftlyServerTool launch-agent install \
+xcrun swift run SpeakSwiftlyServerTool launch-agent install \
   --config-file ./server.yaml
 ```
 
@@ -157,13 +165,13 @@ That command writes a user-owned property list into `~/Library/LaunchAgents`, po
 To inspect or remove the installed LaunchAgent:
 
 ```bash
-swift run SpeakSwiftlyServerTool launch-agent status
-swift run SpeakSwiftlyServerTool launch-agent uninstall
+xcrun swift run SpeakSwiftlyServerTool launch-agent status
+xcrun swift run SpeakSwiftlyServerTool launch-agent uninstall
 ```
 
 ### App-Managed Install Contract
 
-The `v2.0.0` app-managed install contract is now explicit and centered on one per-user layout instead of ad hoc paths:
+The current app-managed install contract is explicit and centered on one per-user layout instead of ad hoc paths:
 
 - server support root: `~/Library/Application Support/SpeakSwiftlyServer`
 - server config file: `~/Library/Application Support/SpeakSwiftlyServer/server.yaml`
@@ -239,7 +247,9 @@ struct ExampleApp: App {
             ContentView(session: session)
                 .task {
                     if session == nil {
-                        session = try? await EmbeddedServerSession.start()
+                        session = try? await EmbeddedServerSession.start(
+                            options: .init(port: 7811)
+                        )
                     }
                 }
         }
@@ -258,6 +268,8 @@ struct ContentView: View {
     }
 }
 ```
+
+If you do not pass `EmbeddedServerSession.Options(port:)`, the embedded host defaults to `127.0.0.1:7339`. Passing `options.port` applies that same value to the shared transport default and the concrete HTTP listener, so app code can claim an app-specific localhost port without mutating global environment state first.
 
 If a subview needs bindings into mutable session-backed state, use SwiftUI's `@Bindable` support for `@Observable` models instead of `@ObservedObject`. Apple documents that `@Observable` types are tracked by the properties a view reads directly, and that binding support should come through `@Bindable` when a view needs writable bindings:
 
@@ -295,7 +307,7 @@ app:
   name: speak-swiftly-server
   environment: development
   host: 127.0.0.1
-  port: 7337
+  port: 7338
   sseHeartbeatSeconds: 10
   completedJobTTLSeconds: 900
   completedJobMaxCount: 200
@@ -303,7 +315,7 @@ app:
   http:
     enabled: true
     host: 127.0.0.1
-    port: 7337
+    port: 7338
     sseHeartbeatSeconds: 10
   mcp:
     enabled: false
@@ -317,6 +329,7 @@ Top-level transport settings and HTTP-specific overrides intentionally compose t
 - `APP_HOST`, `APP_PORT`, and `APP_SSE_HEARTBEAT_SECONDS` define the shared transport defaults.
 - `APP_HTTP_HOST`, `APP_HTTP_PORT`, and `APP_HTTP_SSE_HEARTBEAT_SECONDS` override those defaults only for the HTTP surface.
 - If you do not set an `APP_HTTP_*` value, the HTTP listener inherits the corresponding top-level `APP_*` value.
+- The direct executable, LaunchAgent runtime, and embedded session each start from different built-in default ports before those environment or YAML overrides are applied.
 
 When `APP_CONFIG_FILE` is set, the server watches that YAML file for changes, but only the host-safe subset reloads live today. Bind addresses, ports, HTTP enablement, MCP enablement, MCP path, and MCP server metadata still require a process restart.
 

@@ -5,6 +5,7 @@ import TextForSpeech
 
 // MARK: - Profile Models
 
+/// Summary of one cached voice profile known to the shared runtime.
 public struct ProfileSnapshot: Codable, Sendable, Equatable {
     public let profileName: String
     public let vibe: String
@@ -57,6 +58,7 @@ struct RenameVoiceProfileRequestPayload: Decodable {
 
 // MARK: - Text Profile Models
 
+/// One text-normalization replacement rule exposed through the server surfaces.
 public struct TextReplacementSnapshot: Codable, Sendable, Equatable {
     let id: String
     let text: String
@@ -195,6 +197,7 @@ public struct TextReplacementSnapshot: Codable, Sendable, Equatable {
     }
 }
 
+/// One text profile and its replacement rules as exposed by the server.
 public struct TextProfileSnapshot: Codable, Sendable, Equatable {
     let id: String
     let name: String

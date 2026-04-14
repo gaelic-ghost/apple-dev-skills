@@ -7,21 +7,36 @@ import Foundation
 /// The forthcoming macOS app should treat these paths as the owned install surface for the
 /// standalone LaunchAgent-backed server instead of guessing at ad hoc filesystem locations.
 public struct ServerInstallLayout: Codable, Sendable, Equatable {
+    /// The LaunchAgent label the app-managed install uses for `launchctl` operations.
     public let launchAgentLabel: String
+    /// The working directory the standalone process should use when launched as an installed service.
     public let workingDirectoryURL: URL
+    /// The application support root that owns config, runtime state, and other durable install files.
     public let applicationSupportDirectoryURL: URL
+    /// The cache root the installed service can use for disposable support files.
     public let cacheDirectoryURL: URL
+    /// The directory that owns the retained stdout and stderr log files.
     public let logsDirectoryURL: URL
+    /// The per-user `LaunchAgents` directory that owns the installed property list.
     public let launchAgentsDirectoryURL: URL
+    /// The property list URL for the installed LaunchAgent definition.
     public let launchAgentPlistURL: URL
+    /// The durable server config file an app should manage for the standalone server.
     public let serverConfigFileURL: URL
+    /// The alias config file path used when the real config path is not LaunchAgent-friendly.
     public let launchAgentConfigAliasURL: URL
+    /// The runtime state root used by the installed server process.
     public let runtimeBaseDirectoryURL: URL
+    /// The profile storage root exposed to the installed speech runtime.
     public let runtimeProfileRootURL: URL
+    /// The persisted runtime configuration file used for next-start state.
     public let runtimeConfigurationFileURL: URL
+    /// The retained stdout log file for the installed service.
     public let standardOutLogURL: URL
+    /// The retained stderr log file for the installed service.
     public let standardErrorLogURL: URL
 
+    /// Creates a fully resolved install-layout contract for one app-managed server install.
     public init(
         launchAgentLabel: String,
         workingDirectoryURL: URL,
@@ -54,6 +69,7 @@ public struct ServerInstallLayout: Codable, Sendable, Equatable {
         self.standardErrorLogURL = standardErrorLogURL
     }
 
+    /// Returns the package's default per-user install layout for the current account.
     public static func defaultForCurrentUser(
         fileManager: FileManager = .default,
         homeDirectoryURL: URL = FileManager.default.homeDirectoryForCurrentUser,
@@ -125,11 +141,13 @@ public struct ServerInstallLayout: Codable, Sendable, Equatable {
 
 // MARK: - Installed Server Logs
 
+/// Identifies which retained log file from an installed server snapshot a caller wants to inspect.
 public enum ServerInstalledLogKind: String, Codable, Sendable, Equatable, CaseIterable {
     case stdout
     case stderr
 }
 
+/// Captures one retained stdout or stderr file from an installed standalone server.
 public struct ServerInstalledLogFileSnapshot: Codable, Sendable, Equatable {
     public let kind: ServerInstalledLogKind
     public let fileURL: URL
@@ -140,6 +158,7 @@ public struct ServerInstalledLogFileSnapshot: Codable, Sendable, Equatable {
     public let totalLineCount: Int
     public let truncatedLineCount: Int
 
+    /// Decodes the retained JSON line texts into strongly typed values.
     public func decodeJSONLines<T: Decodable & Sendable>(
         as type: T.Type = T.self,
         decoder: JSONDecoder = JSONDecoder()
@@ -150,11 +169,13 @@ public struct ServerInstalledLogFileSnapshot: Codable, Sendable, Equatable {
     }
 }
 
+/// Bundles the retained stdout and stderr snapshots for one installed server layout.
 public struct ServerInstalledLogsSnapshot: Codable, Sendable, Equatable {
     public let layout: ServerInstallLayout
     public let stdout: ServerInstalledLogFileSnapshot
     public let stderr: ServerInstalledLogFileSnapshot
 
+    /// Returns the retained log snapshot for the requested stream.
     public func file(for kind: ServerInstalledLogKind) -> ServerInstalledLogFileSnapshot {
         switch kind {
         case .stdout:
@@ -165,7 +186,9 @@ public struct ServerInstalledLogsSnapshot: Codable, Sendable, Equatable {
     }
 }
 
+/// Reads retained stdout and stderr files from an app-managed standalone server install.
 public enum ServerInstalledLogs {
+    /// Loads retained stdout and stderr content for the supplied install layout.
     public static func read(
         layout: ServerInstallLayout = .defaultForCurrentUser(),
         maximumLineCount: Int? = 400

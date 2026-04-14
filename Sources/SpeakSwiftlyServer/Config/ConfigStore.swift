@@ -17,11 +17,18 @@ struct ConfigStore: Sendable {
 
     // MARK: - Initialization
 
-    init(environment: [String: String] = ProcessInfo.processInfo.environment) async throws {
+    init(
+        environment: [String: String] = ProcessInfo.processInfo.environment,
+        defaultProfile: AppRuntimeDefaultProfile? = nil
+    ) async throws {
         var services = [any Service]()
         var providers: [any ConfigProvider] = [
             EnvironmentVariablesProvider(environmentVariables: environment),
         ]
+        let resolvedDefaultProfile = AppRuntimeDefaultProfile.resolve(
+            explicitProfile: defaultProfile,
+            environment: environment
+        )
 
         var reloadingProvider: ReloadingFileProvider<YAMLSnapshot>?
 
@@ -36,7 +43,7 @@ struct ConfigStore: Sendable {
             reloadingProvider = provider
         }
 
-        providers.append(InMemoryProvider(values: Self.defaults))
+        providers.append(InMemoryProvider(values: resolvedDefaultProfile.configDefaults))
         self.reader = ConfigReader(providers: providers)
         self.services = services
         self.reloadingProvider = reloadingProvider
@@ -85,24 +92,6 @@ struct ConfigStore: Sendable {
             }
         }
     }
-
-    // MARK: - Defaults
-
-    private static let defaults: [AbsoluteConfigKey: ConfigValue] = [
-        .init(["app", "name"]): "speak-swiftly-server",
-        .init(["app", "environment"]): "development",
-        .init(["app", "host"]): "127.0.0.1",
-        .init(["app", "port"]): 7337,
-        .init(["app", "sseHeartbeatSeconds"]): 10.0,
-        .init(["app", "completedJobTTLSeconds"]): 900.0,
-        .init(["app", "completedJobMaxCount"]): 200,
-        .init(["app", "jobPruneIntervalSeconds"]): 60.0,
-        .init(["app", "http", "enabled"]): true,
-        .init(["app", "mcp", "enabled"]): false,
-        .init(["app", "mcp", "path"]): "/mcp",
-        .init(["app", "mcp", "serverName"]): "speak-swiftly-mcp",
-        .init(["app", "mcp", "title"]): "SpeakSwiftly",
-    ]
 
     // MARK: - Helpers
 

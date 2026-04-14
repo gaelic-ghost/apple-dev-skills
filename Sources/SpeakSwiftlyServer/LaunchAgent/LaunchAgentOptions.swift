@@ -150,7 +150,12 @@ struct LaunchAgentOptions {
         let environmentVariables = layout.launchAgentEnvironmentVariables(
             configFilePath: configFilePath,
             reloadIntervalSeconds: reloadIntervalSeconds
-        ).merging(["SPEAKSWIFTLY_PROFILE_ROOT": profileRootPath]) { _, rhs in rhs }
+        ).merging(
+            [
+                "SPEAKSWIFTLY_PROFILE_ROOT": profileRootPath,
+                AppRuntimeDefaultProfile.environmentKey: LaunchAgentDefaults.defaultProfile.rawValue,
+            ]
+        ) { _, rhs in rhs }
         if !environmentVariables.isEmpty {
             propertyList["EnvironmentVariables"] = environmentVariables
         }

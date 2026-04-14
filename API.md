@@ -136,7 +136,7 @@ The runtime routes are also state-oriented.
 - `GET /runtime/status` returns the underlying `SpeakSwiftly.StatusEvent`.
 - `GET /runtime/configuration` and `PUT /runtime/configuration` expose the saved next-start backend configuration.
 - `POST /runtime/backend` hot-switches the active backend.
-- `POST /runtime/models/reload` and `POST /runtime/models/unload` follow the current v2 runtime-control verbs directly.
+- `POST /runtime/models/reload` and `POST /runtime/models/unload` follow the current runtime-control verbs directly.
 
 The current HTTP SSE route remains intentionally job-specific at the route boundary, but it now rides the same host-owned event backbone used by other non-UI consumers instead of keeping a separate per-job subscriber registry inside `ServerHost`.
 

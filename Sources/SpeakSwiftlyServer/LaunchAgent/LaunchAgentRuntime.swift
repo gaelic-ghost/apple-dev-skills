@@ -125,6 +125,7 @@ struct LaunchAgentStatusOptions {
 
 enum LaunchAgentDefaults {
     static let label = "com.gaelic-ghost.speak-swiftly-server"
+    static let defaultProfile: AppRuntimeDefaultProfile = .launchAgent
     static let launchctlPath = "/bin/launchctl"
     static let userDomain = "gui/\(getuid())"
     static let stagedReleaseDirectoryName = ".release-artifacts"

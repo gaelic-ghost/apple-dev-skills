@@ -4,6 +4,7 @@ import SpeakSwiftly
 
 // MARK: - Queue Models
 
+/// The active request currently running in a host queue.
 public struct ActiveRequestSnapshot: Codable, Sendable, Equatable {
     public let id: String
     public let op: String
@@ -28,6 +29,7 @@ public struct ActiveRequestSnapshot: Codable, Sendable, Equatable {
     }
 }
 
+/// A queued request waiting for work in a host queue.
 public struct QueuedRequestSnapshot: Codable, Sendable, Equatable {
     public let id: String
     public let op: String
@@ -70,6 +72,7 @@ struct QueueSnapshotResponse: ResponseEncodable, Sendable {
     }
 }
 
+/// Transport-facing playback state snapshot used by HTTP and MCP control surfaces.
 public struct PlaybackStateSnapshot: Codable, Sendable, Equatable {
     public let state: String
     public let activeRequest: ActiveRequestSnapshot?

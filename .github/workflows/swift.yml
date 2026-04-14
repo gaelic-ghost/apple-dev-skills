@@ -21,13 +21,38 @@ jobs:
           xcode-version: latest-stable
 
       - name: Show Swift version
-        run: swift --version
+        run: xcrun swift --version
 
       - name: Validate package manifest
-        run: swift package dump-package
+        run: xcrun swift package dump-package
 
       - name: Build package
-        run: swift build
+        run: xcrun swift build
 
       - name: Run test suite
-        run: swift test
+        run: xcrun swift test
+
+      - name: Build DocC archive
+        run: |
+          xcrun swift package \
+            --allow-writing-to-directory .build/docc \
+            generate-documentation \
+            --target SpeakSwiftlyServer \
+            --disable-indexing \
+            --output-path .build/docc
+
+      - name: Smoke-test executable help surface
+        run: |
+          set +e
+          output="$(xcrun swift run SpeakSwiftlyServerTool help 2>&1)"
+          status=$?
+          printf '%s\n' "$output"
+          test "$status" -eq 2
+          printf '%s\n' "$output" | grep -F "Usage:"
+
+      - name: Smoke-test launch-agent plist rendering
+        run: |
+          output="$(xcrun swift run SpeakSwiftlyServerTool launch-agent print-plist 2>&1)"
+          printf '%s\n' "$output"
+          printf '%s\n' "$output" | grep -F "<plist version=\"1.0\">"
+          printf '%s\n' "$output" | grep -F "com.gaelic-ghost.speak-swiftly-server"

@@ -121,9 +121,9 @@ if [ "$REPO_MAINTENANCE_DRY_RUN" = "true" ]; then
   log "Would refresh $current_link to point at $RELEASE_TAG."
 else
   log "Building SpeakSwiftlyServerTool in release mode."
-  swift build -c release --product SpeakSwiftlyServerTool
+  swiftpm build -c release --product SpeakSwiftlyServerTool
 
-  bin_path="$(swift build -c release --show-bin-path)"
+  bin_path="$(swiftpm build -c release --show-bin-path)"
   source_tool="$bin_path/SpeakSwiftlyServerTool"
   [ -f "$source_tool" ] || die "Release build completed, but the expected tool executable was not found at $source_tool."
   [ -x "$source_tool" ] || die "Release build completed, but $source_tool is not executable."

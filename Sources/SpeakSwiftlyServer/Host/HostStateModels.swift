@@ -4,6 +4,7 @@ import SpeakSwiftly
 
 // MARK: - Host State Models
 
+/// High-level readiness and profile-cache status for the shared host.
 public struct HostOverviewSnapshot: Codable, Sendable, Equatable {
     public let service: String
     public let environment: String
@@ -51,6 +52,7 @@ public struct HostOverviewSnapshot: Codable, Sendable, Equatable {
     }
 }
 
+/// Active and queued work for one host queue.
 public struct QueueStatusSnapshot: Codable, Sendable, Equatable {
     public let queueType: String
     public let activeCount: Int
@@ -69,6 +71,7 @@ public struct QueueStatusSnapshot: Codable, Sendable, Equatable {
     }
 }
 
+/// App-facing playback state reported by the shared runtime.
 public struct PlaybackStatusSnapshot: Codable, Sendable, Equatable {
     public let state: String
     public let activeRequest: ActiveRequestSnapshot?
@@ -112,6 +115,7 @@ public struct PlaybackStatusSnapshot: Codable, Sendable, Equatable {
     }
 }
 
+/// Timing markers for one completed refresh cycle of the host state snapshots.
 public struct RuntimeRefreshSnapshot: Codable, Sendable, Equatable {
     public let sequenceID: Int
     public let source: String
@@ -132,6 +136,7 @@ public struct RuntimeRefreshSnapshot: Codable, Sendable, Equatable {
     }
 }
 
+/// Summary of one generation job that is currently active in the runtime.
 public struct CurrentGenerationJobSnapshot: Codable, Sendable, Equatable {
     public let jobID: String
     public let op: String
@@ -152,6 +157,7 @@ public struct CurrentGenerationJobSnapshot: Codable, Sendable, Equatable {
     }
 }
 
+/// Status for one published operator transport such as HTTP or MCP.
 public struct TransportStatusSnapshot: Codable, Sendable, Equatable {
     public let name: String
     public let enabled: Bool
@@ -172,6 +178,7 @@ public struct TransportStatusSnapshot: Codable, Sendable, Equatable {
     }
 }
 
+/// One retained host or transport error suitable for operator display.
 public struct RecentErrorSnapshot: Codable, Sendable, Equatable {
     public let occurredAt: String
     public let source: String
@@ -186,6 +193,7 @@ public struct RecentErrorSnapshot: Codable, Sendable, Equatable {
     }
 }
 
+/// The active and next-start runtime configuration state exposed by the host.
 public struct RuntimeConfigurationSnapshot: Codable, ResponseEncodable, Sendable, Equatable {
     public let activeRuntimeSpeechBackend: String
     public let nextRuntimeSpeechBackend: String
@@ -222,6 +230,7 @@ public struct RuntimeConfigurationSnapshot: Codable, ResponseEncodable, Sendable
     }
 }
 
+/// Aggregate snapshot of the host state that bundles overview, queues, runtime, transport, and error data.
 public struct HostStateSnapshot: Codable, Sendable, Equatable {
     public let overview: HostOverviewSnapshot
     public let runtimeRefresh: RuntimeRefreshSnapshot?

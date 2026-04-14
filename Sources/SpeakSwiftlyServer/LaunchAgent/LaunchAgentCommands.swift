@@ -4,12 +4,14 @@ let speakSwiftlyServerToolName = "SpeakSwiftlyServerTool"
 
 // MARK: - CLI Command
 
+/// Top-level parsed command for the `SpeakSwiftlyServerTool` executable.
 public enum SpeakSwiftlyServerToolCommand {
     case serve
     case launchAgent(LaunchAgentCommand)
 
     // MARK: - Parsing
 
+    /// Parses command-line arguments into the tool's top-level command model.
     public static func parse(
         arguments: [String],
         currentDirectoryPath: String = FileManager.default.currentDirectoryPath,
@@ -44,6 +46,7 @@ public enum SpeakSwiftlyServerToolCommand {
 
     // MARK: - Running
 
+    /// Runs the parsed command against the standalone runtime or LaunchAgent workflow.
     public func run() async throws {
         switch self {
         case .serve:
@@ -79,6 +82,7 @@ public enum SpeakSwiftlyServerToolCommand {
     """
 }
 
+/// Human-friendly parse or usage error for the top-level executable command surface.
 public struct SpeakSwiftlyServerToolCommandError: Error, CustomStringConvertible {
     public let message: String
 
@@ -91,6 +95,7 @@ public struct SpeakSwiftlyServerToolCommandError: Error, CustomStringConvertible
 
 // MARK: - Launch Agent Command
 
+/// Parsed subcommand for LaunchAgent install, uninstall, status, and property-list rendering.
 public struct LaunchAgentCommand {
     enum Action {
         case printPlist(LaunchAgentOptions)
@@ -103,6 +108,7 @@ public struct LaunchAgentCommand {
 
     // MARK: - Parsing
 
+    /// Parses the `launch-agent` subcommand surface.
     static func parse(arguments: [String], currentDirectoryPath: String, currentExecutablePath: String) throws -> LaunchAgentCommand {
         guard let subcommand = arguments.first else {
             throw LaunchAgentCommandError(
@@ -135,6 +141,7 @@ public struct LaunchAgentCommand {
 
     // MARK: - Running
 
+    /// Executes the requested LaunchAgent management action.
     func run() throws {
         switch action {
         case .printPlist(let options):
@@ -158,6 +165,7 @@ public struct LaunchAgentCommand {
     }
 }
 
+/// Human-friendly parse or execution error for the LaunchAgent command surface.
 public struct LaunchAgentCommandError: Error, CustomStringConvertible {
     public let message: String
 

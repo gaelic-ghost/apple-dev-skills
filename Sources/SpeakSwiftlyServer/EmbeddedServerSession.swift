@@ -10,6 +10,20 @@ import ServiceLifecycle
 /// `@Observable` `ServerState` projection that app UI can read directly.
 @MainActor
 public final class EmbeddedServerSession {
+    /// Configuration options for the app-owned embedded session bootstrap path.
+    public struct Options: Sendable {
+        /// Optional localhost port override for the embedded HTTP transport.
+        ///
+        /// When this is set, the embedded session applies the same port to the shared transport
+        /// default and the concrete HTTP listener unless the caller later overrides those values
+        /// more specifically through the environment-driven config surface.
+        public var port: Int?
+
+        public init(port: Int? = nil) {
+            self.port = port
+        }
+    }
+
     struct LifecycleHooks {
         let requestStop: @MainActor @Sendable () async -> Void
         let waitUntilStopped: @MainActor @Sendable () async throws -> Void
@@ -33,27 +47,48 @@ public final class EmbeddedServerSession {
 
     // MARK: - Lifecycle
 
-    /// Starts an embedded server session using the same environment-driven config loading path as the standalone server.
+    /// Starts an embedded server session using the package's embedded-session default profile.
+    ///
+    /// Use this when an app wants to own the shared SpeakSwiftly host lifecycle directly and bind UI to ``state``.
+    /// Pass ``Options`` to override the embedded HTTP port without having to rewrite global process environment first.
     public static func start(
-        environment: [String: String] = ProcessInfo.processInfo.environment
+        environment: [String: String] = ProcessInfo.processInfo.environment,
+        options: Options = .init()
     ) async throws -> EmbeddedServerSession {
-        try await start(environment: environment, bootstrap: liveBootstrap)
+        try await start(
+            environment: environment,
+            options: options,
+            defaultProfile: .embeddedSession,
+            bootstrap: liveBootstrap
+        )
     }
 
     static func start(
         environment: [String: String],
+        options: Options = .init(),
+        defaultProfile: AppRuntimeDefaultProfile = .embeddedSession,
         bootstrap: @escaping @Sendable ([String: String], ServerState) async throws -> LifecycleHooks
     ) async throws -> EmbeddedServerSession {
         let state = ServerState()
-        let lifecycle = try await bootstrap(environment, state)
+        let lifecycle = try await bootstrap(
+            effectiveEnvironment(
+                environment: environment,
+                options: options,
+                defaultProfile: defaultProfile
+            ),
+            state
+        )
         return EmbeddedServerSession(state: state, lifecycle: lifecycle)
     }
 
-    private static func liveBootstrap(
+    static func liveBootstrap(
         environment: [String: String],
         state: ServerState
     ) async throws -> LifecycleHooks {
-        let configStore = try await ConfigStore(environment: environment)
+        let configStore = try await ConfigStore(
+            environment: environment,
+            defaultProfile: .embeddedSession
+        )
         let config = try configStore.loadAppConfig()
         let host = await ServerHost.live(appConfig: config, state: state)
         await MainActor.run {
@@ -200,5 +235,19 @@ public final class EmbeddedServerSession {
 
     func waitUntilStopped() async throws {
         try await lifecycle.waitUntilStopped()
+    }
+
+    private static func effectiveEnvironment(
+        environment: [String: String],
+        options: Options,
+        defaultProfile: AppRuntimeDefaultProfile
+    ) -> [String: String] {
+        var resolvedEnvironment = environment
+        resolvedEnvironment[AppRuntimeDefaultProfile.environmentKey] = defaultProfile.rawValue
+        if let port = options.port {
+            resolvedEnvironment["APP_PORT"] = String(port)
+            resolvedEnvironment["APP_HTTP_PORT"] = String(port)
+        }
+        return resolvedEnvironment
     }
 }

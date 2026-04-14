@@ -24,6 +24,7 @@ let package = Package(
     // MARK: Dependencies
     dependencies: [
         .package(url: "https://github.com/hummingbird-project/hummingbird.git", from: "2.21.1"),
+        .package(url: "https://github.com/swiftlang/swift-docc-plugin", from: "1.1.0"),
         .package(
             url: "https://github.com/gaelic-ghost/SpeakSwiftly.git",
             from: "3.0.3"

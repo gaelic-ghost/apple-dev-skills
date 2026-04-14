@@ -1,0 +1,57 @@
+# LaunchAgent Workflow
+
+## Overview
+
+Use the LaunchAgent workflow when the standalone server should run as a per-user background service managed by `launchd`.
+
+In this package, that workflow is intentionally explicit:
+
+1. render the property list you are about to install
+2. install or refresh it for the current user
+3. inspect status or remove it later through the same executable surface
+
+This article covers the shape of that workflow. It does not replace the repository operator docs, which remain the source of truth for the full command inventory and release-process details.
+
+## Render The Property List First
+
+Start by printing the property list:
+
+```bash
+xcrun swift run SpeakSwiftlyServerTool launch-agent print-plist
+```
+
+That gives you the exact LaunchAgent payload the package currently wants to stage, including:
+
+- the label
+- the `ProgramArguments` path and `serve` invocation
+- the working directory
+- the stdout and stderr log files
+- the `SPEAKSWIFTLY_PROFILE_ROOT` environment override for the standalone server
+
+## Install Or Refresh The Background Service
+
+Once the property list looks right, install it with the config file you want the background service to use:
+
+```bash
+xcrun swift run SpeakSwiftlyServerTool launch-agent install \
+  --config-file ./server.yaml
+```
+
+This package's LaunchAgent path is designed around the staged release artifact, not around whichever debug binary happened to run the command. That keeps the installed service pointed at the package's maintained release surface instead of at a transient local build product.
+
+## Inspect Or Remove The Installed Service
+
+Use the same executable to check the installed state or remove it:
+
+```bash
+xcrun swift run SpeakSwiftlyServerTool launch-agent status
+xcrun swift run SpeakSwiftlyServerTool launch-agent uninstall
+```
+
+Treat those commands as the stable maintenance surface for the per-user service. If the install layout or staged release artifact path changes in the package, those commands should keep reflecting the package's current contract without requiring operators to re-derive launchd details by hand.
+
+## Related Reading
+
+- Continue with <doc:Using-The-Command-Line-Tool> if you need the broader role of the executable.
+- Continue with <doc:App-Managed-Install-Layout> if an app also needs to own the filesystem surface around the installed service.
+- Use the repository docs for the full command reference and the transport-level operator inventory.

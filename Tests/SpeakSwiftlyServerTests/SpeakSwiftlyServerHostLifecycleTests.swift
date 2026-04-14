@@ -6,8 +6,14 @@ import Testing
 
 @available(macOS 14, *)
 @Test func embeddedServerSessionPublishesObservableStateForAppConsumers() async throws {
-    let session = try await EmbeddedServerSession.start(environment: ["APP_ENV": "test"]) { environment, state in
+    let session = try await EmbeddedServerSession.start(
+        environment: ["APP_ENV": "test"],
+        options: .init(port: 7811)
+    ) { environment, state in
         #expect(environment["APP_ENV"] == "test")
+        #expect(environment["APP_PORT"] == "7811")
+        #expect(environment["APP_HTTP_PORT"] == "7811")
+        #expect(environment[AppRuntimeDefaultProfile.environmentKey] == AppRuntimeDefaultProfile.embeddedSession.rawValue)
 
         await MainActor.run {
             state.overview = HostOverviewSnapshot(
@@ -58,9 +64,9 @@ import Testing
                     enabled: true,
                     state: "listening",
                     host: "127.0.0.1",
-                    port: 7337,
+                    port: 7811,
                     path: nil,
-                    advertisedAddress: "http://127.0.0.1:7337"
+                    advertisedAddress: "http://127.0.0.1:7811"
                 ),
             ]
         }

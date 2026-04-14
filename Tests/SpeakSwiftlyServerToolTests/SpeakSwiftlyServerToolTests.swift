@@ -104,6 +104,7 @@ import Testing
     #expect(environment["APP_CONFIG_FILE"] == tempDirectory.appendingPathComponent("config/server.yaml").path)
     #expect(environment["APP_CONFIG_RELOAD_INTERVAL_SECONDS"] == "0.5")
     #expect(environment["SPEAKSWIFTLY_PROFILE_ROOT"] == tempDirectory.appendingPathComponent("runtime/profiles").path)
+    #expect(environment[AppRuntimeDefaultProfile.environmentKey] == AppRuntimeDefaultProfile.launchAgent.rawValue)
 }
 
 @Test func launchAgentInstallWritesPlistAndBootstrapsService() throws {
