@@ -133,6 +133,8 @@ The package now uses distinct default localhost ports by entrypoint:
 - LaunchAgent installs default to `127.0.0.1:7337`
 - embedded app-owned sessions default to `127.0.0.1:7339`
 
+All three entrypaths also support the same explicit runtime-profile-root override through `SPEAKSWIFTLY_PROFILE_ROOT`. Embedded app hosts can set that through `EmbeddedServerSession.Options(runtimeProfileRootURL:)`, foreground `serve` runs can set it through `--profile-root`, and LaunchAgent installs already stage it into the installed property list.
+
 The package now ships one operator-facing executable product with both the foreground server entrypoint and the LaunchAgent maintenance surface:
 
 ```bash
@@ -151,6 +153,13 @@ To render the current per-user LaunchAgent property list without installing it:
 
 ```bash
 xcrun swift run SpeakSwiftlyServerTool launch-agent print-plist
+```
+
+To start the server directly in the foreground with an app- or operator-owned runtime profile root:
+
+```bash
+xcrun swift run SpeakSwiftlyServerTool serve \
+  --profile-root ./runtime/profiles
 ```
 
 To install or refresh the current user's LaunchAgent with a config file:
@@ -248,7 +257,13 @@ struct ExampleApp: App {
                 .task {
                     if session == nil {
                         session = try? await EmbeddedServerSession.start(
-                            options: .init(port: 7811)
+                            options: .init(
+                                port: 7811,
+                                runtimeProfileRootURL: FileManager.default
+                                    .urls(for: .applicationSupportDirectory, in: .userDomainMask)
+                                    .first?
+                                    .appendingPathComponent("ExampleApp/SpeakSwiftlyRuntime", isDirectory: true)
+                            )
                         )
                     }
                 }
@@ -270,6 +285,8 @@ struct ContentView: View {
 ```
 
 If you do not pass `EmbeddedServerSession.Options(port:)`, the embedded host defaults to `127.0.0.1:7339`. Passing `options.port` applies that same value to the shared transport default and the concrete HTTP listener, so app code can claim an app-specific localhost port without mutating global environment state first.
+
+If you pass `EmbeddedServerSession.Options(runtimeProfileRootURL:)`, that same root is forwarded into both the server-owned runtime configuration store and the underlying `SpeakSwiftly` startup path. That gives an app one explicit persistence root for runtime configuration, text-profile persistence, generated artifacts, and other runtime-owned profile data. For sandboxed macOS apps, Apple documents that `applicationSupportDirectory` already resolves inside the app container; for shared storage across the app and extensions or helpers, pass an App Group container URL instead.
 
 If a subview needs bindings into mutable session-backed state, use SwiftUI's `@Bindable` support for `@Observable` models instead of `@ObservedObject`. Apple documents that `@Observable` types are tracked by the properties a view reads directly, and that binding support should come through `@Bindable` when a view needs writable bindings:
 
@@ -299,6 +316,7 @@ The shared server supports these environment variables:
 - `APP_MCP_PATH`
 - `APP_MCP_SERVER_NAME`
 - `APP_MCP_TITLE`
+- `SPEAKSWIFTLY_PROFILE_ROOT`
 
 If `APP_CONFIG_FILE` points at a YAML file, the server loads it through [apple/swift-configuration](https://github.com/apple/swift-configuration) with environment variables taking precedence over YAML and YAML taking precedence over built-in defaults. The expected YAML shape mirrors the nested config reader keys:
 
@@ -330,6 +348,8 @@ Top-level transport settings and HTTP-specific overrides intentionally compose t
 - `APP_HTTP_HOST`, `APP_HTTP_PORT`, and `APP_HTTP_SSE_HEARTBEAT_SECONDS` override those defaults only for the HTTP surface.
 - If you do not set an `APP_HTTP_*` value, the HTTP listener inherits the corresponding top-level `APP_*` value.
 - The direct executable, LaunchAgent runtime, and embedded session each start from different built-in default ports before those environment or YAML overrides are applied.
+
+`SPEAKSWIFTLY_PROFILE_ROOT` is the startup-time persistence-root override. Point it at the runtime profile root directory you want the server to own, not at a broader support directory. When it is set, the server runtime configuration store and the underlying `SpeakSwiftly` persistence paths both use that same root. This value is a startup ownership choice, not a live-reloadable YAML setting.
 
 When `APP_CONFIG_FILE` is set, the server watches that YAML file for changes, but only the host-safe subset reloads live today. Bind addresses, ports, HTTP enablement, MCP enablement, MCP path, and MCP server metadata still require a process restart.
 

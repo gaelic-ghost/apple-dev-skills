@@ -2,11 +2,45 @@ import Foundation
 
 let speakSwiftlyServerToolName = "SpeakSwiftlyServerTool"
 
+// MARK: - Serve Options
+
+public struct ServeOptions: Sendable {
+    let runtimeProfileRootPath: String?
+
+    static func parse(arguments: [String], currentDirectoryPath: String) throws -> ServeOptions {
+        var runtimeProfileRootPath: String?
+        var index = 0
+
+        while index < arguments.count {
+            switch arguments[index] {
+            case "--profile-root":
+                runtimeProfileRootPath = try LaunchAgentOptions.requireValue(
+                    after: arguments,
+                    index: index,
+                    option: "--profile-root"
+                )
+                index += 2
+
+            default:
+                throw SpeakSwiftlyServerToolCommandError(
+                    "\(speakSwiftlyServerToolName) did not recognize serve option '\(arguments[index])'. Run `\(speakSwiftlyServerToolName) help` for supported flags."
+                )
+            }
+        }
+
+        return .init(
+            runtimeProfileRootPath: runtimeProfileRootPath.map {
+                LaunchAgentOptions.resolvePath($0, relativeTo: currentDirectoryPath)
+            }
+        )
+    }
+}
+
 // MARK: - CLI Command
 
 /// Top-level parsed command for the `SpeakSwiftlyServerTool` executable.
 public enum SpeakSwiftlyServerToolCommand {
-    case serve
+    case serve(ServeOptions)
     case launchAgent(LaunchAgentCommand)
 
     // MARK: - Parsing
@@ -18,12 +52,17 @@ public enum SpeakSwiftlyServerToolCommand {
         currentExecutablePath: String = CommandLine.arguments[0]
     ) throws -> SpeakSwiftlyServerToolCommand {
         guard let first = arguments.first else {
-            return .serve
+            return .serve(.init(runtimeProfileRootPath: nil))
         }
 
         switch first {
         case "serve":
-            return .serve
+            return .serve(
+                try ServeOptions.parse(
+                    arguments: Array(arguments.dropFirst()),
+                    currentDirectoryPath: currentDirectoryPath
+                )
+            )
 
         case "launch-agent":
             return .launchAgent(
@@ -38,6 +77,14 @@ public enum SpeakSwiftlyServerToolCommand {
             throw SpeakSwiftlyServerToolCommandError(helpText)
 
         default:
+            if first.hasPrefix("-") {
+                return .serve(
+                    try ServeOptions.parse(
+                        arguments: arguments,
+                        currentDirectoryPath: currentDirectoryPath
+                    )
+                )
+            }
             throw SpeakSwiftlyServerToolCommandError(
                 "\(speakSwiftlyServerToolName) did not recognize command '\(first)'. Supported commands are `serve` and `launch-agent`."
             )
@@ -49,8 +96,10 @@ public enum SpeakSwiftlyServerToolCommand {
     /// Runs the parsed command against the standalone runtime or LaunchAgent workflow.
     public func run() async throws {
         switch self {
-        case .serve:
-            try await ServerRuntimeEntrypoint.run()
+        case .serve(let options):
+            try await ServerRuntimeEntrypoint.run(
+                options: .init(runtimeProfileRootPath: options.runtimeProfileRootPath)
+            )
 
         case .launchAgent(let command):
             try command.run()
@@ -77,6 +126,9 @@ public enum SpeakSwiftlyServerToolCommand {
       --profile-root <path>
       --stdout-path <path>
       --stderr-path <path>
+
+    Serve options:
+      --profile-root <path>
 
       Without arguments, \(speakSwiftlyServerToolName) defaults to `serve`.
     """

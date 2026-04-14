@@ -19,11 +19,19 @@ Create and start the embedded session from app-owned code:
 import SpeakSwiftlyServer
 
 let session = try await EmbeddedServerSession.start(
-    options: .init(port: 7811)
+    options: .init(
+        port: 7811,
+        runtimeProfileRootURL: FileManager.default
+            .urls(for: .applicationSupportDirectory, in: .userDomainMask)
+            .first?
+            .appendingPathComponent("ExampleApp/SpeakSwiftlyRuntime", isDirectory: true)
+    )
 )
 ```
 
 `EmbeddedServerSession` owns the host lifecycle. App code should keep the session alive for as long as it wants the shared server running in-process. If you do not pass `Options(port:)`, the embedded session defaults to `127.0.0.1:7339`.
+
+If you pass `runtimeProfileRootURL`, the embedded host uses that same root for both its own persisted runtime configuration and the underlying `SpeakSwiftly` profile and artifact persistence. Use that when the app wants an explicit app-owned or App Group-owned runtime root instead of relying on the default Application Support lookup.
 
 ## Read The App-Facing State
 

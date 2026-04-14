@@ -39,6 +39,15 @@ xcrun swift run SpeakSwiftlyServerTool serve
 
 This is the simplest path for local operator checks, debugging, and temporary runs where you do not want launchd to own the process lifecycle. The foreground executable defaults to `127.0.0.1:7338` unless environment or YAML config overrides that port.
 
+If the foreground run should own a specific runtime persistence root, pass `--profile-root`:
+
+```bash
+xcrun swift run SpeakSwiftlyServerTool serve \
+  --profile-root ./runtime/profiles
+```
+
+That flag feeds the same `SPEAKSWIFTLY_PROFILE_ROOT` startup override the LaunchAgent and embedded-app paths use, so the foreground server can point its runtime configuration, text-profile persistence, and generated artifacts at one explicit root.
+
 ### LaunchAgent Maintenance
 
 Use the `launch-agent` subcommands when the server should become a user-owned background service:

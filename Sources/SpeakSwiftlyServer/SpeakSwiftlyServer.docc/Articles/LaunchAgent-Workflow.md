@@ -28,6 +28,8 @@ That gives you the exact LaunchAgent payload the package currently wants to stag
 - the stdout and stderr log files
 - the `SPEAKSWIFTLY_PROFILE_ROOT` environment override for the standalone server
 
+That profile-root override is the LaunchAgent-owned runtime persistence root. It is the directory the installed background service uses for its persisted runtime configuration and the underlying `SpeakSwiftly` profile and artifact persistence, so operators do not have to manage those two filesystem surfaces independently.
+
 ## Install Or Refresh The Background Service
 
 Once the property list looks right, install it with the config file you want the background service to use:

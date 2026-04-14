@@ -33,6 +33,8 @@ Only the host-safe subset reloads live today:
 
 Changes to bind addresses, ports, HTTP enablement, MCP enablement, MCP path, or MCP server metadata are detected and reported, but they still require a process restart before they can take effect.
 
+`SPEAKSWIFTLY_PROFILE_ROOT` is also a startup-only setting. It points at the runtime profile root directory the server should own, and the server threads that same root through both its own runtime-configuration persistence and the underlying `SpeakSwiftly` profile and artifact persistence. Because that setting changes filesystem ownership rather than hot runtime state, it is intentionally not part of the live-reloaded YAML surface.
+
 ## HTTP Surface
 
 ### Health And Runtime Endpoints

@@ -6,13 +6,17 @@ import Testing
 
 @available(macOS 14, *)
 @Test func embeddedServerSessionPublishesObservableStateForAppConsumers() async throws {
+    let runtimeProfileRootURL = URL(fileURLWithPath: NSTemporaryDirectory())
+        .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        .appendingPathComponent("profiles", isDirectory: true)
     let session = try await EmbeddedServerSession.start(
         environment: ["APP_ENV": "test"],
-        options: .init(port: 7811)
+        options: .init(port: 7811, runtimeProfileRootURL: runtimeProfileRootURL)
     ) { environment, state in
         #expect(environment["APP_ENV"] == "test")
         #expect(environment["APP_PORT"] == "7811")
         #expect(environment["APP_HTTP_PORT"] == "7811")
+        #expect(environment["SPEAKSWIFTLY_PROFILE_ROOT"] == runtimeProfileRootURL.standardizedFileURL.path)
         #expect(environment[AppRuntimeDefaultProfile.environmentKey] == AppRuntimeDefaultProfile.embeddedSession.rawValue)
 
         await MainActor.run {

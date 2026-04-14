@@ -19,8 +19,16 @@ public final class EmbeddedServerSession {
         /// more specifically through the environment-driven config surface.
         public var port: Int?
 
-        public init(port: Int? = nil) {
+        /// Optional runtime profile-root override for the embedded server and the underlying
+        /// `SpeakSwiftly` runtime.
+        ///
+        /// Pass this when the host app wants one explicit persistence root, such as an app-owned
+        /// Application Support subdirectory or an App Group container path.
+        public var runtimeProfileRootURL: URL?
+
+        public init(port: Int? = nil, runtimeProfileRootURL: URL? = nil) {
             self.port = port
+            self.runtimeProfileRootURL = runtimeProfileRootURL
         }
     }
 
@@ -50,7 +58,8 @@ public final class EmbeddedServerSession {
     /// Starts an embedded server session using the package's embedded-session default profile.
     ///
     /// Use this when an app wants to own the shared SpeakSwiftly host lifecycle directly and bind UI to ``state``.
-    /// Pass ``Options`` to override the embedded HTTP port without having to rewrite global process environment first.
+    /// Pass ``Options`` to override the embedded HTTP port or the runtime profile root without having to rewrite
+    /// global process environment state first.
     public static func start(
         environment: [String: String] = ProcessInfo.processInfo.environment,
         options: Options = .init()
@@ -90,7 +99,7 @@ public final class EmbeddedServerSession {
             defaultProfile: .embeddedSession
         )
         let config = try configStore.loadAppConfig()
-        let host = await ServerHost.live(appConfig: config, state: state)
+        let host = await ServerHost.live(appConfig: config, state: state, environment: environment)
         await MainActor.run {
             state.configureActions(
                 .init(
@@ -247,6 +256,9 @@ public final class EmbeddedServerSession {
         if let port = options.port {
             resolvedEnvironment["APP_PORT"] = String(port)
             resolvedEnvironment["APP_HTTP_PORT"] = String(port)
+        }
+        if let runtimeProfileRootURL = options.runtimeProfileRootURL {
+            resolvedEnvironment["SPEAKSWIFTLY_PROFILE_ROOT"] = runtimeProfileRootURL.standardizedFileURL.path
         }
         return resolvedEnvironment
     }

@@ -15,7 +15,7 @@ The session keeps transport ownership, config loading, and host shutdown logic i
 
 ### ``EmbeddedServerSession``
 
-Start the shared host through ``EmbeddedServerSession/start(environment:options:)``. The embedded path still uses the same environment-driven config model as the standalone runtime, but it now carries its own embedded-session default port and lets app code provide an explicit `Options(port:)` override when another localhost port is a better fit.
+Start the shared host through ``EmbeddedServerSession/start(environment:options:)``. The embedded path still uses the same environment-driven config model as the standalone runtime, but it now carries its own embedded-session default port and lets app code provide explicit `Options(port:runtimeProfileRootURL:)` values when another localhost port or another runtime-owned persistence root is a better fit.
 
 Call ``EmbeddedServerSession/stop()`` when the app wants a graceful shutdown. If a session has already been asked to stop, a second stop request simply waits for the same shutdown to finish.
 
@@ -39,5 +39,7 @@ When you need the whole current picture at once, use ``HostStateSnapshot`` as th
 ## When To Use The Executable Instead
 
 Use the embedded session when an app owns the process and wants direct observable state. Use the standalone executable and the HTTP or MCP surfaces when another process, a LaunchAgent, or an external operator should own runtime startup and shutdown.
+
+If the app needs explicit ownership of where the runtime persists profiles, generated artifacts, and staged runtime configuration, pass `runtimeProfileRootURL` on the embedded session options. That same root is forwarded into both the server's own runtime-configuration store and the underlying `SpeakSwiftly` startup path so the embedded app does not have to manage those two persistence layers separately.
 
 For the transport inventory and command-line surface, see <doc:Operator-Surfaces>.

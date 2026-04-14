@@ -51,6 +51,44 @@ import Testing
     #expect(options.reloadIntervalSeconds == "2")
 }
 
+@Test func toolParsesServeProfileRootOption() throws {
+    let tempDirectory = try makeTemporaryDirectory()
+
+    let command = try SpeakSwiftlyServerToolCommand.parse(
+        arguments: ["serve", "--profile-root", "./runtime/profiles"],
+        currentDirectoryPath: tempDirectory.path
+    )
+
+    guard case .serve(let options) = command else {
+        Issue.record("Expected the tool parser to produce a serve command.")
+        return
+    }
+
+    #expect(
+        options.runtimeProfileRootPath
+            == tempDirectory.appendingPathComponent("runtime/profiles").standardizedFileURL.path
+    )
+}
+
+@Test func toolTreatsBareServeOptionsAsServeCommand() throws {
+    let tempDirectory = try makeTemporaryDirectory()
+
+    let command = try SpeakSwiftlyServerToolCommand.parse(
+        arguments: ["--profile-root", "./runtime/profiles"],
+        currentDirectoryPath: tempDirectory.path
+    )
+
+    guard case .serve(let options) = command else {
+        Issue.record("Expected bare serve options to parse as the serve command.")
+        return
+    }
+
+    #expect(
+        options.runtimeProfileRootPath
+            == tempDirectory.appendingPathComponent("runtime/profiles").standardizedFileURL.path
+    )
+}
+
 @Test func toolRejectsInstallWhenStagedReleaseArtifactIsMissing() throws {
     let tempDirectory = try makeTemporaryDirectory()
     try FileManager.default.createDirectory(

@@ -106,10 +106,22 @@ actor ServerHost {
 
     // MARK: - Construction
 
-    static func live(appConfig: AppConfig, state: ServerState) async -> ServerHost {
-        let runtimeConfigurationStore = RuntimeConfigurationStore()
+    static func live(
+        appConfig: AppConfig,
+        state: ServerState,
+        environment: [String: String] = ProcessInfo.processInfo.environment
+    ) async -> ServerHost {
+        let runtimeConfigurationStore = RuntimeConfigurationStore(environment: environment)
         let startupConfiguration = runtimeConfigurationStore.startupConfiguration()
-        let runtime = ServerRuntimeAdapter(runtime: await SpeakSwiftly.liftoff(configuration: startupConfiguration))
+        let runtime = ServerRuntimeAdapter(
+            runtime: await SpeakSwiftlyRuntimeLauncher.shared.launch(
+                configuration: startupConfiguration,
+                environment: environment,
+                makeRuntime: { configuration in
+                    await SpeakSwiftly.liftoff(configuration: configuration)
+                }
+            )
+        )
         let host = ServerHost(
             configuration: appConfig.server,
             httpConfig: appConfig.http,

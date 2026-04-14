@@ -76,6 +76,7 @@
 - [x] Document the app-managed install and configuration contract the forthcoming macOS app will need.
 - [x] Add any server-side hooks needed for LaunchAgent-friendly lifecycle management.
 - [x] Decide how logs, profile roots, and cache paths should be configured and owned for app-managed installs.
+- [x] Add one explicit runtime profile-root override model across embedded sessions, direct `serve` runs, and LaunchAgent installs, and thread that override through to `SpeakSwiftly` startup.
 - [x] Prepare an initial tagged release once the service is meaningfully usable.
 
 ## Milestone 7: Live Update Convergence
