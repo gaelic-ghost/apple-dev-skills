@@ -262,6 +262,7 @@ extension SpeakSwiftlyServerTests {
         let host = ServerHost(
             configuration: configuration,
             runtime: runtime,
+            runtimeConfigurationStore: testRuntimeConfigurationStore(),
             state: state
         )
 
@@ -300,6 +301,7 @@ extension SpeakSwiftlyServerTests {
         let host = ServerHost(
             configuration: configuration,
             runtime: runtime,
+            runtimeConfigurationStore: testRuntimeConfigurationStore(),
             state: state
         )
 
@@ -319,6 +321,100 @@ extension SpeakSwiftlyServerTests {
             #expect(response.status == .badRequest)
             #expect(body.contains("did not include 'profile_name'"))
             #expect(body.contains("app.defaultVoiceProfileName"))
+        }
+
+        await host.shutdown()
+    }
+
+    @available(macOS 14, *)
+    @Test func runtimeRoutesRejectUnsupportedSpeechBackendClearly() async throws {
+        let runtime = MockRuntime()
+        let configuration = testConfiguration()
+        let state = await MainActor.run { ServerState() }
+        let host = ServerHost(
+            configuration: configuration,
+            runtime: runtime,
+            runtimeConfigurationStore: testRuntimeConfigurationStore(),
+            state: state
+        )
+
+        await host.start()
+        await runtime.publishStatus(.residentModelReady)
+        try await waitUntilReady(host)
+
+        let app = assembleHBApp(configuration: testHTTPConfig(configuration), host: host)
+        try await app.test(.router) { client in
+            let persistResponse = try await client.execute(
+                uri: "/runtime/configuration",
+                method: .put,
+                headers: [.contentType: "application/json"],
+                body: byteBuffer(#"{"speech_backend":"totally_invalid"}"#)
+            )
+            let persistJSON = try jsonObject(from: persistResponse.body)
+            let persistError = try #require(persistJSON["error"] as? [String: Any])
+            let persistMessage = try #require(persistError["message"] as? String)
+            #expect(persistResponse.status == .badRequest)
+            #expect(persistMessage.contains("speech_backend"))
+            #expect(persistMessage.contains("totally_invalid"))
+            #expect(persistMessage.contains("qwen3"))
+            #expect(persistMessage.contains("marvis"))
+
+            let switchResponse = try await client.execute(
+                uri: "/runtime/backend",
+                method: .post,
+                headers: [.contentType: "application/json"],
+                body: byteBuffer(#"{"speech_backend":"totally_invalid"}"#)
+            )
+            let switchJSON = try jsonObject(from: switchResponse.body)
+            let switchError = try #require(switchJSON["error"] as? [String: Any])
+            let switchMessage = try #require(switchError["message"] as? String)
+            #expect(switchResponse.status == .badRequest)
+            #expect(switchMessage.contains("speech_backend"))
+            #expect(switchMessage.contains("totally_invalid"))
+            #expect(switchMessage.contains("qwen3"))
+            #expect(switchMessage.contains("marvis"))
+        }
+
+        await host.shutdown()
+    }
+
+    @available(macOS 14, *)
+    @Test func runtimeRoutesRejectMissingSpeechBackendFieldClearly() async throws {
+        let runtime = MockRuntime()
+        let configuration = testConfiguration()
+        let state = await MainActor.run { ServerState() }
+        let host = ServerHost(
+            configuration: configuration,
+            runtime: runtime,
+            runtimeConfigurationStore: testRuntimeConfigurationStore(),
+            state: state
+        )
+
+        await host.start()
+        await runtime.publishStatus(.residentModelReady)
+        try await waitUntilReady(host)
+
+        let app = assembleHBApp(configuration: testHTTPConfig(configuration), host: host)
+        try await app.test(.router) { client in
+            let persistResponse = try await client.execute(
+                uri: "/runtime/configuration",
+                method: .put,
+                headers: [.contentType: "application/json"],
+                body: byteBuffer(#"{}"#)
+            )
+            let persistBody = string(from: persistResponse.body)
+            #expect(persistResponse.status == .badRequest)
+            #expect(persistBody.contains("speech_backend"))
+
+            let switchResponse = try await client.execute(
+                uri: "/runtime/backend",
+                method: .post,
+                headers: [.contentType: "application/json"],
+                body: byteBuffer(#"{}"#)
+            )
+            let switchBody = string(from: switchResponse.body)
+            #expect(switchResponse.status == .badRequest)
+            #expect(switchBody.contains("speech_backend"))
         }
 
         await host.shutdown()

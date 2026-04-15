@@ -21,6 +21,7 @@ extension SpeakSwiftlyServerTests {
                 title: "SpeakSwiftly Test MCP"
             ),
             runtime: runtime,
+            runtimeConfigurationStore: testRuntimeConfigurationStore(),
             state: state
         )
 
@@ -94,6 +95,7 @@ extension SpeakSwiftlyServerTests {
                 title: "SpeakSwiftly Test MCP"
             ),
             runtime: runtime,
+            runtimeConfigurationStore: testRuntimeConfigurationStore(),
             state: state
         )
 
@@ -167,6 +169,7 @@ extension SpeakSwiftlyServerTests {
                 title: "SpeakSwiftly Test MCP"
             ),
             runtime: runtime,
+            runtimeConfigurationStore: testRuntimeConfigurationStore(),
             state: state
         )
 
