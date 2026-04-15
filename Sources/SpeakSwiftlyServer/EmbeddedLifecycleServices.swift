@@ -137,7 +137,9 @@ struct ConfigWatchService: Service {
             // Graceful shutdown or sibling failure cancelled the watch loop.
         } catch {
             await host.markConfigurationWatchFailed(error)
-            throw error
+            // Preserve the pre-service-lifecycle behavior: a config-watch failure should be
+            // reported clearly, but it should not tear down the embedded host.
+            return
         }
     }
 }

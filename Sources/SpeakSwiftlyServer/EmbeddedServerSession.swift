@@ -188,43 +188,56 @@ public final class EmbeddedServerSession: @unchecked Sendable {
             await host.markTransportStarting(name: "mcp")
         }
 
-        var services = configStore.services
+        var services = configStore.services.map { service in
+            ServiceGroupConfiguration.ServiceConfiguration(service: service)
+        }
         services.append(
-            HostLifecycleService(
-                host: host,
-                readinessGate: hostReadinessGate,
-                shutdownBarrier: shutdownBarrier
+            .init(
+                service: HostLifecycleService(
+                    host: host,
+                    readinessGate: hostReadinessGate,
+                    shutdownBarrier: shutdownBarrier
+                )
             )
         )
         if !configStore.services.isEmpty {
             services.append(
-                ConfigWatchService(
-                    configStore: configStore,
-                    host: host
+                .init(
+                    service: ConfigWatchService(
+                        configStore: configStore,
+                        host: host
+                    ),
+                    successTerminationBehavior: .ignore,
+                    failureTerminationBehavior: .ignore,
+                    serviceName: "ConfigWatchService(non-fatal)"
                 )
             )
         }
         if let mcpSurface, let mcpReadinessGate {
             services.append(
-                MCPLifecycleService(
-                    surface: mcpSurface,
-                    readinessGate: mcpReadinessGate,
-                    shutdownBarrier: shutdownBarrier
+                .init(
+                    service: MCPLifecycleService(
+                        surface: mcpSurface,
+                        readinessGate: mcpReadinessGate,
+                        shutdownBarrier: shutdownBarrier
+                    )
                 )
             )
         }
         services.append(
-            EmbeddedApplicationService(
-                application: app,
-                shutdownBarrier: shutdownBarrier
+            .init(
+                service: EmbeddedApplicationService(
+                    application: app,
+                    shutdownBarrier: shutdownBarrier
+                )
             )
         )
 
         let serviceGroup = ServiceGroup(
-            services: services,
-            gracefulShutdownSignals: [],
-            cancellationSignals: [],
-            logger: app.logger
+            configuration: .init(
+                services: services,
+                logger: app.logger
+            )
         )
         let runTask = Task<Void, Error> {
             do {
