@@ -54,7 +54,10 @@ jobs:
         run: |
           tool_path="$PWD/.build/debug/SpeakSwiftlyServerTool"
           test -x "$tool_path"
-          output="$("$tool_path" launch-agent print-plist --tool-executable-path "$tool_path" 2>&1)"
+          set +e
+          output="$(xcrun swift run SpeakSwiftlyServerTool launch-agent print-plist --tool-executable-path "$tool_path" 2>&1)"
+          status=$?
           printf '%s\n' "$output"
+          test "$status" -eq 0
           printf '%s\n' "$output" | grep -F "<plist version=\"1.0\">"
           printf '%s\n' "$output" | grep -F "com.gaelic-ghost.speak-swiftly-server"
