@@ -17,6 +17,7 @@ extension SpeakSwiftlyServerTests {
         let host = ServerHost(
             configuration: configuration,
             runtime: runtime,
+            runtimeConfigurationStore: testRuntimeConfigurationStore(),
             state: state
         )
 
@@ -136,6 +137,7 @@ extension SpeakSwiftlyServerTests {
         let host = ServerHost(
             configuration: configuration,
             runtime: runtime,
+            runtimeConfigurationStore: testRuntimeConfigurationStore(),
             state: state
         )
 
@@ -183,6 +185,7 @@ extension SpeakSwiftlyServerTests {
         let host = ServerHost(
             configuration: configuration,
             runtime: runtime,
+            runtimeConfigurationStore: testRuntimeConfigurationStore(),
             state: state
         )
 
