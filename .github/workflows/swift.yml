@@ -52,7 +52,9 @@ jobs:
 
       - name: Smoke-test launch-agent plist rendering
         run: |
-          output="$(xcrun swift run SpeakSwiftlyServerTool launch-agent print-plist 2>&1)"
+          tool_path="$PWD/.build/debug/SpeakSwiftlyServerTool"
+          test -x "$tool_path"
+          output="$("$tool_path" launch-agent print-plist --tool-executable-path "$tool_path" 2>&1)"
           printf '%s\n' "$output"
           printf '%s\n' "$output" | grep -F "<plist version=\"1.0\">"
           printf '%s\n' "$output" | grep -F "com.gaelic-ghost.speak-swiftly-server"
