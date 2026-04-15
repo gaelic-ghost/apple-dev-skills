@@ -25,10 +25,7 @@ struct LaunchAgentOptions {
     ) throws -> LaunchAgentOptions {
         var label = LaunchAgentDefaults.label
         let _ = currentExecutablePath
-        var toolExecutablePath = try resolveDefaultToolExecutablePath(
-            currentDirectoryPath: currentDirectoryPath,
-            mustExist: requireToolExecutableExists
-        )
+        var toolExecutablePathOverride: String?
         var plistPath = LaunchAgentDefaults.plistPath(for: label)
         var configFilePath: String?
         var reloadIntervalSeconds: String?
@@ -46,7 +43,7 @@ struct LaunchAgentOptions {
                 index += 2
 
             case "--tool-executable-path", "--executable-path":
-                toolExecutablePath = try requireValue(after: arguments, index: index, option: arguments[index])
+                toolExecutablePathOverride = try requireValue(after: arguments, index: index, option: arguments[index])
                 index += 2
 
             case "--plist-path":
@@ -83,6 +80,11 @@ struct LaunchAgentOptions {
                 )
             }
         }
+
+        let toolExecutablePath = try toolExecutablePathOverride ?? resolveDefaultToolExecutablePath(
+            currentDirectoryPath: currentDirectoryPath,
+            mustExist: requireToolExecutableExists
+        )
 
         return try .init(
             label: label,

@@ -43,6 +43,31 @@ import Testing
     }
 }
 
+@Test func launchAgentPrintPlistHonorsExplicitToolExecutablePathWithoutStagedArtifact() throws {
+    let repositoryRootURL = try makeLaunchAgentCommandTestRepository()
+    let explicitToolURL = repositoryRootURL.appendingPathComponent("tmp/SpeakSwiftlyServerTool", isDirectory: false)
+    try FileManager.default.createDirectory(
+        at: explicitToolURL.deletingLastPathComponent(),
+        withIntermediateDirectories: true
+    )
+    try "#!/bin/sh\nexit 0\n".write(to: explicitToolURL, atomically: true, encoding: .utf8)
+    try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: explicitToolURL.path)
+
+    let command = try LaunchAgentCommand.parse(
+        arguments: ["print-plist", "--tool-executable-path", explicitToolURL.path],
+        currentDirectoryPath: repositoryRootURL.path,
+        currentExecutablePath: "/tmp/SpeakSwiftlyServerTool"
+    )
+
+    switch command.action {
+    case .printPlist(let options):
+        #expect(options.toolExecutablePath == explicitToolURL.path)
+
+    default:
+        Issue.record("Expected `launch-agent print-plist` to parse into the print-plist action.")
+    }
+}
+
 @Test func healthcheckCommandParsesCustomProbeOptions() throws {
     let command = try SpeakSwiftlyServerToolCommand.parse(
         arguments: [
