@@ -233,6 +233,12 @@ That API is intentionally file-backed. The app can call one package function and
 
 That public surface is intentionally small. `ServerHost` remains internal so app code does not couple itself to transport orchestration, async stream plumbing, or other backend ownership details.
 
+Behind that small public API, the embedded path now uses one outer `ServiceGroup` owned by the
+session wrapper. That outer group owns the package-level host lifecycle, optional config watching,
+optional MCP readiness and drain, and the wrapped Hummingbird application as sibling long-running
+services. Hummingbird still owns its own internal application `ServiceGroup`, but app code should
+keep treating `EmbeddedServerSession` itself as the lifecycle boundary.
+
 From app code, `ServerState` now also exposes app-facing control points for the cached voice-profile list, the effective default voice profile, and playback actions:
 
 - `listVoiceProfiles()` and `refreshVoiceProfiles()`

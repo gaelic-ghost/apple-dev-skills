@@ -18,6 +18,12 @@ The server exposes one shared localhost host process with:
 - an optional MCP surface
 - shared retained request, artifact, playback, and runtime snapshots behind both transports
 
+When the same host is embedded through `EmbeddedServerSession`, the transport process now runs
+inside one outer service-owned lifecycle group that also owns package-level host startup,
+config-watch lifetime, and optional MCP readiness and drain. The HTTP and MCP contracts described
+below are unchanged by that embedding model, but the ownership story is now flatter and more
+explicit for app hosts and maintainers.
+
 ## Configuration Notes
 
 When `APP_CONFIG_FILE` is set, the server watches that YAML file through `ReloadingFileProvider<YAMLSnapshot>`. The optional `APP_CONFIG_RELOAD_INTERVAL_SECONDS` environment variable controls the polling interval and defaults to `2` seconds.

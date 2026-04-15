@@ -6,6 +6,8 @@ This document is the maintainer map for the current `SpeakSwiftly 3.x`-aligned s
 
 ## Host Sources
 
+- `Sources/SpeakSwiftlyServer/EmbeddedLifecycleServices.swift`
+  Holds the embedded-session readiness gates, shutdown barrier, and the explicit service-owned wrappers for host lifecycle, config watching, MCP lifecycle, and wrapped application runtime.
 - `Sources/SpeakSwiftlyServer/Host/ServerHost.swift`
   Holds the actor declaration, stored state, construction, lifecycle, transport watch hooks, and shared snapshot basics.
 - `Sources/SpeakSwiftlyServer/Host/ServerHost+Queries.swift`
@@ -62,5 +64,6 @@ This document is the maintainer map for the current `SpeakSwiftly 3.x`-aligned s
 ## Current Cleanup Follow-Through
 
 - Keep same-type `ServerHost` extensions as the preferred split mechanism for host refactors. Do not introduce helper coordinators or wrapper objects unless a real ownership boundary changes.
+- Keep embedded-session lifecycle ownership in `EmbeddedLifecycleServices.swift` plus `EmbeddedServerSession.swift` instead of drifting those readiness and shutdown semantics back into ad hoc retained-task bodies.
 - Keep transport-local shaping at the edge. If `SpeakSwiftly` or `TextForSpeech` can express a concept directly, prefer deleting server-local inference instead of adding another translation layer.
 - If a test file starts mixing HTTP, MCP, LaunchAgent, and host-state concerns again, split it before adding more cases.

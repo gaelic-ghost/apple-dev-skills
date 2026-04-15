@@ -14,7 +14,14 @@ These surfaces share the same underlying host model, but they answer different o
 
 ### Embedded Library
 
-Use ``EmbeddedServerSession`` and ``ServerState`` when an app owns the process and wants direct state observation on the main actor.
+Use ``EmbeddedServerSession`` and ``ServerState`` when an app owns the process and wants direct
+state observation on the main actor.
+
+Internally, the embedded path now keeps package-owned lifecycle concerns explicit: one outer
+service-owned group coordinates host startup and shutdown, optional config watching, optional MCP
+readiness and drain, and the wrapped Hummingbird application. App code should still treat the
+session object as the lifecycle boundary and `ServerState` as the UI-facing projection rather than
+as the owner of the runtime.
 
 ### Command-Line Tool
 

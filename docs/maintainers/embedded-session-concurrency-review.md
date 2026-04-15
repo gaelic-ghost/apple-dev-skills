@@ -101,11 +101,14 @@ the action closures now more accurately reflect that the underlying work belongs
 
 ### What we are already using well
 
-This package already uses `ServiceLifecycle` in a reasonable, application-shaped way:
+This package now uses `ServiceLifecycle` in the more explicit shape we wanted for the embedded
+path:
 
-- `ServiceGroup` is used to run the Hummingbird application and any config-provider services
-- the current embedded and standalone entrypoints already benefit from structured shutdown
-  sequencing through that group
+- one outer embedded-session `ServiceGroup` owns package-level host lifecycle, optional config
+  watching, optional MCP lifecycle, and the wrapped Hummingbird application as sibling services
+- Hummingbird still uses its own internal `ServiceGroup` for application-local services
+- the standalone and embedded entrypoints now both benefit from structured shutdown sequencing
+  through explicit service ownership instead of hidden task bodies
 
 That matches the upstream `ServiceLifecycle` docs, which position:
 
@@ -120,35 +123,21 @@ It was caused by where the library's embedded bootstrap entrypoint itself was is
 Rewriting the embedded startup path around more `ServiceLifecycle` types would not, by itself,
 move bootstrap work off the main actor.
 
-### Could we broaden ServiceLifecycle usage later?
+### What the follow-on refactor changed
 
-Yes, but it should be a separate design decision.
+That follow-on service-lifecycle pass is now landed:
 
-The most plausible future broadening would be to make some package-owned long-running components
-more explicitly `Service`-shaped, such as:
+- host startup and shutdown run through `HostLifecycleService`
+- config watching runs through `ConfigWatchService`
+- MCP readiness and drain run through `MCPLifecycleService`
+- Hummingbird startup is gated by `beforeServerStarts(...)`
+- the retained embedded run task is now mostly just the top-level join handle for the outer group
 
-- an MCP lifecycle wrapper
-- a configuration-watch wrapper
-- a higher-level library-owned embedded runtime bundle
+That keeps the main actor fix and the service-lifecycle cleanup as separate decisions:
 
-That could make composition cleaner if the embedded library surface grows more long-running owned
-subsystems.
-
-That follow-on decision is now recorded in:
-
-- `docs/maintainers/embedded-service-lifecycle-plan.md`
-
-### Recommendation
-
-For the release-facing concurrency pass, fixing `EmbeddedServerSession` isolation directly was the
-right first move.
-
-For the follow-on composition pass, the package now has a recorded plan to:
-
-- keep one outer embedded-session `ServiceGroup`
-- promote host lifecycle, config watching, and MCP readiness into explicit `Service`-shaped
-  components
-- keep `ServerState` as the app-facing `@MainActor` projection instead of treating it as a service
+- the main actor issue was solved by moving embedded bootstrap off `MainActor`
+- the later composition cleanup made package-owned long-running work flatter and easier to reason
+  about without turning `ServerState` into a service or hiding ownership inside the HTTP layer
 
 ## Checklist
 
@@ -156,5 +145,6 @@ For the follow-on composition pass, the package now has a recorded plan to:
 - [x] Move embedded bootstrap work off the main actor while keeping `ServerState` main-actor-owned.
 - [x] Remove unnecessary `@MainActor` coupling from lifecycle hooks.
 - [x] Narrow the action-plumbing isolation so host work is not modeled as UI-owned.
-- [x] Record the follow-on `ServiceLifecycle` composition plan for host, config-watch, and MCP
-      lifecycle cleanup in `docs/maintainers/embedded-service-lifecycle-plan.md`.
+- [x] Land the follow-on `ServiceLifecycle` composition pass for host, config-watch, and MCP
+      lifecycle cleanup, using `docs/maintainers/embedded-service-lifecycle-plan.md` as the
+      design reference.
