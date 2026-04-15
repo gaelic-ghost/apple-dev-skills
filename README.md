@@ -148,6 +148,7 @@ The most common local operator path is:
 1. `xcrun swift run SpeakSwiftlyServerTool help`
 2. `xcrun swift run SpeakSwiftlyServerTool launch-agent print-plist`
 3. `xcrun swift run SpeakSwiftlyServerTool launch-agent promote-live --config-file ./server.yaml`
+4. `xcrun swift run SpeakSwiftlyServerTool healthcheck`
 
 To render the current per-user LaunchAgent property list without installing it:
 
@@ -186,6 +187,14 @@ To inspect or remove the installed LaunchAgent:
 xcrun swift run SpeakSwiftlyServerTool launch-agent status
 xcrun swift run SpeakSwiftlyServerTool launch-agent uninstall
 ```
+
+To verify the live service end to end without ad hoc `curl` or hand-built JSON-RPC:
+
+```bash
+xcrun swift run SpeakSwiftlyServerTool healthcheck
+```
+
+That command probes `GET /healthz`, reads `GET /runtime/host`, and sends a real MCP `initialize` request to `/mcp`. It prints one concise summary that distinguishes "the process is up" from "both HTTP and MCP are actually healthy."
 
 ### App-Managed Install Contract
 

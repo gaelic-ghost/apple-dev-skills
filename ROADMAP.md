@@ -161,7 +161,7 @@ Post-`v2.0.4` note: these items capture the next hardening pass after the Launch
 
 - [ ] Add an app-managed LaunchAgent smoke test that starts from a canonical config path with spaces and verifies both `GET /runtime/host` and MCP `initialize`.
 - [ ] Add explicit startup logging for canonical config paths, LaunchAgent alias staging, and the exact config file path the runtime loader opened.
-- [ ] Add a first-class operator health-check command that verifies HTTP and MCP transport health without ad hoc curl or one-off JSON-RPC scripts.
+- [x] Add a first-class operator health-check command that verifies HTTP and MCP transport health without ad hoc curl or one-off JSON-RPC scripts.
 - [ ] Decide whether LaunchAgent-owned startup config should keep using a reloading provider or move to a simpler startup-open path with reload support layered on intentionally later.
 - [ ] Promote the existing MCP E2E client utilities into a reusable repo-owned smoke helper for local checks, CI, and release verification.
 - [ ] Add a maintainer-facing release verification path that confirms the staged release artifact, LaunchAgent install, runtime host overview, and MCP initialize flow all agree.
@@ -179,7 +179,7 @@ Current note: repo-local guidance and automation now prefer `xcrun swift ...` be
 
 Current note: this milestone turns the live-service reliability work into a package-wide hardening program. The first confirmed live fixes were promoting commit `7e651f8` into the LaunchAgent-backed service, removing the old prune-maintenance crash loop from the live runtime, and discovering that in-place staged-artifact refreshes can still trip a launchd code-signing failure unless the staged executable's ad-hoc signature is refreshed intentionally.
 
-- [ ] Harden the install and release surface so staged-artifact refreshes are deterministic, the required signature or provenance handling is explicit, the live-service promotion path is first-class, and operator-facing diagnostics make LaunchAgent boot failures obvious.
+- [x] Harden the install and release surface so staged-artifact refreshes are deterministic, the required signature or provenance handling is explicit, the live-service promotion path is first-class, and operator-facing diagnostics make LaunchAgent boot failures obvious.
 - [ ] Audit the playback and device-observation surface that still logs `freed pointer was not the last allocation`, confirm whether the warning comes from runtime-owned audio observation or server-owned integration behavior, and either fix the root cause or narrow the server boundary so the remaining ownership is explicit.
 - [ ] Continue the lifecycle hardening pass by moving any remaining long-lived maintenance loops, watchers, or retained background tasks under explicit service ownership and shutdown accounting instead of freestanding task bodies.
 - [ ] Harden configuration and persisted runtime state handling, including precedence rules, atomic writes, corruption or repair behavior, runtime-configuration persistence, and test isolation for profile-root-sensitive state.

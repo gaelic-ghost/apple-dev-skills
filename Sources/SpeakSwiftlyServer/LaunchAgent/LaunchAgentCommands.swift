@@ -41,6 +41,7 @@ public struct ServeOptions: Sendable {
 /// Top-level parsed command for the `SpeakSwiftlyServerTool` executable.
 public enum SpeakSwiftlyServerToolCommand {
     case serve(ServeOptions)
+    case healthcheck(HealthcheckOptions)
     case launchAgent(LaunchAgentCommand)
 
     // MARK: - Parsing
@@ -73,6 +74,11 @@ public enum SpeakSwiftlyServerToolCommand {
                 )
             )
 
+        case "healthcheck":
+            return .healthcheck(
+                try HealthcheckOptions.parse(arguments: Array(arguments.dropFirst()))
+            )
+
         case "-h", "--help", "help":
             throw SpeakSwiftlyServerToolCommandError(helpText)
 
@@ -101,6 +107,9 @@ public enum SpeakSwiftlyServerToolCommand {
                 options: .init(runtimeProfileRootPath: options.runtimeProfileRootPath)
             )
 
+        case .healthcheck(let options):
+            try await SpeakSwiftlyServerHealthcheck(options: options).run()
+
         case .launchAgent(let command):
             try command.run()
         }
@@ -111,6 +120,7 @@ public enum SpeakSwiftlyServerToolCommand {
     static let helpText = """
     Usage:
       \(speakSwiftlyServerToolName) serve
+      \(speakSwiftlyServerToolName) healthcheck [options]
       \(speakSwiftlyServerToolName) launch-agent print-plist [options]
       \(speakSwiftlyServerToolName) launch-agent install [options]
       \(speakSwiftlyServerToolName) launch-agent promote-live [options]
@@ -130,6 +140,11 @@ public enum SpeakSwiftlyServerToolCommand {
 
     Serve options:
       --profile-root <path>
+
+    Healthcheck options:
+      --base-url <url>
+      --mcp-path <path>
+      --timeout-seconds <seconds>
 
       Without arguments, \(speakSwiftlyServerToolName) defaults to `serve`.
     """

@@ -15,10 +15,8 @@ actor ServerRuntimeAdapter: ServerRuntimeProtocol {
 
     // MARK: - Lifecycle
 
-    func start() {
-        Task {
-            await runtime.start()
-        }
+    func start() async {
+        await runtime.start()
     }
 
     func shutdown() async {

@@ -62,6 +62,11 @@ actor MockRuntime: ServerRuntimeProtocol {
         case leaveProfilesUnchanged
     }
 
+    enum StartBehavior: Sendable {
+        case immediate
+        case waitForRelease
+    }
+
     var profiles: [SpeakSwiftly.ProfileSummary]
     var speakBehavior: SpeakBehavior
     var mutationRefreshBehavior: MutationRefreshBehavior
@@ -88,17 +93,23 @@ actor MockRuntime: ServerRuntimeProtocol {
     var playbackStateRequestCount = 0
     var startCallCount = 0
     var shutdownCallCount = 0
+    var startBehavior: StartBehavior
+    var startReleaseContinuation: CheckedContinuation<Void, Never>?
+    var startHasReachedBarrier = false
+    var startBarrierWaiters = [CheckedContinuation<Void, Never>]()
 
     // MARK: - Lifecycle
 
     init(
         profiles: [SpeakSwiftly.ProfileSummary] = [sampleProfile()],
         speakBehavior: SpeakBehavior = .completeImmediately,
-        mutationRefreshBehavior: MutationRefreshBehavior = .applyMutations
+        mutationRefreshBehavior: MutationRefreshBehavior = .applyMutations,
+        startBehavior: StartBehavior = .immediate
     ) {
         self.profiles = profiles
         self.speakBehavior = speakBehavior
         self.mutationRefreshBehavior = mutationRefreshBehavior
+        self.startBehavior = startBehavior
         self.textRuntimePersistenceURL = FileManager.default.temporaryDirectory
             .appendingPathComponent("SpeakSwiftlyServerTests", isDirectory: true)
             .appendingPathComponent(UUID().uuidString)
@@ -106,8 +117,22 @@ actor MockRuntime: ServerRuntimeProtocol {
         self.textRuntime = try! TextForSpeech.Runtime(persistence: .file(textRuntimePersistenceURL))
     }
 
-    func start() {
+    func start() async {
         startCallCount += 1
+        guard startBehavior == .waitForRelease else {
+            return
+        }
+
+        startHasReachedBarrier = true
+        let barrierWaiters = startBarrierWaiters
+        startBarrierWaiters.removeAll()
+        for waiter in barrierWaiters {
+            waiter.resume()
+        }
+
+        await withCheckedContinuation { continuation in
+            startReleaseContinuation = continuation
+        }
     }
 
     func shutdown() async {
@@ -131,6 +156,25 @@ actor MockRuntime: ServerRuntimeProtocol {
 
     func lifecycleCounts() -> (start: Int, shutdown: Int) {
         (startCallCount, shutdownCallCount)
+    }
+
+    func waitUntilStartReachesBarrier() async {
+        guard startBehavior == .waitForRelease else { return }
+        guard !startHasReachedBarrier else { return }
+
+        await withCheckedContinuation { continuation in
+            if startHasReachedBarrier {
+                continuation.resume()
+            } else {
+                startBarrierWaiters.append(continuation)
+            }
+        }
+    }
+
+    func allowStartToFinish() {
+        startReleaseContinuation?.resume()
+        startReleaseContinuation = nil
+        startBehavior = .immediate
     }
 
 }

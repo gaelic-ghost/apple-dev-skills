@@ -177,6 +177,44 @@ import Testing
 }
 
 @available(macOS 14, *)
+@Test func hostStartWaitsForRuntimeStartToFinish() async throws {
+    actor StartCompletionProbe {
+        private(set) var didFinish = false
+
+        func markFinished() {
+            didFinish = true
+        }
+    }
+
+    let runtime = MockRuntime(startBehavior: .waitForRelease)
+    let state = await MainActor.run { ServerState() }
+    let host = ServerHost(
+        configuration: testConfiguration(),
+        runtime: runtime,
+        runtimeConfigurationStore: testRuntimeConfigurationStore(),
+        state: state
+    )
+    let probe = StartCompletionProbe()
+
+    let startTask = Task {
+        await host.start()
+        await probe.markFinished()
+    }
+
+    await runtime.waitUntilStartReachesBarrier()
+    #expect(await probe.didFinish == false)
+
+    let countsWhileBlocked = await runtime.lifecycleCounts()
+    #expect(countsWhileBlocked.start == 1)
+
+    await runtime.allowStartToFinish()
+    await startTask.value
+
+    let finalCounts = await runtime.lifecycleCounts()
+    #expect(finalCounts.start == 1)
+}
+
+@available(macOS 14, *)
 @Test func hostPruneServiceCancelsOnGracefulShutdownAndMarksShutdownBarrier() async throws {
     let runtime = MockRuntime()
     let configuration = testConfiguration(jobPruneIntervalSeconds: 60)

@@ -43,6 +43,28 @@ import Testing
     }
 }
 
+@Test func healthcheckCommandParsesCustomProbeOptions() throws {
+    let command = try SpeakSwiftlyServerToolCommand.parse(
+        arguments: [
+            "healthcheck",
+            "--base-url", "http://127.0.0.1:8123",
+            "--mcp-path", "rpc",
+            "--timeout-seconds", "5",
+        ],
+        currentExecutablePath: "/tmp/SpeakSwiftlyServerTool"
+    )
+
+    switch command {
+    case .healthcheck(let options):
+        #expect(options.baseURL.absoluteString == "http://127.0.0.1:8123")
+        #expect(options.mcpPath == "/rpc")
+        #expect(options.timeoutSeconds == 5)
+
+    default:
+        Issue.record("Expected `healthcheck` to parse into the healthcheck command.")
+    }
+}
+
 private func makeLaunchAgentCommandTestRepository() throws -> URL {
     let repositoryRootURL = URL(fileURLWithPath: NSTemporaryDirectory())
         .appendingPathComponent(UUID().uuidString, isDirectory: true)

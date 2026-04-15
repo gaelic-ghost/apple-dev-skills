@@ -60,7 +60,7 @@ func canonicalOperationName(_ operation: String) -> String {
 // MARK: - Runtime Protocol
 
 protocol ServerRuntimeProtocol: Actor {
-    func start()
+    func start() async
     func shutdown() async
     func statusEvents() async -> AsyncStream<SpeakSwiftly.StatusEvent>
     func queueSpeechLive(

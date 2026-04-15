@@ -9,6 +9,7 @@ In this package, that workflow is intentionally explicit:
 1. render the property list you are about to install
 2. either install the already-staged artifact or promote the current source checkout into the staged live artifact
 3. inspect status or remove it later through the same executable surface
+4. verify the live HTTP and MCP transports through one repo-owned health-check command
 
 This article covers the shape of that workflow. It does not replace the repository operator docs, which remain the source of truth for the full command inventory and release-process details.
 
@@ -58,6 +59,14 @@ Use the same executable to check the installed state or remove it:
 xcrun swift run SpeakSwiftlyServerTool launch-agent status
 xcrun swift run SpeakSwiftlyServerTool launch-agent uninstall
 ```
+
+For one explicit live-service verification pass, run:
+
+```bash
+xcrun swift run SpeakSwiftlyServerTool healthcheck
+```
+
+That command probes the HTTP health route, reads the shared runtime host snapshot, and sends a real MCP `initialize` request to the live `/mcp` endpoint so the result distinguishes "the process is up" from "both transports are actually healthy."
 
 Treat those commands as the stable maintenance surface for the per-user service. If the install layout or staged release artifact path changes in the package, those commands should keep reflecting the package's current contract without requiring operators to re-derive launchd details by hand.
 

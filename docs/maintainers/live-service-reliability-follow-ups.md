@@ -81,6 +81,8 @@ The output should be short enough for operators to use interactively, but specif
 - HTTP up and MCP advertised, but MCP initialize failing
 - service healthy on both transports
 
+Status update on `2026-04-15`: this is now shipped as `xcrun swift run SpeakSwiftlyServerTool healthcheck`. The command probes `GET /healthz`, reads `GET /runtime/host`, sends a real MCP `initialize` request to `/mcp`, and handles the current streaming-style MCP initialize response instead of assuming a plain JSON body.
+
 ### 4. Revisit whether LaunchAgent-owned config needs a reloading provider
 
 The current server config path uses `swift-configuration` reloading providers for YAML-backed config, which is the right long-term default for operator-edited config files. It is less clear that the LaunchAgent-owned startup config path needs the same behavior when the practical requirement is "start reliably from a known file under the app-managed layout".
@@ -199,7 +201,7 @@ The broader package hardening program should now follow this order:
 1. Install and release surface hardening.
    This includes staged-artifact refresh, LaunchAgent promotion semantics, signature handling, release verification, and operator-facing install diagnostics.
 2. Playback and device-observation hardening.
-   The recurring `freed pointer was not the last allocation` warning still needs a focused ownership audit even though the prune-maintenance crash loop is now fixed in the live service.
+   The recurring `freed pointer was not the last allocation` warning still needs a focused ownership audit even though the prune-maintenance crash loop is now fixed in the live service. The current audit result is that this package did own one startup-ordering issue: `ServerRuntimeAdapter.start()` used an untracked fire-and-forget task, so `ServerHost.start()` did not actually wait for runtime startup. That race is now fixed here by making the runtime start path truly awaitable. The remaining `playback_output_device_observed` event and eager playback-engine preparation still originate upstream from `SpeakSwiftly.Runtime.start()` -> `startResidentPreload()` -> `playbackController.prepare(...)` with no active request, so any deeper audio-hardware or preload policy change belongs in `SpeakSwiftly` unless this server later chooses a different readiness model intentionally.
 3. Host lifecycle and background-work hardening.
    Keep moving retained maintenance and watch behavior under explicit service ownership instead of leaving long-lived freestanding task loops around the package.
 4. Configuration and persisted runtime-state hardening.
