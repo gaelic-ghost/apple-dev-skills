@@ -143,7 +143,12 @@ trap cleanup EXIT INT TERM
 
 [ -n "$title" ] || title="release: prepare $RELEASE_TAG"
 
-pr_json="$(gh pr view --head "$branch_name" --json number,url,state,title 2>/dev/null || true)"
+pr_json="$(gh pr list --head "$branch_name" --json number,url,state,title --limit 1 2>/dev/null || true)"
+if [ -n "$pr_json" ] && [ "$pr_json" != "[]" ]; then
+  pr_json="$(printf '%s' "$pr_json" | jq '.[0]')"
+else
+  pr_json=""
+fi
 if [ -n "$pr_json" ]; then
   pr_number="$(printf '%s' "$pr_json" | jq -r '.number')"
   pr_url="$(printf '%s' "$pr_json" | jq -r '.url')"
@@ -172,7 +177,7 @@ else
     else
       gh pr create --base "$base_branch" --head "$branch_name" --title "$title" --body-file "$body_file" >/dev/null
     fi
-    pr_json="$(gh pr view --head "$branch_name" --json number,url)"
+    pr_json="$(gh pr list --head "$branch_name" --json number,url --limit 1 | jq '.[0]')"
     pr_number="$(printf '%s' "$pr_json" | jq -r '.number')"
     pr_url="$(printf '%s' "$pr_json" | jq -r '.url')"
     log "Created PR #$pr_number at $pr_url."
