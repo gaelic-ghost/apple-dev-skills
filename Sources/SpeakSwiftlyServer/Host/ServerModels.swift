@@ -3,6 +3,20 @@ import Hummingbird
 import SpeakSwiftly
 import TextForSpeech
 
+// MARK: - Speech Backend Surface Helpers
+
+func exposedSpeechBackendIdentifiers() -> [String] {
+    SpeakSwiftly.SpeechBackend.allCases.map(\.rawValue)
+}
+
+func supportedSpeechBackendDescription() -> String {
+    exposedSpeechBackendIdentifiers().joined(separator: ", ")
+}
+
+func legacySpeechBackendNormalizationNote() -> String {
+    "The legacy value '\(SpeakSwiftly.SpeechBackend.legacyQwenCustomVoiceRawValue)' is still accepted and normalized to 'qwen3'."
+}
+
 // MARK: - SpeakRequestPayload
 
 struct SpeakRequestPayload: Decodable {
@@ -303,11 +317,10 @@ private func resolveSpeechBackend(
     _ rawValue: String,
     fieldName: String,
 ) throws -> SpeakSwiftly.SpeechBackend {
-    guard let speechBackend = SpeakSwiftly.SpeechBackend(rawValue: rawValue) else {
-        let supportedBackends = SpeakSwiftly.SpeechBackend.allCases.map(\.rawValue).joined(separator: ", ")
+    guard let speechBackend = SpeakSwiftly.SpeechBackend.normalized(rawValue: rawValue) else {
         throw HTTPError(
             .badRequest,
-            message: "Runtime configuration field '\(fieldName)' used unsupported value '\(rawValue)'. Expected one of: \(supportedBackends).",
+            message: "Runtime configuration field '\(fieldName)' used unsupported value '\(rawValue)'. Expected one of: \(supportedSpeechBackendDescription()). \(legacySpeechBackendNormalizationNote())",
         )
     }
 

@@ -399,10 +399,10 @@ import Testing
     #expect(await host.defaultVoiceProfileName() == nil)
     #expect(await host.resolvedRequestedVoiceProfileName(nil) == nil)
 
-    let switchedSnapshot = try await state.switchSpeechBackend(to: .marvis)
-    #expect(switchedSnapshot.runtimeConfiguration.activeRuntimeSpeechBackend == "marvis")
+    let switchedSnapshot = try await state.switchSpeechBackend(to: .chatterboxTurbo)
+    #expect(switchedSnapshot.runtimeConfiguration.activeRuntimeSpeechBackend == "chatterbox_turbo")
     let runtimeConfigurationAfterSwitch = await MainActor.run { state.runtimeConfiguration }
-    #expect(runtimeConfigurationAfterSwitch.activeRuntimeSpeechBackend == "marvis")
+    #expect(runtimeConfigurationAfterSwitch.activeRuntimeSpeechBackend == "chatterbox_turbo")
 
     let reloadedSnapshot = try await state.reloadModels()
     #expect(reloadedSnapshot.overview.workerStage == "resident_model_ready")
