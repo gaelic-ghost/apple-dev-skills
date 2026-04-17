@@ -11,6 +11,8 @@ The release surface is intentionally split by checkout authority:
 
 That split keeps branch and worktree automation convenient without letting an unmerged feature branch publish a release tag accidentally.
 
+One practical rule follows from that split: if the commits you want to release are not already on `origin/main`, you are still on the prepare side of the workflow even if those commits currently live in a local `main` checkout. Protected-branch policy and `release-publish.sh` both assume the release tip has already been merged and synced back down to local `main`.
+
 ## Context Rules
 
 ### Local `main`
@@ -22,6 +24,8 @@ scripts/repo-maintenance/release-publish.sh --version vX.Y.Z --skip-live-service
 ```
 
 That path is the only supported tagged-release publisher. It syncs local `main` with `origin/main`, validates the repo unless told not to, stages the release artifact, creates the annotated tag, pushes the branch and tag, creates the GitHub release, and optionally refreshes the local LaunchAgent-backed live service.
+
+If local `main` is ahead of `origin/main`, stop there. Do not try to force the publish path through that unsynced checkout. Put those commits on a feature branch if needed, run `release-prepare.sh`, merge the PR, fast-forward local `main`, and only then return to `release-publish.sh`.
 
 ### Local Feature Branch
 
@@ -111,6 +115,8 @@ Behavior:
 4. let GitHub checks run
 5. let auto-merge land the PR
 
+If you accidentally made the release-candidate commits directly on local `main`, branch from that tip before continuing so the rest of the workflow still goes through `release-prepare.sh` and a normal PR merge.
+
 ### Main Publish
 
 1. switch to `main`
@@ -135,4 +141,5 @@ Current defaults:
 - `release-publish.sh` refuses to run from any branch other than the configured release branch
 - `release-publish.sh` syncs the local release branch with the remote before tagging
 - `release-publish.sh` refuses to publish if local release-branch commits are ahead of the remote
+- protected `main` policies are expected to force release-candidate commits through a PR before publish
 - both flows require a clean worktree

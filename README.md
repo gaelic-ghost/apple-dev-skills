@@ -408,7 +408,7 @@ If you are integrating against the server rather than just running it locally, u
 
 Use [CONTRIBUTING.md](CONTRIBUTING.md) for the maintainer workflow, validation path, live end-to-end coverage, release flow, and monorepo handoff rules.
 
-The maintainer release contract is now intentionally split by checkout context: use `scripts/repo-maintenance/release-prepare.sh` from a feature branch or worktree when the job is "push this release candidate, open or update the PR, and queue auto-merge," then use `scripts/repo-maintenance/release-publish.sh` from local `main` after the PR merges when the job is "cut the actual tag and GitHub release." The current details live in [docs/maintainers/release-workflow.md](docs/maintainers/release-workflow.md).
+The maintainer release contract is now intentionally split by checkout context: use `scripts/repo-maintenance/release-prepare.sh` from a feature branch or worktree when the job is "push this release candidate, open or update the PR, and queue auto-merge," then use `scripts/repo-maintenance/release-publish.sh` from local `main` after the PR merges when the job is "cut the actual tag and GitHub release." If local `main` is ahead of `origin/main`, that still counts as branch-side release-candidate work for this contract: get those commits onto a PR path first, then fast-forward `main` and publish from the synced release branch. The current details live in [docs/maintainers/release-workflow.md](docs/maintainers/release-workflow.md).
 
 ## Development
 
