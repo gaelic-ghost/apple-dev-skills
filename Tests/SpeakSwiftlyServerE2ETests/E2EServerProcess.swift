@@ -232,7 +232,7 @@ final class E2ELiveServerExecutionLaneLease: @unchecked Sendable {
         .appendingPathComponent("speak-swiftly-server-e2e-live-server.lock", isDirectory: false)
     private static let launchAgentLabel = "com.gaelic-ghost.speak-swiftly-server"
     private static let launchctlPath = "/bin/launchctl"
-    private static let psPath = "/bin/ps"
+    private static let pgrepPath = "/usr/bin/pgrep"
 
     private var fileDescriptor: Int32?
     private let lockPath: String
@@ -320,8 +320,8 @@ final class E2ELiveServerExecutionLaneLease: @unchecked Sendable {
 
     private static func ensureNoCompetingServeProcessIsRunning() throws {
         let result = try runProcess(
-            executableURL: URL(fileURLWithPath: psPath),
-            arguments: ["-axo", "pid=,command="],
+            executableURL: URL(fileURLWithPath: pgrepPath),
+            arguments: ["-fl", "SpeakSwiftlyServerTool serve"],
             allowNonZeroExit: false,
             failureSummary: "The live end-to-end suite could not inspect the current process table for competing SpeakSwiftlyServerTool serve processes.",
         )
@@ -331,7 +331,7 @@ final class E2ELiveServerExecutionLaneLease: @unchecked Sendable {
             .split(separator: "\n")
             .map(String.init)
             .filter { line in
-                line.contains("SpeakSwiftlyServerTool serve") && !line.contains(currentProcessIdentifier)
+                line.contains("SpeakSwiftlyServerTool serve") && !line.hasPrefix(currentProcessIdentifier + " ")
             }
 
         guard competingProcesses.isEmpty else {
