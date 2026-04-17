@@ -149,7 +149,7 @@ enum MCPToolCatalog {
                 "type": "object",
                 "required": ["speech_backend"],
                 "properties": [
-                    "speech_backend": ["type": "string", "enum": ["qwen3", "marvis"]],
+                    "speech_backend": ["type": "string", "enum": ["qwen3", "chatterbox_turbo", "marvis"]],
                 ],
             ],
         ),
@@ -160,7 +160,7 @@ enum MCPToolCatalog {
                 "type": "object",
                 "required": ["speech_backend"],
                 "properties": [
-                    "speech_backend": ["type": "string", "enum": ["qwen3", "marvis"]],
+                    "speech_backend": ["type": "string", "enum": ["qwen3", "chatterbox_turbo", "marvis"]],
                 ],
             ],
         ),
