@@ -290,14 +290,6 @@ final class E2ELiveServerExecutionLaneLease: @unchecked Sendable {
         }
     }
 
-    func release() {
-        guard let fileDescriptor else { return }
-
-        flock(fileDescriptor, LOCK_UN)
-        close(fileDescriptor)
-        self.fileDescriptor = nil
-    }
-
     private static func ensureLaunchAgentBackedLiveServiceIsNotLoaded() throws {
         let userDomain = "gui/\(getuid())"
         let result = try runProcess(
@@ -346,6 +338,14 @@ final class E2ELiveServerExecutionLaneLease: @unchecked Sendable {
             )
         }
     }
+
+    func release() {
+        guard let fileDescriptor else { return }
+
+        flock(fileDescriptor, LOCK_UN)
+        close(fileDescriptor)
+        self.fileDescriptor = nil
+    }
 }
 
 private func durationToNanoseconds(_ duration: Duration) -> UInt64 {
@@ -363,6 +363,8 @@ private func durationDescription(_ duration: Duration) -> String {
         + Double(duration.components.attoseconds) / 1_000_000_000_000_000_000
     return String(format: "%.2f second(s)", fractionalSeconds)
 }
+
+// MARK: - E2EProcessExecutionResult
 
 private struct E2EProcessExecutionResult {
     let exitCode: Int32
