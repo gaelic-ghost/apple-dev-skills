@@ -51,3 +51,4 @@
 - [x] Update lifecycle regression coverage so the post-shutdown `land()` path is treated as a no-op and add direct restart coverage for the reused embedded-session instance.
 - [x] Split MCP startup failure handling from the post-start shutdown path so readiness failures only describe real startup failures instead of conflating later lifecycle errors with startup.
 - [x] Collapse repeated sibling-service shutdown-barrier completion into one helper so prune, config-watch, MCP, and embedded-application services all use the same completion bookkeeping on success, graceful shutdown, and thrown failure paths.
+- [ ] Review whether embedded host startup should become explicitly cancellable or time-bounded; `HostLifecycleService` still cannot reach orderly shutdown or sibling-barrier waiting until `host.start()` returns, so a hung runtime startup remains the main unresolved lifecycle wedge.
