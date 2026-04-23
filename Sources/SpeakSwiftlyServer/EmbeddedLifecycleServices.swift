@@ -101,6 +101,20 @@ actor EmbeddedLifecycleShutdownBarrier {
     }
 }
 
+private func withEmbeddedShutdownBarrier<T>(
+    _ shutdownBarrier: EmbeddedLifecycleShutdownBarrier,
+    operation: () async throws -> T,
+) async throws -> T {
+    do {
+        let result = try await operation()
+        await shutdownBarrier.markCompleted()
+        return result
+    } catch {
+        await shutdownBarrier.markCompleted()
+        throw error
+    }
+}
+
 struct HostLifecycleService: Service {
     let host: ServerHost
     let readinessGate: EmbeddedLifecycleReadinessGate
@@ -126,23 +140,23 @@ struct HostPruneService: Service {
     let shutdownBarrier: EmbeddedLifecycleShutdownBarrier
 
     func run() async throws {
-        while !Task.isCancelled {
-            let interval = await host.jobPruneInterval()
-            var didReceiveTick = false
-            for await _ in AsyncTimerSequence(interval: interval, clock: .continuous)
-                .prefix(1)
-                .cancelOnGracefulShutdown() {
-                didReceiveTick = true
-            }
+        _ = try await withEmbeddedShutdownBarrier(shutdownBarrier) {
+            while !Task.isCancelled {
+                let interval = await host.jobPruneInterval()
+                var didReceiveTick = false
+                for await _ in AsyncTimerSequence(interval: interval, clock: .continuous)
+                    .prefix(1)
+                    .cancelOnGracefulShutdown() {
+                    didReceiveTick = true
+                }
 
-            guard didReceiveTick, !Task.isCancelled else {
-                break
-            }
+                guard didReceiveTick, !Task.isCancelled else {
+                    break
+                }
 
-            await host.runPruneMaintenanceTick()
+                await host.runPruneMaintenanceTick()
+            }
         }
-
-        await shutdownBarrier.markCompleted()
     }
 }
 
@@ -152,25 +166,23 @@ struct ConfigWatchService: Service {
     let shutdownBarrier: EmbeddedLifecycleShutdownBarrier
 
     func run() async throws {
-        do {
-            for try await update in configStore.updates().cancelOnGracefulShutdown() {
-                switch update {
-                    case let .reloaded(updatedConfig):
-                        await host.applyConfigurationUpdate(updatedConfig)
-                    case let .rejected(message):
-                        await host.markConfigurationReloadRejected(message)
+        _ = try await withEmbeddedShutdownBarrier(shutdownBarrier) {
+            do {
+                for try await update in configStore.updates().cancelOnGracefulShutdown() {
+                    switch update {
+                        case let .reloaded(updatedConfig):
+                            await host.applyConfigurationUpdate(updatedConfig)
+                        case let .rejected(message):
+                            await host.markConfigurationReloadRejected(message)
+                    }
                 }
+            } catch is CancellationError {
+                // Graceful shutdown or sibling failure cancelled the watch loop.
+            } catch {
+                await host.markConfigurationWatchFailed(error)
+                // Preserve the pre-service-lifecycle behavior: a config-watch failure should be
+                // reported clearly, but it should not tear down the embedded host.
             }
-            await shutdownBarrier.markCompleted()
-        } catch is CancellationError {
-            // Graceful shutdown or sibling failure cancelled the watch loop.
-            await shutdownBarrier.markCompleted()
-        } catch {
-            await host.markConfigurationWatchFailed(error)
-            // Preserve the pre-service-lifecycle behavior: a config-watch failure should be
-            // reported clearly, but it should not tear down the embedded host.
-            await shutdownBarrier.markCompleted()
-            return
         }
     }
 }
@@ -183,8 +195,17 @@ struct MCPLifecycleService: Service {
     func run() async throws {
         do {
             try await surface.start()
-            await readinessGate.markReady()
+        } catch {
+            await readinessGate.markFailed(
+                message: "SpeakSwiftly MCP could not finish starting inside the embedded session lifecycle. Likely cause: \(error.localizedDescription)",
+            )
+            await shutdownBarrier.markCompleted()
+            throw error
+        }
 
+        await readinessGate.markReady()
+
+        try await withEmbeddedShutdownBarrier(shutdownBarrier) {
             do {
                 try await gracefulShutdown()
             } catch is CancellationError {
@@ -192,13 +213,6 @@ struct MCPLifecycleService: Service {
             }
 
             await surface.stop()
-            await shutdownBarrier.markCompleted()
-        } catch {
-            await readinessGate.markFailed(
-                message: "SpeakSwiftly MCP could not finish starting inside the embedded session lifecycle. Likely cause: \(error.localizedDescription)",
-            )
-            await shutdownBarrier.markCompleted()
-            throw error
         }
     }
 }
@@ -208,12 +222,8 @@ struct EmbeddedApplicationService: Service {
     let shutdownBarrier: EmbeddedLifecycleShutdownBarrier
 
     func run() async throws {
-        do {
+        try await withEmbeddedShutdownBarrier(shutdownBarrier) {
             try await application.run()
-            await shutdownBarrier.markCompleted()
-        } catch {
-            await shutdownBarrier.markCompleted()
-            throw error
         }
     }
 }

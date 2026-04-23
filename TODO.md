@@ -49,3 +49,5 @@
 
 - [x] Reset the embedded session lifecycle handle after shutdown completes so one long-lived `EmbeddedServer` instance can `liftoff()`, `land()`, and `liftoff()` again when an app feature is turned off and later turned back on.
 - [x] Update lifecycle regression coverage so the post-shutdown `land()` path is treated as a no-op and add direct restart coverage for the reused embedded-session instance.
+- [x] Split MCP startup failure handling from the post-start shutdown path so readiness failures only describe real startup failures instead of conflating later lifecycle errors with startup.
+- [x] Collapse repeated sibling-service shutdown-barrier completion into one helper so prune, config-watch, MCP, and embedded-application services all use the same completion bookkeeping on success, graceful shutdown, and thrown failure paths.
