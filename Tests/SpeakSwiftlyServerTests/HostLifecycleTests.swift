@@ -128,7 +128,64 @@ import Testing
 
     let counts = await probe.counts()
     #expect(counts.requestStop == 1)
-    #expect(counts.waitUntilStopped == 2)
+    #expect(counts.waitUntilStopped == 1)
+}
+
+@available(macOS 14, *)
+@Test func `embedded server can liftoff again after landing`() async throws {
+    actor RestartProbe {
+        private var bootstrapCallCount = 0
+        private var requestStopCallCount = 0
+
+        func recordBootstrap() {
+            bootstrapCallCount += 1
+        }
+
+        func recordRequestStop() {
+            requestStopCallCount += 1
+        }
+
+        func counts() -> (bootstrap: Int, requestStop: Int) {
+            (bootstrapCallCount, requestStopCallCount)
+        }
+    }
+
+    let probe = RestartProbe()
+    let server = await MainActor.run { EmbeddedServer() }
+
+    try await server.liftoff(
+        environment: [:],
+        defaultProfile: .embeddedSession,
+        bootstrap: { _, _ in
+            await probe.recordBootstrap()
+            return EmbeddedServerLifecycleHooks(
+                requestStop: {
+                    await probe.recordRequestStop()
+                },
+                waitUntilStopped: {},
+            )
+        },
+    )
+    try await server.land()
+
+    try await server.liftoff(
+        environment: [:],
+        defaultProfile: .embeddedSession,
+        bootstrap: { _, _ in
+            await probe.recordBootstrap()
+            return EmbeddedServerLifecycleHooks(
+                requestStop: {
+                    await probe.recordRequestStop()
+                },
+                waitUntilStopped: {},
+            )
+        },
+    )
+    try await server.land()
+
+    let counts = await probe.counts()
+    #expect(counts.bootstrap == 2)
+    #expect(counts.requestStop == 2)
 }
 
 @available(macOS 14, *)

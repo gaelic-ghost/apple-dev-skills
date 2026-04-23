@@ -229,6 +229,7 @@ public final class EmbeddedServer {
             await lifecycle.requestStop()
         }
         try await lifecycle.waitUntilStopped()
+        resetEmbeddedLifecycleState()
     }
 
     /// Returns the currently cached voice-profile summaries.
@@ -371,5 +372,11 @@ public final class EmbeddedServer {
         }
 
         try await lifecycle.waitUntilStopped()
+        resetEmbeddedLifecycleState()
+    }
+
+    private func resetEmbeddedLifecycleState() {
+        lifecycle = nil
+        stopCoordinator = EmbeddedServerStopCoordinator()
     }
 }

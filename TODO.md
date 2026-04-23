@@ -14,7 +14,7 @@
   Files: `Sources/SpeakSwiftlyServer/MCP/MCPToolHandlers.swift`
   Focus: repeated argument parsing, accepted-request result shaping, resource-change notifications, and tool-handler drift.
 
-- [ ] Slice 4: Embedded lifecycle and startup or shutdown ownership
+- [~] Slice 4: Embedded lifecycle and startup or shutdown ownership
   Files: `Sources/SpeakSwiftlyServer/EmbeddedServerSession.swift`, `Sources/SpeakSwiftlyServer/EmbeddedLifecycleServices.swift`
   Focus: readiness gates, sibling-service coordination, shutdown barriers, and transport-state transitions.
 
@@ -44,3 +44,8 @@
 - [x] Collapse repeated accepted-request MCP tool result shaping behind one helper so speech-generation and voice-profile job tools keep a single request-resource response shape.
 - [x] Collapse repeated text-profile MCP mutation branches behind one helper that preserves explicit `MCPError` mapping and always emits the `textProfiles` resource-change notification after successful mutation work.
 - [x] Keep the text-profile snapshot read path on the same explicit error-mapping helper so read-only and mutation tool cases now fail through one predictable MCP error surface.
+
+## Slice 4 Findings
+
+- [x] Reset the embedded session lifecycle handle after shutdown completes so one long-lived `EmbeddedServer` instance can `liftoff()`, `land()`, and `liftoff()` again when an app feature is turned off and later turned back on.
+- [x] Update lifecycle regression coverage so the post-shutdown `land()` path is treated as a no-op and add direct restart coverage for the reused embedded-session instance.
