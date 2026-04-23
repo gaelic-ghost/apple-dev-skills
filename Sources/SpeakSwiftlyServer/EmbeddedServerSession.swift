@@ -159,6 +159,7 @@ func embeddedServerLiveBootstrap(
                 host: host,
                 readinessGate: hostReadinessGate,
                 shutdownBarrier: shutdownBarrier,
+                startupTimeout: HostLifecycleService.defaultStartupTimeout,
             ),
         ),
     )

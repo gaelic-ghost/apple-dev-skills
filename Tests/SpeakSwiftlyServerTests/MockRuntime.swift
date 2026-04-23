@@ -135,8 +135,14 @@ actor MockRuntime: ServerRuntimeProtocol {
             waiter.resume()
         }
 
-        await withCheckedContinuation { continuation in
-            startReleaseContinuation = continuation
+        await withTaskCancellationHandler {
+            await withCheckedContinuation { continuation in
+                startReleaseContinuation = continuation
+            }
+        } onCancel: {
+            Task {
+                await self.cancelStartWait()
+            }
         }
     }
 
@@ -180,5 +186,10 @@ actor MockRuntime: ServerRuntimeProtocol {
         startReleaseContinuation?.resume()
         startReleaseContinuation = nil
         startBehavior = .immediate
+    }
+
+    func cancelStartWait() {
+        startReleaseContinuation?.resume()
+        startReleaseContinuation = nil
     }
 }

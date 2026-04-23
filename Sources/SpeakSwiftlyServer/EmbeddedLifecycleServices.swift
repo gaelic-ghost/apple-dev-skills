@@ -6,6 +6,14 @@ private struct EmbeddedLifecycleReadinessError: Error {
     let message: String
 }
 
+struct EmbeddedLifecycleStartupTimeoutError: Error, LocalizedError {
+    let message: String
+
+    var errorDescription: String? {
+        message
+    }
+}
+
 actor EmbeddedLifecycleReadinessGate {
     private enum State {
         case pending([CheckedContinuation<Void, Error>])
@@ -115,14 +123,51 @@ private func withEmbeddedShutdownBarrier<T>(
     }
 }
 
+private enum HostLifecycleStartupOutcome {
+    case started
+    case shutdownRequested
+    case timedOut
+}
+
+private func embeddedLifecycleDurationDescription(_ duration: Duration) -> String {
+    if duration.components.attoseconds == 0 {
+        return "\(duration.components.seconds) second(s)"
+    }
+
+    let fractionalSeconds = Double(duration.components.seconds)
+        + Double(duration.components.attoseconds) / 1_000_000_000_000_000_000
+    return String(format: "%.2f second(s)", fractionalSeconds)
+}
+
 struct HostLifecycleService: Service {
+    static let defaultStartupTimeout: Duration = .seconds(15)
+
     let host: ServerHost
     let readinessGate: EmbeddedLifecycleReadinessGate
     let shutdownBarrier: EmbeddedLifecycleShutdownBarrier
+    let startupTimeout: Duration
 
     func run() async throws {
-        await host.start()
-        await readinessGate.markReady()
+        let startupTask = Task {
+            await host.start()
+        }
+
+        switch await waitForStartupOutcome(startupTask: startupTask) {
+            case .started:
+                await readinessGate.markReady()
+            case .shutdownRequested:
+                startupTask.cancel()
+                await host.shutdown()
+                return
+            case .timedOut:
+                startupTask.cancel()
+                let message =
+                    "SpeakSwiftlyServer timed out while waiting for the embedded runtime to finish startup after \(embeddedLifecycleDurationDescription(startupTimeout)). Likely cause: the underlying SpeakSwiftly runtime start path stopped responding before it reported readiness."
+                await readinessGate.markFailed(message: message)
+                await host.markEmbeddedStartupFailure(message)
+                await host.shutdown()
+                throw EmbeddedLifecycleStartupTimeoutError(message: message)
+        }
 
         do {
             try await gracefulShutdown()
@@ -132,6 +177,50 @@ struct HostLifecycleService: Service {
 
         await shutdownBarrier.waitUntilCompleted()
         await host.shutdown()
+    }
+
+    private func waitForStartupOutcome(startupTask: Task<Void, Never>) async -> HostLifecycleStartupOutcome {
+        let (events, continuation) = AsyncStream.makeStream(
+            of: HostLifecycleStartupOutcome.self,
+            bufferingPolicy: .bufferingNewest(1),
+        )
+
+        let startupWatcher = Task {
+            await startupTask.value
+            continuation.yield(.started)
+            continuation.finish()
+        }
+
+        let shutdownWatcher = Task {
+            do {
+                try await gracefulShutdown()
+                continuation.yield(.shutdownRequested)
+                continuation.finish()
+            } catch is CancellationError {
+                continuation.finish()
+            } catch {
+                continuation.yield(.shutdownRequested)
+                continuation.finish()
+            }
+        }
+
+        let timeoutWatcher = Task {
+            do {
+                try await Task.sleep(for: startupTimeout)
+                continuation.yield(.timedOut)
+                continuation.finish()
+            } catch is CancellationError {
+                continuation.finish()
+            } catch {
+                continuation.finish()
+            }
+        }
+
+        let outcome = await events.first(where: { _ in true }) ?? .started
+        startupWatcher.cancel()
+        shutdownWatcher.cancel()
+        timeoutWatcher.cancel()
+        return outcome
     }
 }
 
