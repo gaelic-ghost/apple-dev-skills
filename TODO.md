@@ -2,7 +2,7 @@
 
 ## Thorough Review Slices
 
-- [~] Slice 1: Host state and job tracking
+- [x] Slice 1: Host state and job tracking
   Files: `Sources/SpeakSwiftlyServer/Host/ServerHost+State.swift`, `Sources/SpeakSwiftlyServer/Host/ServerHost+JobTracking.swift`
   Focus: runtime-derived state refresh policy, degraded-worker fallback behavior, profile-cache reconciliation, SSE replay, request retention and pruning.
 
@@ -30,7 +30,7 @@
 
 - [x] Fix degraded-worker cached fallback so it clears `generationQueueStatus` alongside playback state, and add regression coverage for the degraded queue snapshot path.
 - [x] Refresh the cached voice-profile list after `reroll_voice_profile` completes, and add regression coverage that verifies profile-cache metadata is refreshed after reroll.
-- [ ] Review whether profile-mutation reconciliation should rely on profile-name set comparisons alone, especially when concurrent external profile edits can happen between retries.
+- [x] Replace profile-name set reconciliation with request-scoped mutation intent checks so create, rename, reroll, and delete refreshes only verify the specific profile transition that was actually requested, even when unrelated external profile edits happen during the refresh window.
 
 ## Slice 2 Findings
 

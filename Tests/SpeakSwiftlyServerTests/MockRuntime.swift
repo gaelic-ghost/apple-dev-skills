@@ -89,6 +89,7 @@ actor MockRuntime: ServerRuntimeProtocol {
     var generatedBatches = [SpeakSwiftly.GeneratedBatch]()
     var generationJobs = [SpeakSwiftly.GenerationJob]()
     var listVoiceProfilesCallCount = 0
+    var scriptedProfileRefreshSnapshots = [[SpeakSwiftly.ProfileSummary]]()
     var generationQueueRequestCount = 0
     var playbackQueueRequestCount = 0
     var playbackStateRequestCount = 0
@@ -105,12 +106,14 @@ actor MockRuntime: ServerRuntimeProtocol {
         mutationRefreshBehavior: MutationRefreshBehavior = .applyMutations,
         textProfileTransportError: SpeakSwiftly.Error? = nil,
         startBehavior: StartBehavior = .immediate,
+        scriptedProfileRefreshSnapshots: [[SpeakSwiftly.ProfileSummary]] = [],
     ) {
         self.profiles = profiles
         self.speakBehavior = speakBehavior
         self.mutationRefreshBehavior = mutationRefreshBehavior
         self.textProfileTransportError = textProfileTransportError
         self.startBehavior = startBehavior
+        self.scriptedProfileRefreshSnapshots = scriptedProfileRefreshSnapshots
         let persistenceURL = FileManager.default
             .temporaryDirectory
             .appendingPathComponent("ServerTests", isDirectory: true)
@@ -167,6 +170,10 @@ actor MockRuntime: ServerRuntimeProtocol {
 
     func lifecycleCounts() -> (start: Int, shutdown: Int) {
         (startCallCount, shutdownCallCount)
+    }
+
+    func setScriptedProfileRefreshSnapshots(_ snapshots: [[SpeakSwiftly.ProfileSummary]]) {
+        scriptedProfileRefreshSnapshots = snapshots
     }
 
     func waitUntilStartReachesBarrier() async {
