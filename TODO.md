@@ -56,3 +56,4 @@
 ## Slice 5 Findings
 
 - [x] Make plain LaunchAgent uninstall wait for launchd to finish unloading the job, not just issue `bootout`, so immediate status checks and follow-up install flows do not race a partially torn-down service.
+- [x] Distinguish a normal `not_loaded` LaunchAgent status from unexpected `launchctl print` failures so operator status output stops masking permission or launchd inspection errors as if the job were simply absent.
