@@ -78,6 +78,8 @@ struct LaunchAgentStatusOptions {
             try unloadLoadedService()
         }
 
+        try removeStagedConfigAliasIfPresent()
+
         if FileManager.default.fileExists(atPath: plistPath) {
             do {
                 try FileManager.default.removeItem(atPath: plistPath)
@@ -89,6 +91,22 @@ struct LaunchAgentStatusOptions {
             print("Removed LaunchAgent plist '\(plistPath)' for label '\(label)'.")
         } else {
             print("LaunchAgent plist '\(plistPath)' was already absent for label '\(label)'.")
+        }
+    }
+
+    func removeStagedConfigAliasIfPresent() throws {
+        let layout = ServerInstallLayout.defaultForCurrentUser(launchAgentLabel: label)
+        let aliasPath = layout.launchAgentConfigAliasURL.path
+        guard FileManager.default.fileExists(atPath: aliasPath) else {
+            return
+        }
+
+        do {
+            try FileManager.default.removeItem(atPath: aliasPath)
+        } catch {
+            throw LaunchAgentCommandError(
+                "\(speakSwiftlyServerToolName) could not remove the staged LaunchAgent config copy '\(aliasPath)' during uninstall. Likely cause: \(error.localizedDescription)",
+            )
         }
     }
 

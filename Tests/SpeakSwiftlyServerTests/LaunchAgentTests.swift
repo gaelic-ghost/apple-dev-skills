@@ -119,6 +119,35 @@ import Testing
     #expect(FileManager.default.fileExists(atPath: serviceStateURL.path) == false)
 }
 
+@Test func `launch agent uninstall removes staged config alias`() throws {
+    let homeDirectoryURL = try makeLaunchAgentCommandTestRepository()
+    let layout = ServerInstallLayout.defaultForCurrentUser(
+        homeDirectoryURL: homeDirectoryURL,
+        launchAgentLabel: "com.gaelic-ghost.test-launch-agent",
+    )
+
+    try FileManager.default.createDirectory(
+        at: layout.launchAgentConfigAliasURL.deletingLastPathComponent(),
+        withIntermediateDirectories: true,
+    )
+    try FileManager.default.createDirectory(
+        at: layout.launchAgentPlistURL.deletingLastPathComponent(),
+        withIntermediateDirectories: true,
+    )
+    try "aliased config".write(to: layout.launchAgentConfigAliasURL, atomically: true, encoding: .utf8)
+    try "plist".write(to: layout.launchAgentPlistURL, atomically: true, encoding: .utf8)
+
+    let options = LaunchAgentStatusOptions(
+        label: layout.launchAgentLabel,
+        plistPath: layout.launchAgentPlistURL.path,
+        launchctlPath: "/usr/bin/true",
+        userDomain: "gui/501",
+    )
+
+    try options.removeStagedConfigAliasIfPresent()
+    #expect(FileManager.default.fileExists(atPath: layout.launchAgentConfigAliasURL.path) == false)
+}
+
 @Test func `launch agent status reports explicit not loaded state`() throws {
     let temporaryRootURL = URL(fileURLWithPath: NSTemporaryDirectory())
         .appendingPathComponent(UUID().uuidString, isDirectory: true)
