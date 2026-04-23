@@ -22,7 +22,7 @@
   Files: `Sources/SpeakSwiftlyServer/LaunchAgent/LaunchAgentRuntime.swift`
   Focus: launchctl polling, uninstall timing, partial teardown states, and operator-facing diagnostics.
 
-- [ ] Slice 6: E2E MCP stream harness
+- [x] Slice 6: E2E MCP stream harness
   Files: `Tests/SpeakSwiftlyServerE2ETests/E2EMCPEventStream.swift` and related E2E helpers
   Focus: stream connection timing, polling sleeps, notification matching, and flake risk.
 
@@ -58,3 +58,9 @@
 - [x] Make plain LaunchAgent uninstall wait for launchd to finish unloading the job, not just issue `bootout`, so immediate status checks and follow-up install flows do not race a partially torn-down service.
 - [x] Distinguish a normal `not_loaded` LaunchAgent status from unexpected `launchctl print` failures so operator status output stops masking permission or launchd inspection errors as if the job were simply absent.
 - [x] Remove the staged LaunchAgent config alias during uninstall so the app-owned install surface does not leave behind a stale launch-agent-only config copy after the service has been removed.
+
+## Slice 6 Findings
+
+- [x] Replace the SSE helper's fixed post-connect sleep and buffer polling loop with explicit async wakeups for stream readiness, notification arrival, and terminal stream failure so MCP resource-update tests stop depending on arbitrary 100ms delays inside the harness.
+- [x] Recheck the broader MCP E2E helper path for places where startup or session-handshake failures are still flattened into retry polling instead of surfacing the real transport error once the server is reachable.
+- [x] Run one live MCP smoke path against the refactored stream helper once it is worth temporarily stopping any LaunchAgent-backed local service, so the async-wakeup harness changes have one real end-to-end proof point beyond helper-only tests.
