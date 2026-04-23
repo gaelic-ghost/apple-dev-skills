@@ -80,6 +80,7 @@ extension MCPSurface {
                         textProfileID: optionalString("text_profile_id", in: arguments),
                         normalizationContext: normalizationContext(in: arguments),
                         sourceFormat: sourceFormat(in: arguments),
+                        requestContext: requestContext(in: arguments),
                     )
                     return try acceptedRequestToolResult(
                         requestID: requestID,
@@ -99,6 +100,7 @@ extension MCPSurface {
                         textProfileID: optionalString("text_profile_id", in: arguments),
                         normalizationContext: normalizationContext(in: arguments),
                         sourceFormat: sourceFormat(in: arguments),
+                        requestContext: requestContext(in: arguments),
                     )
                     return try acceptedRequestToolResult(
                         requestID: requestID,

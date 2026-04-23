@@ -19,6 +19,7 @@ actor MockRuntime: ServerRuntimeProtocol {
         let textProfileID: String?
         let normalizationContext: SpeechNormalizationContext?
         let sourceFormat: TextForSpeech.SourceFormat?
+        let requestContext: SpeakSwiftly.RequestContext?
     }
 
     struct CreateCloneInvocation: Equatable {

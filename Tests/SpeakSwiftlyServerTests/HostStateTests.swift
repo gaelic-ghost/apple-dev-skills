@@ -321,7 +321,7 @@ import Testing
                 refreshVoiceProfiles: {
                     try await host.refreshVoiceProfiles()
                 },
-                queueLiveSpeech: { text, profileName, textProfileID, normalizationContext, sourceFormat in
+                queueLiveSpeech: { text, profileName, textProfileID, normalizationContext, sourceFormat, requestContext in
                     guard let resolvedProfileName = await host.resolvedRequestedVoiceProfileName(profileName) else {
                         let errorMessage = await host.missingVoiceProfileNameMessage(for: "the live speech request")
                         throw ServerConfigurationError(errorMessage)
@@ -333,6 +333,7 @@ import Testing
                         textProfileID: textProfileID,
                         normalizationContext: normalizationContext,
                         sourceFormat: sourceFormat,
+                        requestContext: requestContext,
                     )
                 },
                 setDefaultVoiceProfileName: { profileName in
@@ -411,6 +412,13 @@ import Testing
             nestedSourceFormat: .swift,
         ),
         sourceFormat: .python,
+        requestContext: .init(
+            source: "embedded-session",
+            app: "SpeakSwiftlyServerTests",
+            project: "SpeakSwiftlyServer",
+            topic: "state-actions",
+            attributes: ["surface": "embedded"],
+        ),
     )
     let firstQueuedSpeechInvocation = try #require(await runtime.latestQueuedSpeechInvocation())
     #expect(firstQueuedRequestID.isEmpty == false)
@@ -425,6 +433,16 @@ import Testing
     )
     #expect(firstQueuedSpeechInvocation.normalizationContext == expectedNormalizationContext)
     #expect(firstQueuedSpeechInvocation.sourceFormat == .python)
+    #expect(
+        firstQueuedSpeechInvocation.requestContext
+            == SpeakSwiftly.RequestContext(
+                source: "embedded-session",
+                app: "SpeakSwiftlyServerTests",
+                project: "SpeakSwiftlyServer",
+                topic: "state-actions",
+                attributes: ["surface": "embedded"],
+            ),
+    )
     await runtime.finishHeldSpeak(id: firstQueuedRequestID)
 
     let defaultVoiceProfileName = try await state.setDefaultVoiceProfileName("default")
@@ -603,7 +621,7 @@ import Testing
                 refreshVoiceProfiles: {
                     try await host.refreshVoiceProfiles()
                 },
-                queueLiveSpeech: { text, profileName, textProfileID, normalizationContext, sourceFormat in
+                queueLiveSpeech: { text, profileName, textProfileID, normalizationContext, sourceFormat, requestContext in
                     guard let resolvedProfileName = await host.resolvedRequestedVoiceProfileName(profileName) else {
                         let errorMessage = await host.missingVoiceProfileNameMessage(for: "the live speech request")
                         throw ServerConfigurationError(errorMessage)
@@ -615,6 +633,7 @@ import Testing
                         textProfileID: textProfileID,
                         normalizationContext: normalizationContext,
                         sourceFormat: sourceFormat,
+                        requestContext: requestContext,
                     )
                 },
                 setDefaultVoiceProfileName: { profileName in

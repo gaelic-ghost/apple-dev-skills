@@ -77,6 +77,7 @@ protocol ServerRuntimeProtocol: Actor {
         textProfileID: String?,
         normalizationContext: SpeechNormalizationContext?,
         sourceFormat: TextForSpeech.SourceFormat?,
+        requestContext: SpeakSwiftly.RequestContext?,
     ) async -> RuntimeRequestHandle
     func queueSpeechFile(
         text: String,
@@ -84,6 +85,7 @@ protocol ServerRuntimeProtocol: Actor {
         textProfileID: String?,
         normalizationContext: SpeechNormalizationContext?,
         sourceFormat: TextForSpeech.SourceFormat?,
+        requestContext: SpeakSwiftly.RequestContext?,
     ) async -> RuntimeRequestHandle
     func queueSpeechBatch(
         _ items: [SpeakSwiftly.BatchItem],

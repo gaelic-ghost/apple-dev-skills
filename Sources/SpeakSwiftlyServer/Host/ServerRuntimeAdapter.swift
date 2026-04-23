@@ -70,6 +70,7 @@ actor ServerRuntimeAdapter: ServerRuntimeProtocol {
         textProfileID: String?,
         normalizationContext: SpeechNormalizationContext?,
         sourceFormat: TextForSpeech.SourceFormat?,
+        requestContext: SpeakSwiftly.RequestContext?,
     ) async -> RuntimeRequestHandle {
         let handle = await runtime.generate.speech(
             text: text,
@@ -79,6 +80,7 @@ actor ServerRuntimeAdapter: ServerRuntimeProtocol {
                 normalizationContext: normalizationContext,
                 sourceFormat: sourceFormat,
             ),
+            requestContext: requestContext,
         )
         return .init(id: handle.id, operation: "generate_speech", profileName: profileName, events: handle.events)
     }
@@ -89,6 +91,7 @@ actor ServerRuntimeAdapter: ServerRuntimeProtocol {
         textProfileID: String?,
         normalizationContext: SpeechNormalizationContext?,
         sourceFormat: TextForSpeech.SourceFormat?,
+        requestContext: SpeakSwiftly.RequestContext?,
     ) async -> RuntimeRequestHandle {
         let handle = await runtime.generate.audio(
             text: text,
@@ -98,6 +101,7 @@ actor ServerRuntimeAdapter: ServerRuntimeProtocol {
                 normalizationContext: normalizationContext,
                 sourceFormat: sourceFormat,
             ),
+            requestContext: requestContext,
         )
         return .init(id: handle.id, operation: "generate_audio_file", profileName: profileName, events: handle.events)
     }
