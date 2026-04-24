@@ -81,6 +81,11 @@ extension MCPSurface {
                         normalizationContext: normalizationContext(in: arguments),
                         sourceFormat: sourceFormat(in: arguments),
                         requestContext: requestContext(in: arguments),
+                        qwenPreModelTextChunking: decodeOptionalArgument(
+                            "qwen_pre_model_text_chunking",
+                            in: arguments,
+                            default: false,
+                        ),
                     )
                     return try acceptedRequestToolResult(
                         requestID: requestID,
@@ -195,6 +200,8 @@ extension MCPSurface {
                     return try await toolResult(
                         host.saveRuntimeConfiguration(
                             speechBackend: requiredSpeechBackend("speech_backend", in: arguments),
+                            qwenResidentModel: optionalQwenResidentModel("qwen_resident_model", in: arguments),
+                            marvisResidentPolicy: optionalMarvisResidentPolicy("marvis_resident_policy", in: arguments),
                         ),
                     )
 

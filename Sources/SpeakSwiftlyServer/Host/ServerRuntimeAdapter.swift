@@ -74,6 +74,7 @@ actor ServerRuntimeAdapter: ServerRuntimeProtocol {
         normalizationContext: SpeechNormalizationContext?,
         sourceFormat: TextForSpeech.SourceFormat?,
         requestContext: SpeakSwiftly.RequestContext?,
+        qwenPreModelTextChunking: Bool,
     ) async -> RuntimeRequestHandle {
         let handle = await runtime.generate.speech(
             text: text,
@@ -84,6 +85,7 @@ actor ServerRuntimeAdapter: ServerRuntimeProtocol {
                 sourceFormat: sourceFormat,
             ),
             requestContext: requestContext,
+            qwenPreModelTextChunking: qwenPreModelTextChunking,
         )
         return .init(id: handle.id, operation: "generate_speech", profileName: profileName, events: handle.events)
     }

@@ -216,29 +216,20 @@ public struct RecentErrorSnapshot: Codable, Sendable, Equatable {
 
 /// The active and next-start runtime configuration state exposed by the host.
 public struct RuntimeConfigurationSnapshot: Codable, ResponseEncodable, Sendable, Equatable {
-    public let activeRuntimeSpeechBackend: String
-    public let nextRuntimeSpeechBackend: String
-    public let activeDefaultVoiceProfileName: String?
-    public let nextDefaultVoiceProfileName: String?
-    public let environmentSpeechBackendOverride: String?
-    public let persistedSpeechBackend: String?
-    public let persistedDefaultVoiceProfileName: String?
-    public let profileRootPath: String
-    public let persistedConfigurationPath: String
-    public let persistedConfigurationExists: Bool
-    public let persistedConfigurationState: String
-    public let persistedConfigurationError: String?
-    public let persistedConfigurationAppliesOnRestart: Bool
-    public let activeRuntimeMatchesNextRuntime: Bool
-    public let persistedConfigurationWillAffectNextRuntimeStart: Bool
-
     enum CodingKeys: String, CodingKey {
         case activeRuntimeSpeechBackend = "active_runtime_speech_backend"
         case nextRuntimeSpeechBackend = "next_runtime_speech_backend"
+        case activeQwenResidentModel = "active_qwen_resident_model"
+        case nextQwenResidentModel = "next_qwen_resident_model"
+        case activeMarvisResidentPolicy = "active_marvis_resident_policy"
+        case nextMarvisResidentPolicy = "next_marvis_resident_policy"
         case activeDefaultVoiceProfileName = "active_default_voice_profile_name"
         case nextDefaultVoiceProfileName = "next_default_voice_profile_name"
         case environmentSpeechBackendOverride = "environment_speech_backend_override"
+        case environmentQwenResidentModelOverride = "environment_qwen_resident_model_override"
         case persistedSpeechBackend = "persisted_speech_backend"
+        case persistedQwenResidentModel = "persisted_qwen_resident_model"
+        case persistedMarvisResidentPolicy = "persisted_marvis_resident_policy"
         case persistedDefaultVoiceProfileName = "persisted_default_voice_profile_name"
         case profileRootPath = "profile_root_path"
         case persistedConfigurationPath = "persisted_configuration_path"
@@ -249,6 +240,29 @@ public struct RuntimeConfigurationSnapshot: Codable, ResponseEncodable, Sendable
         case activeRuntimeMatchesNextRuntime = "active_runtime_matches_next_runtime"
         case persistedConfigurationWillAffectNextRuntimeStart = "persisted_configuration_will_affect_next_runtime_start"
     }
+
+    public let activeRuntimeSpeechBackend: String
+    public let nextRuntimeSpeechBackend: String
+    public let activeQwenResidentModel: String
+    public let nextQwenResidentModel: String
+    public let activeMarvisResidentPolicy: String
+    public let nextMarvisResidentPolicy: String
+    public let activeDefaultVoiceProfileName: String?
+    public let nextDefaultVoiceProfileName: String?
+    public let environmentSpeechBackendOverride: String?
+    public let environmentQwenResidentModelOverride: String?
+    public let persistedSpeechBackend: String?
+    public let persistedQwenResidentModel: String?
+    public let persistedMarvisResidentPolicy: String?
+    public let persistedDefaultVoiceProfileName: String?
+    public let profileRootPath: String
+    public let persistedConfigurationPath: String
+    public let persistedConfigurationExists: Bool
+    public let persistedConfigurationState: String
+    public let persistedConfigurationError: String?
+    public let persistedConfigurationAppliesOnRestart: Bool
+    public let activeRuntimeMatchesNextRuntime: Bool
+    public let persistedConfigurationWillAffectNextRuntimeStart: Bool
 }
 
 /// Aggregate snapshot of the host state that bundles overview, queues, runtime, transport, and error data.

@@ -33,6 +33,7 @@ actor MockRuntime: ServerRuntimeProtocol {
         let normalizationContext: SpeechNormalizationContext?
         let sourceFormat: TextForSpeech.SourceFormat?
         let requestContext: SpeakSwiftly.RequestContext?
+        let qwenPreModelTextChunking: Bool
     }
 
     struct CreateCloneInvocation: Equatable {

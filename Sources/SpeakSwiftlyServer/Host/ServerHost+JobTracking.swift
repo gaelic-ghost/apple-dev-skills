@@ -163,6 +163,8 @@ extension ServerHost {
         activeRuntimeSpeechBackend = resolvedSpeechBackend
         let runtimeConfigurationSnapshot = runtimeConfigurationStore.snapshot(
             activeRuntimeSpeechBackend: resolvedSpeechBackend,
+            activeQwenResidentModel: activeQwenResidentModel,
+            activeMarvisResidentPolicy: activeMarvisResidentPolicy,
         )
         emitRuntimeConfigurationChanged(runtimeConfigurationSnapshot)
         await record(mapSuccessEvent(success, acknowledged: false), for: requestID, terminal: true)

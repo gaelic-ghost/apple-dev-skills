@@ -95,6 +95,8 @@ actor ServerHost {
     let encoder = JSONEncoder()
     let byteBufferAllocator = ByteBufferAllocator()
     var activeRuntimeSpeechBackend: SpeakSwiftly.SpeechBackend
+    var activeQwenResidentModel: SpeakSwiftly.QwenResidentModel
+    var activeMarvisResidentPolicy: SpeakSwiftly.MarvisResidentPolicy
 
     var statusTask: Task<Void, Never>?
     var publishTask: Task<Void, Never>?
@@ -154,6 +156,8 @@ actor ServerHost {
         runtime: any ServerRuntimeProtocol,
         runtimeConfigurationStore: RuntimeConfigurationStore = .init(),
         activeRuntimeSpeechBackend: SpeakSwiftly.SpeechBackend? = nil,
+        activeQwenResidentModel: SpeakSwiftly.QwenResidentModel? = nil,
+        activeMarvisResidentPolicy: SpeakSwiftly.MarvisResidentPolicy? = nil,
         state: EmbeddedServer,
     ) {
         let (immediatePublishRequests, immediatePublishContinuation) = AsyncStream.makeStream(
@@ -192,6 +196,10 @@ actor ServerHost {
         self.runtimeConfigurationStore = runtimeConfigurationStore
         self.activeRuntimeSpeechBackend = activeRuntimeSpeechBackend
             ?? runtimeConfigurationStore.initialActiveRuntimeSpeechBackend()
+        self.activeQwenResidentModel = activeQwenResidentModel
+            ?? runtimeConfigurationStore.initialActiveQwenResidentModel()
+        self.activeMarvisResidentPolicy = activeMarvisResidentPolicy
+            ?? runtimeConfigurationStore.initialActiveMarvisResidentPolicy()
         activeDefaultVoiceProfileName = runtimeConfigurationStore.initialActiveDefaultVoiceProfileName(
             configuredDefaultVoiceProfileName: configuration.defaultVoiceProfileName,
         )
@@ -259,6 +267,8 @@ actor ServerHost {
             runtime: runtime,
             runtimeConfigurationStore: runtimeConfigurationStore,
             activeRuntimeSpeechBackend: startupConfiguration.speechBackend,
+            activeQwenResidentModel: startupConfiguration.qwenResidentModel,
+            activeMarvisResidentPolicy: startupConfiguration.marvisResidentPolicy,
             state: state,
         )
     }
