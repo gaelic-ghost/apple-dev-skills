@@ -217,9 +217,10 @@ struct HostLifecycleService: Service {
         }
 
         let outcome = await events.first(where: { _ in true }) ?? .started
-        startupWatcher.cancel()
-        shutdownWatcher.cancel()
-        timeoutWatcher.cancel()
+        // These watcher tasks complete on their own once startup, shutdown, or timeout happens.
+        // Cancelling the sleeping timeout watcher during normal fast startup can trip Swift
+        // concurrency teardown in optimized LaunchAgent builds before the server binds HTTP.
+        _ = (startupWatcher, shutdownWatcher, timeoutWatcher)
         return outcome
     }
 }
