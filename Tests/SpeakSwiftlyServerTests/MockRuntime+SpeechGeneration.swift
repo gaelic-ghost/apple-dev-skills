@@ -14,6 +14,7 @@ extension MockRuntime {
         normalizationContext: SpeechNormalizationContext?,
         sourceFormat: TextForSpeech.SourceFormat?,
         requestContext: SpeakSwiftly.RequestContext?,
+        qwenPreModelTextChunking: Bool,
     ) async -> RuntimeRequestHandle {
         let requestID = UUID().uuidString
         let request = MockRequest(id: requestID, operation: "generate_speech", profileName: profileName)
@@ -25,6 +26,7 @@ extension MockRuntime {
                 normalizationContext: normalizationContext,
                 sourceFormat: sourceFormat,
                 requestContext: requestContext,
+                qwenPreModelTextChunking: qwenPreModelTextChunking,
             ),
         )
         var requestContinuation: AsyncThrowingStream<SpeakSwiftly.RequestEvent, Error>.Continuation?

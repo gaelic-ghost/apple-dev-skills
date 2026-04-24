@@ -29,7 +29,11 @@ func registerHTTPRuntimeRoutes(
 
     router.put("runtime/configuration") { request, context -> RuntimeConfigurationSnapshot in
         let payload = try await request.decode(as: RuntimeConfigurationUpdatePayload.self, context: context)
-        return try await host.saveRuntimeConfiguration(speechBackend: payload.speechBackendModel())
+        return try await host.saveRuntimeConfiguration(
+            speechBackend: payload.speechBackendModel(),
+            qwenResidentModel: payload.qwenResidentModelModel(),
+            marvisResidentPolicy: payload.marvisResidentPolicyModel(),
+        )
     }
 
     router.post("runtime/backend") { request, context -> Response in

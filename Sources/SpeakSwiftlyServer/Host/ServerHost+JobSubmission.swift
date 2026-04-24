@@ -11,6 +11,7 @@ extension ServerHost {
         normalizationContext: SpeechNormalizationContext? = nil,
         sourceFormat: TextForSpeech.SourceFormat? = nil,
         requestContext: SpeakSwiftly.RequestContext? = nil,
+        qwenPreModelTextChunking: Bool = false,
     ) async throws -> String {
         try ensureWorkerReady()
         let handle = await runtime.queueSpeechLive(
@@ -20,6 +21,7 @@ extension ServerHost {
             normalizationContext: normalizationContext,
             sourceFormat: sourceFormat,
             requestContext: requestContext,
+            qwenPreModelTextChunking: qwenPreModelTextChunking,
         )
         return await enqueuePublicJob(handle)
     }

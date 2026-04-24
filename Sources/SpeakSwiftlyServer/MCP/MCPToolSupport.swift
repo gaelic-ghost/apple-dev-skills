@@ -157,6 +157,28 @@ func requiredSpeechBackend(
     return speechBackend
 }
 
+func optionalQwenResidentModel(
+    _ key: String,
+    in arguments: [String: Value],
+) throws -> SpeakSwiftly.QwenResidentModel? {
+    guard let rawValue = optionalString(key, in: arguments) else {
+        return nil
+    }
+
+    return try decodeStringEnum(rawValue, fieldName: key, valueType: SpeakSwiftly.QwenResidentModel.self)
+}
+
+func optionalMarvisResidentPolicy(
+    _ key: String,
+    in arguments: [String: Value],
+) throws -> SpeakSwiftly.MarvisResidentPolicy? {
+    guard let rawValue = optionalString(key, in: arguments) else {
+        return nil
+    }
+
+    return try decodeStringEnum(rawValue, fieldName: key, valueType: SpeakSwiftly.MarvisResidentPolicy.self)
+}
+
 func requiredBuiltInTextProfileStyle(
     _ key: String,
     in arguments: [String: Value],

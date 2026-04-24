@@ -19,6 +19,7 @@ enum MCPToolCatalog {
                     "text_format": ["type": "string"],
                     "nested_source_format": ["type": "string"],
                     "source_format": ["type": "string"],
+                    "qwen_pre_model_text_chunking": ["type": "boolean"],
                 ],
             ],
         ),
@@ -138,18 +139,20 @@ enum MCPToolCatalog {
         ),
         Tool(
             name: "get_staged_runtime_config",
-            description: "Return the staged persisted runtime-configuration snapshot that will apply on the next runtime start, including the active backend, the next-start backend, and any environment override.",
+            description: "Return the staged persisted runtime-configuration snapshot that will apply on the next runtime start, including active and next-start backend, Qwen resident model, Marvis resident policy, and environment overrides.",
             inputSchema: ["type": "object", "properties": [:]],
             annotations: .init(readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false),
         ),
         Tool(
             name: "set_staged_config",
-            description: "Persist one speech_backend value for the next runtime start without hot-swapping the current worker.",
+            description: "Persist runtime startup choices for the next runtime start without hot-swapping the current worker. speech_backend stays required for compatibility; qwen_resident_model and marvis_resident_policy are optional startup-only refinements.",
             inputSchema: [
                 "type": "object",
                 "required": ["speech_backend"],
                 "properties": [
-                    "speech_backend": ["type": "string", "enum": ["qwen3", "chatterbox_turbo", "marvis"]],
+                    "speech_backend": ["type": "string", "enum": stringEnum(exposedSpeechBackendIdentifiers())],
+                    "qwen_resident_model": ["type": "string", "enum": stringEnum(exposedQwenResidentModelIdentifiers())],
+                    "marvis_resident_policy": ["type": "string", "enum": stringEnum(exposedMarvisResidentPolicyIdentifiers())],
                 ],
             ],
         ),
@@ -160,7 +163,7 @@ enum MCPToolCatalog {
                 "type": "object",
                 "required": ["speech_backend"],
                 "properties": [
-                    "speech_backend": ["type": "string", "enum": ["qwen3", "chatterbox_turbo", "marvis"]],
+                    "speech_backend": ["type": "string", "enum": stringEnum(exposedSpeechBackendIdentifiers())],
                 ],
             ],
         ),
@@ -423,4 +426,8 @@ enum MCPToolCatalog {
             annotations: .init(readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false),
         ),
     ]
+
+    private static func stringEnum(_ values: [String]) -> Value {
+        .array(values.map { .string($0) })
+    }
 }

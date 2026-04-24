@@ -78,6 +78,7 @@ protocol ServerRuntimeProtocol: Actor {
         normalizationContext: SpeechNormalizationContext?,
         sourceFormat: TextForSpeech.SourceFormat?,
         requestContext: SpeakSwiftly.RequestContext?,
+        qwenPreModelTextChunking: Bool,
     ) async -> RuntimeRequestHandle
     func queueSpeechFile(
         text: String,

@@ -27,12 +27,13 @@ The server's normalized backend contract is now:
 - published backend identifiers: `qwen3`, `chatterbox_turbo`, `marvis`
 - compatibility alias accepted on HTTP and MCP runtime-control input: `qwen3_custom_voice`
 - compatibility alias response behavior: always normalized back to `qwen3`
+- staged Qwen resident-model identifiers: `base_0_6b_8bit`, `base_1_7b_8bit`
+- staged Marvis resident-policy identifiers: `dual_resident_serialized`, `single_resident_dynamic`
+- opt-in Qwen live request chunking field: `qwen_pre_model_text_chunking`
 
 What remains intentionally non-parity:
 
 - host-owned lifecycle such as `liftoff`, runtime startup, and runtime shutdown
-- Qwen resident-model startup selection until the server runtime-configuration snapshot grows a typed field for it
-- opt-in Qwen pre-model live chunking until HTTP and MCP have an explicit request-field contract for it
 - raw `AsyncStream` / `AsyncThrowingStream` values as first-class wire contracts
 - line-oriented parser or transport entrypoints such as `accept(line:)`
 - exact Swift type shapes where HTTP or MCP need stable snake_case or resource-oriented contracts instead
@@ -48,10 +49,11 @@ That means the server is best understood as a transport adapter over the public 
 | `runtime.statusEvents()` | Adapted | `GET /healthz`, `GET /readyz`, `GET /runtime/host`, `GET /runtime/status`, `GET /requests/{request_id}/events` | `get_runtime_overview`, `get_runtime_status`, live resources and subscriptions | Exposed through host snapshots, retained request history, and typed resource updates instead of raw streams. |
 | `runtime.overview()` | Full | `GET /runtime/host` | `get_runtime_overview`, `speak://runtime/overview` | The host now trusts the atomic runtime overview instead of reconstructing queue or playback state locally. |
 | `runtime.status()` | Full | `GET /runtime/status` | `get_runtime_status`, `speak://runtime/status` | Returned as runtime status data plus server-owned live backend-transition state so clients can observe queued backend switches without treating persisted configuration as live state. |
-| `SpeakSwiftly.Configuration.qwenResidentModel` | Not exposed | None | None | New in `SpeakSwiftly 4.0.5`. The server currently uses the upstream default resident Qwen model because runtime configuration persistence only carries `speech_backend`. Exposing this needs a deliberate runtime-configuration surface update, not just a dependency bump. |
+| `SpeakSwiftly.Configuration.qwenResidentModel` | Full | `GET /runtime/configuration`, `PUT /runtime/configuration` with `qwen_resident_model` | `get_staged_runtime_config`, `set_staged_config` with `qwen_resident_model`, `speak://runtime/configuration` | Startup-only configuration. Accepts `base_0_6b_8bit` and `base_1_7b_8bit`, reports both active and next-start values, and honors the upstream `SPEAKSWIFTLY_QWEN_RESIDENT_MODEL` override when building the startup configuration passed to `SpeakSwiftly.liftoff(configuration:)`. |
+| `SpeakSwiftly.Configuration.marvisResidentPolicy` | Full | `GET /runtime/configuration`, `PUT /runtime/configuration` with `marvis_resident_policy` | `get_staged_runtime_config`, `set_staged_config` with `marvis_resident_policy`, `speak://runtime/configuration` | Startup-only configuration. Accepts `dual_resident_serialized` and `single_resident_dynamic`, and reports both active and next-start values. |
 | `runtime.switchSpeechBackend(to:)` | Full | `POST /runtime/backend` | `switch_speech_backend` | Queues an ordered live backend switch and returns an accepted request. Transport-facing input accepts `qwen3`, `chatterbox_turbo`, and `marvis`, and still normalizes legacy `qwen3_custom_voice` input onto `qwen3`. Pending live transition state is observable from runtime overview/status and the retained request resource. |
 | `runtime.reloadModels()` / `runtime.unloadModels()` | Full | `POST /runtime/models/reload`, `POST /runtime/models/unload` | `reload_models`, `unload_models` | Immediate runtime-control operations. |
-| `runtime.generate.speech(...)` | Partial | `POST /speech/live` | `generate_speech` | Carries `text_profile_id`, `request_context`, `cwd`, `repo_root`, `text_format`, `nested_source_format`, and `source_format`. The new `qwenPreModelTextChunking` flag from `SpeakSwiftly 4.0.5` is not exposed yet; omitted requests keep upstream's single-pass Qwen live-playback default. |
+| `runtime.generate.speech(...)` | Full | `POST /speech/live` | `generate_speech` | Carries `text_profile_id`, `request_context`, `cwd`, `repo_root`, `text_format`, `nested_source_format`, `source_format`, and `qwen_pre_model_text_chunking`. The Qwen chunking flag is opt-in and defaults to `false`, matching upstream's single-pass Qwen live-playback default when omitted. |
 | `runtime.generate.audio(...)` | Full | `POST /speech/files` | `generate_audio_file` | Retains generated file artifacts for later reads. |
 | `runtime.generate.batch(_:with:)` | Full | `POST /speech/batches` | `generate_batch` | Uses the same retained-request and generated-batch shaping as the other submission lanes. |
 | `runtime.voices.create(design:from:vibe:voice:outputPath:)` | Full | `POST /voices/from-description` | `create_voice_profile_from_description` | Accepted-request flow with retained request inspection. |
@@ -91,8 +93,6 @@ Those adaptations are deliberate because HTTP and MCP consumers need stable, nav
 
 At this point, the remaining surface work should stay focused on clarity rather than parity theater:
 
-1. keep trimming any server-local wrappers that do not add real transport clarity now that the runtime overview, jobs, artifacts, and text-normalizer APIs are all directly available
-2. add an explicit server-side decision for `qwenPreModelTextChunking` before exposing it on HTTP and MCP, because it changes live-playback generation shape for Qwen requests while file generation now intentionally stays single-pass upstream
-3. decide whether `qwenResidentModel` belongs in the server's persisted runtime configuration snapshot before exposing the new upstream startup choice to operators
-4. keep README and maintainer docs synchronized whenever the resolved `SpeakSwiftly` version or MCP surface changes
-5. keep the small live E2E smoke suite pointed at the current HTTP and MCP names so release verification proves the actual shipped transport surface
+1. keep trimming any server-local wrappers that do not add real transport clarity now that the runtime overview, jobs, artifacts, runtime configuration, and text-normalizer APIs are all directly available
+2. keep README and maintainer docs synchronized whenever the resolved `SpeakSwiftly` version or MCP surface changes
+3. keep the small live E2E smoke suite pointed at the current HTTP and MCP names so release verification proves the actual shipped transport surface

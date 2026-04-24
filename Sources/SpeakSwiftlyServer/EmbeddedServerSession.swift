@@ -53,7 +53,7 @@ func embeddedServerLiveBootstrap(
                 refreshVoiceProfiles: {
                     try await host.refreshVoiceProfiles()
                 },
-                queueLiveSpeech: { text, profileName, textProfileID, normalizationContext, sourceFormat, requestContext in
+                queueLiveSpeech: { text, profileName, textProfileID, normalizationContext, sourceFormat, requestContext, qwenPreModelTextChunking in
                     guard let resolvedProfileName = await host.resolvedRequestedVoiceProfileName(profileName) else {
                         let errorMessage = await host.missingVoiceProfileNameMessage(for: "the live speech request")
                         throw ServerConfigurationError(errorMessage)
@@ -66,6 +66,7 @@ func embeddedServerLiveBootstrap(
                         normalizationContext: normalizationContext,
                         sourceFormat: sourceFormat,
                         requestContext: requestContext,
+                        qwenPreModelTextChunking: qwenPreModelTextChunking,
                     )
                 },
                 setDefaultVoiceProfileName: { profileName in

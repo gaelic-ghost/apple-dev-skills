@@ -39,7 +39,7 @@ enum MCPResourceCatalog {
     static let resources: [Resource] = [
         .init(name: "Runtime Overview", uri: "speak://runtime/overview", description: "Shared-host runtime overview with readiness, queues, transports, and recent errors.", mimeType: "application/json"),
         .init(name: "Runtime Status", uri: "speak://runtime/status", description: "Underlying SpeakSwiftly runtime status event, including stage, resident-model state, and speech backend.", mimeType: "application/json"),
-        .init(name: "Runtime Configuration", uri: "speak://runtime/configuration", description: "Persisted runtime configuration snapshot for the next runtime start.", mimeType: "application/json"),
+        .init(name: "Runtime Configuration", uri: "speak://runtime/configuration", description: "Persisted runtime configuration snapshot for the next runtime start, including backend, Qwen resident model, and Marvis resident policy.", mimeType: "application/json"),
         .init(name: "Voice Profiles", uri: "speak://voices", description: "Current cached SpeakSwiftly voice profiles.", mimeType: "application/json"),
         .init(name: "Voice Profile Guide", uri: "speak://voices/guide", description: "Operator guidance for creating, cloning, renaming, rerolling, deleting, and using SpeakSwiftly voice profiles.", mimeType: "text/markdown"),
         .init(name: "Text Profiles", uri: "speak://text-profiles", description: "Current SpeakSwiftly text-profile snapshot, including built-in style plus base, active, stored, and effective profiles.", mimeType: "application/json"),
