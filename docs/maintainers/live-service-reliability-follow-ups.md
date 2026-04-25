@@ -18,6 +18,8 @@ The `v2.0.4` fix kept the canonical config file in Application Support, but stag
 
 The `v4.3.4` follow-up moves that alias to `~/Library/SpeakSwiftlyServer/launch-agent-server.yaml`. The alias still avoids the `Application Support` space that exposed the original config-provider bug, but it no longer depends on a cache directory that macOS or maintenance tooling can remove independently of the installed LaunchAgent plist.
 
+The next cleanup plan is tracked in [Application Support Config Plan](./application-support-config-plan.md). That plan treats the alias as a temporary compatibility shim and moves the target design back to direct `~/Library/Application Support/SpeakSwiftlyServer/server.yaml` loading.
+
 ## Reliability Follow-Ups
 
 ### 1. Add a full LaunchAgent smoke test for the real per-user install layout
