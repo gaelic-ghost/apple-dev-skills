@@ -60,6 +60,9 @@ let package = Package(
                 .product(name: "TextForSpeech", package: "TextForSpeech"),
             ],
             path: "Sources/SpeakSwiftlyServer",
+            resources: [
+                .process("Resources"),
+            ],
         ),
         .executableTarget(
             name: "SpeakSwiftlyServerTool",

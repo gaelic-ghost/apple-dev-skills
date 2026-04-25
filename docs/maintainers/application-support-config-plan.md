@@ -1,8 +1,12 @@
 # Application Support Config Plan
 
+Status: implemented on `runtime/application-support-config`. The active LaunchAgent path now points
+directly at `~/Library/Application Support/SpeakSwiftlyServer/server.yaml`, and install/refresh
+paths seed that canonical file from a bundled default when it is missing.
+
 ## Context
 
-The live LaunchAgent-backed service now starts from a copied config alias at
+The live `v4.3.4` LaunchAgent-backed service starts from a copied config alias at
 `~/Library/SpeakSwiftlyServer/launch-agent-server.yaml` when the canonical config path contains
 spaces. That alias is a patch-level durability fix: it moved the copied config out of
 `~/Library/Caches`, which macOS and maintenance tools can remove independently of the installed
@@ -58,36 +62,35 @@ Resolve the Application Support root through Foundation URL APIs instead of hand
 escaping the path string. The space in `Application Support` is normal filesystem state, not a
 special case the package should work around with alternate active config paths.
 
-## Implementation Plan
+## Implementation Notes
 
 ### 1. Prove the path-with-spaces failure locally
 
-Add a focused test or small diagnostic that asks the current config loader to read a YAML file at an
-`Application Support` path with spaces. This should use the same `ConfigStore` path as service
-startup instead of a different YAML parser path.
+Added a focused test that asks `ConfigStore` to read a YAML file at an `Application Support` path
+with spaces. This uses the same service startup config-loading path rather than a separate parser.
 
-Expected result before the fix:
+Initial result before the fix:
 
-- the test reproduces the failure that originally forced the alias
-- or the test proves the failure has already been removed upstream, in which case the remaining work
-  can be a cleanup without a parser fix
+- `ReloadingFileProvider<YAMLSnapshot>` reported the file as missing at the Application Support path
+- the file had been written first, so the failure was in the provider path handling rather than the
+  test fixture or YAML contents
 
 ### 2. Fix canonical config loading
 
-Make `ConfigStore` load `APP_CONFIG_FILE` paths with spaces directly. Prefer a fix that keeps the
-current `ReloadingFileProvider<YAMLSnapshot>` behavior if the provider can support it cleanly.
+`ConfigStore` now loads `APP_CONFIG_FILE` paths with spaces directly through
+`URLReloadingYAMLConfigProvider`.
 
-If the provider cannot support that path shape reliably, split the behavior deliberately:
+The provider keeps `swift-configuration` for `ConfigReader`, precedence behavior, YAML parsing, and
+snapshot shape, but it owns the filesystem read and reload polling through Foundation file URLs. That
+avoids the current `ReloadingFileProvider<YAMLSnapshot>` path conversion that treats the normal
+`Application Support` space as an unsafe path.
 
-- startup reads the YAML config through a direct Foundation-backed file read
-- optional reload watching is layered on top only after direct startup loading is proven reliable
-
-Do not preserve a stringly fallback that silently swaps to the alias after a failed direct open. If
-the canonical path is invalid or missing, startup should fail with an explicit path-specific error.
+There is no stringly alias fallback. If the configured path is invalid or missing, startup fails with
+an explicit path-specific error.
 
 ### 3. Seed the canonical config during install and refresh
 
-Add a package-bundled default config template and have install-style commands seed
+Added a package-bundled default config template and made install-style commands seed
 `~/Library/Application Support/SpeakSwiftlyServer/server.yaml` when it is missing.
 
 The install/update/refresh policy is:
@@ -104,20 +107,18 @@ failure.
 
 ### 4. Change LaunchAgent environment shaping
 
-Update `ServerInstallLayout.launchAgentEnvironmentVariables(...)` so `APP_CONFIG_FILE` points to the
+Updated `ServerInstallLayout.launchAgentEnvironmentVariables(...)` so `APP_CONFIG_FILE` points to the
 canonical config path, including when that path contains spaces.
 
 After this change:
 
-- `launchAgentConfigPath(for:)` should either return the canonical standardized path unconditionally
-  or be removed
-- `launchAgentConfigAliasURL` should be removed from the public install layout unless a separate
-  migration step still needs to delete old aliases
-- `stageLaunchAgentConfigAliasIfNeeded(...)` should be removed from the install path
+- `launchAgentConfigPath(for:)` returns the canonical standardized path unconditionally
+- `launchAgentConfigAliasURL` remains only as a legacy cleanup location in the public install layout
+- the active install path no longer stages a copied alias config
 
 ### 5. Clean up old alias state
 
-Keep uninstall cleanup for both historical alias locations during the migration:
+Uninstall cleanup now removes both historical alias locations during the migration:
 
 - `~/Library/Caches/SpeakSwiftlyServer/launch-agent-server.yaml`
 - `~/Library/SpeakSwiftlyServer/launch-agent-server.yaml`
@@ -130,16 +131,15 @@ operator hygiene.
 
 ### 6. Add bundle-backed defaults only where they help
 
-Add package-bundled resources only for read-only shipped data. A good first slice is a template or
-default config resource that app/bootstrap code can copy into Application Support when no canonical
-`server.yaml` exists.
+The package now bundles `default-server.yaml` as read-only shipped data that app/bootstrap code can
+copy into Application Support when no canonical `server.yaml` exists.
 
 Do not make the package bundle the active config store. Active config is user and operator state,
 and it needs to remain writable outside the package artifact.
 
 ### 7. Update docs and release notes
 
-Refresh the operator-facing docs that currently mention alias behavior:
+Refresh or release-note the operator-facing docs that currently mention alias behavior:
 
 - `README.md`
 - `Sources/SpeakSwiftlyServer/SpeakSwiftlyServer.docc/Articles/LaunchAgent-Workflow.md`
@@ -170,9 +170,9 @@ Then run the live-service proof serially:
 7. remove or temporarily rename the canonical config after install, start the service without the
    install/refresh seeding path, and confirm startup fails loudly with the missing config path
 
-## Open Questions
+## Resolved Questions
 
-- Was the original path-with-spaces failure inside `swift-configuration`, this package's
-  `FilePath(configFilePath)` handoff, or an earlier release's command/property-list construction?
-- Should the app-managed install layout expose a public method for seeding the default config from
-  bundle resources, or should seeding stay inside the command/app install path?
+- The path-with-spaces failure is in the `ReloadingFileProvider<YAMLSnapshot>` filesystem path flow
+  used by this package, not in the LaunchAgent property list or YAML contents.
+- Seeding currently stays inside the command install/refresh path. A future app-facing public seeding
+  API can be added when the app integration needs to call the same behavior directly.
