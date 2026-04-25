@@ -21,7 +21,7 @@ public struct ServerInstallLayout: Codable, Sendable, Equatable {
     public let launchAgentPlistURL: URL
     /// The durable server config file an app should manage for the standalone server.
     public let serverConfigFileURL: URL
-    /// The alias config file path used when the real config path is not LaunchAgent-friendly.
+    /// The legacy alias config file path used by older LaunchAgent installs.
     public let launchAgentConfigAliasURL: URL
     /// The runtime state root used by the installed server process.
     public let runtimeBaseDirectoryURL: URL
@@ -133,11 +133,7 @@ public struct ServerInstallLayout: Codable, Sendable, Equatable {
     }
 
     func launchAgentConfigPath(for configFilePath: String) -> String {
-        let standardizedPath = URL(fileURLWithPath: configFilePath).standardizedFileURL.path
-        if standardizedPath.contains(" ") {
-            return launchAgentConfigAliasURL.path
-        }
-        return standardizedPath
+        URL(fileURLWithPath: configFilePath).standardizedFileURL.path
     }
 }
 
