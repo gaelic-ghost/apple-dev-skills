@@ -1,14 +1,15 @@
 # AGENTS.md
 
-This file is the Apple Dev Skills child-repo override for work done from `socket`. Follow the root `socket` guidance for general git, docs, release, branch, and maintainer workflow rules.
+This file is the Apple Dev Skills compatibility-repo override. Follow the root `socket` guidance for general git, docs, release, branch, and maintainer workflow rules when changing the canonical Socket-hosted payload.
 
 ## Scope
 
-- This repository is the canonical home for Gale's Apple, Swift, and Xcode workflow skills.
+- This repository is a compatibility marketplace and README pointer for users who installed `gaelic-ghost/apple-dev-skills` directly.
+- The canonical authored Apple Dev Skills payload now lives in `gaelic-ghost/socket` under `plugins/apple-dev-skills`.
 - Treat `productivity-skills` as the default baseline maintainer layer for general repo docs and maintenance work; this repo is the narrower specialist layer when Apple-specific behavior should change the workflow.
-- Preserve standalone-install guidance for public users who install only `apple-dev-skills`, while allowing the public README quickstart to lead with the Socket marketplace when users want Apple Dev Skills plus companion workflows from one catalog.
-- Root `skills/` is the canonical authored and exported surface.
-- Keep shared reusable assets in [`shared/`](./shared/) and maintainer tests in [`tests/`](./tests/).
+- Preserve standalone-install guidance for public users who install only `apple-dev-skills`, while leading new users to the Socket marketplace.
+- Keep `.agents/plugins/marketplace.json` as the compatibility surface that redirects to the Socket subdirectory.
+- Do not edit the legacy payload copy here for new feature work; make payload changes in Socket.
 
 ## Apple Rules
 
@@ -23,15 +24,14 @@ This file is the Apple Dev Skills child-repo override for work done from `socket
 
 ## Install Guidance
 
-- The public README may lead with `codex plugin marketplace add gaelic-ghost/socket` and `codex plugin marketplace upgrade socket` because Socket is the preferred catalog when users want Apple Dev Skills plus companion workflows.
-- Also document `codex plugin marketplace add gaelic-ghost/apple-dev-skills` and `codex plugin marketplace upgrade apple-dev-skills` for Apple-only installs.
+- The public README should lead with `codex plugin marketplace add gaelic-ghost/socket` and `codex plugin marketplace upgrade socket` because Socket is the preferred catalog.
+- Also document `codex plugin marketplace add gaelic-ghost/apple-dev-skills` and `codex plugin marketplace upgrade apple-dev-skills` for compatibility installs.
 - Keep explicit refs scoped to pinned reproducible installs and manual local clone marketplace instructions scoped to development, unpublished testing, or fallback cases.
 
 ## Validation
 
 ```bash
 bash .github/scripts/validate_repo_docs.sh
-uv run pytest
 ```
 
 Use the docs validator when README, AGENTS, ROADMAP, active skill inventory, or maintainer docs change. Use pytest when skill behavior, scripts, validation helpers, or tested contracts change.
