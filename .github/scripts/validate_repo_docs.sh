@@ -38,15 +38,13 @@ echo "Validating local discovery mirrors..."
 [[ ! -e "plugins/apple-dev-skills" ]] || fail "Did not expect a nested plugins/apple-dev-skills tree."
 
 echo "Validating root README contract..."
-require_contains "README.md" 'Treat `productivity-skills` as the default baseline layer for general repo-doc and maintenance work'
-require_contains "README.md" 'This repository is the canonical source of truth for Gale'"'"'s Apple, Swift, and Xcode workflow skills.'
-require_contains "README.md" 'Most Apple Dev Skills workflows are useful as a standalone plugin.'
-require_contains "README.md" 'The [`socket`](https://github.com/gaelic-ghost/socket) repository is Gale'"'"'s plugin superproject and marketplace catalog.'
-require_contains "README.md" 'Treat root [`skills/`](./skills/) as the canonical authored surface.'
-require_contains "README.md" 'Keep shared reusable assets in [`shared/`](./shared/)'
-require_contains "README.md" 'Run the repository test suite for skill and metadata changes:'
-require_contains "README.md" 'Use [`CONTRIBUTING.md`](./CONTRIBUTING.md) for maintainer workflow details'
-require_not_contains "README.md" 'plugins/apple-dev-skills/'
+require_contains "README.md" 'Apple Dev Skills has moved into the [Socket marketplace](https://github.com/gaelic-ghost/socket).'
+require_contains "README.md" 'codex plugin marketplace add gaelic-ghost/socket'
+require_contains "README.md" 'codex plugin marketplace upgrade socket'
+require_contains "README.md" 'codex plugin marketplace add gaelic-ghost/apple-dev-skills'
+require_contains "README.md" 'codex plugin marketplace upgrade apple-dev-skills'
+require_contains "README.md" 'That compatibility marketplace now points at the Socket-hosted plugin payload.'
+require_contains "README.md" 'prefer the Socket entry: `apple-dev-skills@socket`'
 require_not_contains "README.md" 'install-plugin-to-socket'
 
 echo "Validating CONTRIBUTING contract..."
@@ -58,14 +56,14 @@ require_contains "CONTRIBUTING.md" 'bash .github/scripts/validate_repo_docs.sh'
 require_contains "CONTRIBUTING.md" 'uv run pytest'
 
 echo "Validating AGENTS contract..."
-require_contains "AGENTS.md" 'This repository is the canonical home for Gale'"'"'s Apple, Swift, and Xcode workflow skills.'
+require_contains "AGENTS.md" 'This repository is a compatibility marketplace and README pointer'
+require_contains "AGENTS.md" 'The canonical authored Apple Dev Skills payload now lives in `gaelic-ghost/socket` under `plugins/apple-dev-skills`.'
 require_contains "AGENTS.md" 'Treat `productivity-skills` as the default baseline maintainer layer'
 require_contains "AGENTS.md" 'Preserve standalone-install guidance for public users who install only `apple-dev-skills`'
-require_contains "AGENTS.md" 'Root `skills/` is the canonical authored and exported surface.'
-require_contains "AGENTS.md" 'Keep shared reusable assets in [`shared/`](./shared/) and maintainer tests in [`tests/`](./tests/).'
+require_contains "AGENTS.md" 'Keep `.agents/plugins/marketplace.json` as the compatibility surface that redirects to the Socket subdirectory.'
+require_contains "AGENTS.md" 'Do not edit the legacy payload copy here for new feature work; make payload changes in Socket.'
 require_contains "AGENTS.md" 'require reading the relevant Apple documentation before proposing implementation changes.'
 require_contains "AGENTS.md" 'Keep `explore-apple-swift-docs` as the canonical docs-routing surface'
-require_not_contains "AGENTS.md" 'plugins/apple-dev-skills/'
 
 echo "Validating reality audit guide..."
 audit_doc="docs/maintainers/reality-audit.md"
