@@ -1,0 +1,47 @@
+apple-dev-skills
+Copyright 2026 Gale Williams
+
+Required Notice: Copyright 2026 Gale Williams (mailto:mail@galewilliams.com)
+
+This repository is licensed under the PolyForm Noncommercial License 1.0.0.
+See [LICENSE](./LICENSE) for the full license text.
+
+Commercial use requires a separate written commercial license from Gale.
+For commercial licensing, contact Gale W at <mail@galewilliams.com>.
+See [COMMERCIAL-USE.md](./COMMERCIAL-USE.md) for the current commercial-use
+policy.
+
+Apple Dev Skills versions published before the PolyForm Noncommercial change
+remain available under the license terms that applied to those versions. The
+historical Apache License 2.0 text is preserved in
+[LICENSE-APACHE-2.0](./LICENSE-APACHE-2.0).
+
+This repository is a compatibility marketplace pointer for Apple Dev Skills.
+The canonical authored payload lives in the Socket repository at
+`plugins/apple-dev-skills`.
+
+Third-Party Trademarks And Brand References
+
+This repository and the Socket-hosted Apple Dev Skills payload refer to
+third-party technologies, developer tools, programming languages, product
+names, and visual identities for identification, compatibility, and workflow
+description only. Those references do not imply sponsorship, endorsement,
+approval, or affiliation unless an explicit written license or partnership
+statement says so.
+
+Apple Dev Skills, Socket, and Gaelic Ghost are independent projects and are
+not affiliated with, authorized by, sponsored by, endorsed by, or otherwise
+approved by Apple Inc. or the Swift open source project.
+
+Apple, Xcode, Swift, SwiftUI, SwiftData, Safari, TestFlight, and the Swift
+Logo are trademarks of Apple Inc., registered in the U.S. and other countries
+and regions. The Apple logo is a trademark of Apple Inc. Any Apple, Xcode,
+Swift, SwiftUI, SwiftData, Safari, TestFlight, or Swift Logo reference in
+this repository is referential and descriptive.
+
+All other third-party trademarks, service marks, names, logos, and brand
+features are the property of their respective owners.
+
+This notice does not grant any license or permission to use third-party
+trademarks, logos, icons, trade dress, or brand features outside the
+referential uses allowed by the applicable owner policies or by law.

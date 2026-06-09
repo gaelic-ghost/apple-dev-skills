@@ -21,21 +21,24 @@ require_not_contains() {
   ! grep -Fq -- "$needle" "$file" || fail "Unexpected stale string in $file: $needle"
 }
 
-echo "Validating roadmap presence..."
-[[ -f ROADMAP.md ]] || fail "Missing ROADMAP.md at repo root."
-
 echo "Validating root docs presence..."
 [[ -f README.md ]] || fail "Missing README.md at repo root."
-[[ -f CONTRIBUTING.md ]] || fail "Missing CONTRIBUTING.md at repo root."
 [[ -f AGENTS.md ]] || fail "Missing AGENTS.md at repo root."
-[[ -f docs/maintainers/reality-audit.md ]] || fail "Missing docs/maintainers/reality-audit.md."
-[[ -f docs/maintainers/customization-consolidation-review.md ]] || fail "Missing docs/maintainers/customization-consolidation-review.md."
-[[ -f docs/maintainers/execution-split-and-inference-plan.md ]] || fail "Missing docs/maintainers/execution-split-and-inference-plan.md."
+[[ -f LICENSE ]] || fail "Missing PolyForm Noncommercial LICENSE."
+[[ -f LICENSE-APACHE-2.0 ]] || fail "Missing historical Apache 2.0 license text."
+[[ -f NOTICE ]] || fail "Missing NOTICE."
+[[ -f COMMERCIAL-USE.md ]] || fail "Missing COMMERCIAL-USE.md."
 
-echo "Validating local discovery mirrors..."
-[[ -L ".agents/skills" ]] || fail "Expected .agents/skills to be a symlink to ../skills"
-[[ "$(readlink .agents/skills)" == "../skills" ]] || fail "Expected .agents/skills -> ../skills"
+echo "Validating compatibility pointer shape..."
+[[ -f ".agents/plugins/marketplace.json" ]] || fail "Missing compatibility marketplace metadata."
+[[ ! -e ".agents/skills" ]] || fail "Did not expect .agents/skills in the pointer repository."
+[[ ! -e ".codex-plugin" ]] || fail "Did not expect .codex-plugin in the pointer repository."
+[[ ! -e "skills" ]] || fail "Did not expect a local skills tree in the pointer repository."
 [[ ! -e "plugins/apple-dev-skills" ]] || fail "Did not expect a nested plugins/apple-dev-skills tree."
+require_contains ".agents/plugins/marketplace.json" '"source": "git-subdir"'
+require_contains ".agents/plugins/marketplace.json" '"url": "https://github.com/gaelic-ghost/socket.git"'
+require_contains ".agents/plugins/marketplace.json" '"path": "./plugins/apple-dev-skills"'
+require_contains ".agents/plugins/marketplace.json" '"ref": "main"'
 
 echo "Validating root README contract..."
 require_contains "README.md" 'Apple Dev Skills has moved into the [Socket marketplace](https://github.com/gaelic-ghost/socket).'
@@ -43,17 +46,14 @@ require_contains "README.md" 'codex plugin marketplace add gaelic-ghost/socket'
 require_contains "README.md" 'codex plugin marketplace upgrade socket'
 require_contains "README.md" 'codex plugin marketplace add gaelic-ghost/apple-dev-skills'
 require_contains "README.md" 'codex plugin marketplace upgrade apple-dev-skills'
-require_contains "README.md" 'That compatibility marketplace now points at the Socket-hosted plugin payload.'
+require_contains "README.md" 'That compatibility marketplace points at the Socket-hosted plugin payload through `.agents/plugins/marketplace.json`.'
 require_contains "README.md" 'prefer the Socket entry: `apple-dev-skills@socket`'
+require_contains "README.md" 'PolyForm Noncommercial License 1.0.0'
+require_contains "README.md" 'Commercial use requires a separate written commercial license from Gale.'
+require_contains "README.md" 'mail@galewilliams.com'
+require_contains "README.md" 'LICENSE-APACHE-2.0'
 require_not_contains "README.md" 'install-plugin-to-socket'
-
-echo "Validating CONTRIBUTING contract..."
-require_contains "CONTRIBUTING.md" 'Use this guide when preparing changes so the repository stays understandable, testable, and truthful about the Apple workflow surface it actually ships.'
-require_contains "CONTRIBUTING.md" '## Contribution Workflow'
-require_contains "CONTRIBUTING.md" '## Local Setup'
-require_contains "CONTRIBUTING.md" '## Development Expectations'
-require_contains "CONTRIBUTING.md" 'bash .github/scripts/validate_repo_docs.sh'
-require_contains "CONTRIBUTING.md" 'uv run pytest'
+require_not_contains "README.md" 'licensed under Apache 2.0'
 
 echo "Validating AGENTS contract..."
 require_contains "AGENTS.md" 'This repository is a compatibility marketplace and README pointer'
@@ -61,225 +61,18 @@ require_contains "AGENTS.md" 'The canonical authored Apple Dev Skills payload no
 require_contains "AGENTS.md" 'Treat `productivity-skills` as the default baseline maintainer layer'
 require_contains "AGENTS.md" 'Preserve standalone-install guidance for public users who install only `apple-dev-skills`'
 require_contains "AGENTS.md" 'Keep `.agents/plugins/marketplace.json` as the compatibility surface that redirects to the Socket subdirectory.'
-require_contains "AGENTS.md" 'Do not edit the legacy payload copy here for new feature work; make payload changes in Socket.'
+require_contains "AGENTS.md" 'Do not add plugin payload, `.codex-plugin`, or `.agents/skills` surfaces back to this repository for new feature work; make payload changes in Socket.'
 require_contains "AGENTS.md" 'require reading the relevant Apple documentation before proposing implementation changes.'
 require_contains "AGENTS.md" 'Keep `explore-apple-swift-docs` as the canonical docs-routing surface'
+require_contains "AGENTS.md" "This repository no longer carries skill behavior or pytest-backed payload tests."
 
-echo "Validating reality audit guide..."
-audit_doc="docs/maintainers/reality-audit.md"
-require_contains "$audit_doc" "## Source-of-Truth Order"
-require_contains "$audit_doc" "## Audit Procedure"
-require_contains "$audit_doc" "## Local Discovery Smoke Test Flow"
-require_contains "$audit_doc" "## Reporting Shape"
-require_contains "$audit_doc" '`productivity-skills` owns the reusable `maintain-project-repo` toolkit contract'
-require_contains "$audit_doc" 'standalone `apple-dev-skills` installs from installs that also include the `productivity-skills` companion plugin'
-require_contains "$audit_doc" 'this repository owns only the Apple-specific profile selection and Xcode MCP registration contract'
-require_contains "$audit_doc" 'Historical milestone planning decisions that no longer need standalone docs should live in `ROADMAP.md`'
-require_not_contains "$audit_doc" 'plugins/apple-dev-skills/'
+echo "Validating commercial-use contract..."
+require_contains "COMMERCIAL-USE.md" "Commercial use requires a separate written commercial license"
+require_contains "COMMERCIAL-USE.md" "mail@galewilliams.com"
+require_contains "COMMERCIAL-USE.md" "contractor, consultant, freelancer"
+require_contains "COMMERCIAL-USE.md" "using Apple Dev Skills to do work for an employer"
+require_contains "COMMERCIAL-USE.md" "startup using Apple Dev Skills"
+require_contains "COMMERCIAL-USE.md" "organization using Apple Dev Skills to provide services"
+require_contains "COMMERCIAL-USE.md" "train, evaluate, benchmark, design, or improve"
 
-echo "Validating customization consolidation review..."
-customization_review_doc="docs/maintainers/customization-consolidation-review.md"
-require_contains "$customization_review_doc" "## Current State Summary"
-require_contains "$customization_review_doc" "## Decision"
-require_contains "$customization_review_doc" "## Knob Classification"
-require_contains "$customization_review_doc" "## Shared Helper Decision"
-require_contains "$customization_review_doc" "## Follow-Up Plan"
-require_contains "$customization_review_doc" "Milestone 20 concludes that the repo should shrink the customization surface rather than expand it."
-require_contains "$customization_review_doc" "## Sync Skill Simplification Decision"
-require_contains "$customization_review_doc" 'implemented replacement: `writeMode`'
-execution_split_doc="docs/maintainers/execution-split-and-inference-plan.md"
-require_contains "$execution_split_doc" "## Target Skill Matrix"
-require_contains "$execution_split_doc" "## Guidance Preservation Contract"
-require_contains "$execution_split_doc" "## AGENTS Expansion Strategy"
-require_contains "$execution_split_doc" "## Repo-Maintenance Direction"
-require_contains "$execution_split_doc" "## Implementation Plan"
-require_contains "$execution_split_doc" '`productivity-skills/maintain-project-repo` as the canonical shipped repo-maintenance surface'
-require_contains "$execution_split_doc" 'Users who install only `apple-dev-skills` still get the Apple-only workflows'
-require_contains "ROADMAP.md" "Completed Milestones 22 and 23"
-require_contains "ROADMAP.md" 'See `docs/maintainers/customization-consolidation-review.md`.'
-require_contains "ROADMAP.md" "Completed Milestones 30 through 36"
-require_contains "ROADMAP.md" "shrinking the customization surface"
-require_contains "ROADMAP.md" "splitting execution workflows"
-require_contains "ROADMAP.md" "preserving guidance through the refactor"
-
-echo "Validating skill directory layout..."
-active_skill_mds=(
-  "./skills/xcode-app-project-workflow/SKILL.md"
-  "./skills/xcode-build-run-workflow/SKILL.md"
-  "./skills/xcode-testing-workflow/SKILL.md"
-  "./skills/swift-package-build-run-workflow/SKILL.md"
-  "./skills/swift-package-testing-workflow/SKILL.md"
-  "./skills/swift-package-workflow/SKILL.md"
-  "./skills/author-swift-docc-docs/SKILL.md"
-  "./skills/safari-extension-control-workflow/SKILL.md"
-  "./skills/swiftui-app-architecture-workflow/SKILL.md"
-  "./skills/apple-ui-accessibility-workflow/SKILL.md"
-  "./skills/explore-apple-swift-docs/SKILL.md"
-  "./skills/format-swift-sources/SKILL.md"
-  "./skills/structure-swift-sources/SKILL.md"
-  "./skills/bootstrap-swift-package/SKILL.md"
-  "./skills/bootstrap-xcode-app-project/SKILL.md"
-  "./skills/sync-xcode-project-guidance/SKILL.md"
-  "./skills/sync-swift-package-guidance/SKILL.md"
-)
-[[ ${#active_skill_mds[@]} -eq 17 ]] || fail "Expected exactly 17 active skills, found ${#active_skill_mds[@]}."
-
-shared_xcode_snippet="./shared/agents-snippets/apple-xcode-project-core.md"
-shared_package_snippet="./shared/agents-snippets/apple-swift-package-core.md"
-[[ -f "$shared_xcode_snippet" ]] || fail "Missing shared snippet: $shared_xcode_snippet"
-[[ -f "$shared_package_snippet" ]] || fail "Missing shared snippet: $shared_package_snippet"
-
-for skill_md in "${active_skill_mds[@]}"; do
-  skill_dir="${skill_md%/SKILL.md}"
-  [[ -f "$skill_dir/agents/openai.yaml" ]] || fail "Missing $skill_dir/agents/openai.yaml"
-  [[ -d "$skill_dir/references" ]] || fail "Missing $skill_dir/references/"
-
-  case "$skill_dir" in
-    ./skills/structure-swift-sources)
-      ;;
-    *)
-      [[ -f "$skill_dir/references/customization.template.yaml" ]] || fail "Missing $skill_dir/references/customization.template.yaml"
-      [[ -f "$skill_dir/references/customization-flow.md" ]] || fail "Missing $skill_dir/references/customization-flow.md"
-      [[ -f "$skill_dir/scripts/customization_config.py" ]] || fail "Missing $skill_dir/scripts/customization_config.py"
-      ;;
-  esac
-
-  for heading in \
-    "^## Purpose$" \
-    "^## When To Use$" \
-    "^## Single-Path Workflow$" \
-    "^## Inputs$" \
-    "^## Outputs$" \
-    "^## Guards and Stop Conditions$" \
-    "^## Fallbacks and Handoffs$" \
-    "^## Customization$" \
-    "^## References$"
-  do
-    grep -q "$heading" "$skill_md" || fail "Missing required heading in $skill_md: ${heading#^}"
-  done
-
-  # Some skills are policy-only and intentionally do not ship scripts.
-  if grep -q "scripts/" "$skill_md"; then
-    [[ -d "$skill_dir/scripts" ]] || fail "Missing $skill_dir/scripts/ (referenced by $skill_md)"
-  fi
-
-  case "$skill_dir" in
-    ./skills/bootstrap-swift-package|./skills/sync-swift-package-guidance|./skills/swift-package-workflow|./skills/swift-package-build-run-workflow|./skills/swift-package-testing-workflow)
-      local_snippet="$skill_dir/references/snippets/apple-swift-package-core.md"
-      shared_snippet="$shared_package_snippet"
-      snippet_ref='references/snippets/apple-swift-package-core.md'
-      ;;
-    ./skills/structure-swift-sources|./skills/author-swift-docc-docs)
-      local_snippet=""
-      shared_snippet=""
-      snippet_ref=""
-      ;;
-    *)
-      local_snippet="$skill_dir/references/snippets/apple-xcode-project-core.md"
-      shared_snippet="$shared_xcode_snippet"
-      snippet_ref='references/snippets/apple-xcode-project-core.md'
-      ;;
-  esac
-
-  if [[ -n "$local_snippet" ]]; then
-    [[ -f "$local_snippet" ]] || fail "Missing $local_snippet"
-    cmp -s "$shared_snippet" "$local_snippet" || fail "Snippet drift detected between $shared_snippet and $local_snippet"
-
-    grep -Fq "$snippet_ref" "$skill_md" || fail "Missing local snippet reference in $skill_md"
-    grep -Eiq "recommend.{0,120}$snippet_ref|$snippet_ref.{0,120}recommend" "$skill_md" || fail "Missing snippet recommendation guidance in $skill_md"
-  fi
-done
-
-echo "Validating Dash docs exploration references..."
-dash_skill_dir="./skills/explore-apple-swift-docs"
-[[ -f "$dash_skill_dir/references/dash_call_library.md" ]] || fail "Missing $dash_skill_dir/references/dash_call_library.md"
-require_contains "$dash_skill_dir/SKILL.md" 'Prefer direct docs access methods in this order: Xcode MCP docs first, Dash MCP second, Dash localhost HTTP third, and official web docs last.'
-require_contains "$dash_skill_dir/SKILL.md" 'Do not present `scripts/run_workflow.py` as the required first step'
-require_contains "$dash_skill_dir/references/dash_call_library.md" '## Dash MCP Examples'
-require_contains "$dash_skill_dir/references/dash_call_library.md" '## Dash Local HTTP Examples'
-require_contains "$dash_skill_dir/references/dash_call_library.md" '## High-Value Docset Targets'
-
-echo "Validating stale installer and nested-packaging guidance is gone..."
-for file in \
-  "skills/swift-package-workflow/SKILL.md" \
-  "skills/swift-package-testing-workflow/SKILL.md" \
-  "skills/swift-package-build-run-workflow/SKILL.md" \
-  "skills/xcode-app-project-workflow/SKILL.md" \
-  "skills/xcode-testing-workflow/SKILL.md" \
-  "skills/xcode-build-run-workflow/SKILL.md" \
-  "skills/author-swift-docc-docs/SKILL.md" \
-  "skills/safari-extension-control-workflow/SKILL.md" \
-  "skills/swiftui-app-architecture-workflow/SKILL.md" \
-  "skills/sync-swift-package-guidance/SKILL.md" \
-  "skills/sync-xcode-project-guidance/SKILL.md" \
-  "ROADMAP.md"
-do
-  require_not_contains "$file" 'install-plugin-to-socket'
-  require_not_contains "$file" 'plugins/apple-dev-skills/'
-done
-
-echo "Validating maintain-project-repo delegation..."
-[[ ! -e "./shared/repo-maintenance-toolkit" ]] || fail "Did not expect apple-dev-skills to retain shared/repo-maintenance-toolkit."
-for skill_dir in \
-  "./skills/bootstrap-swift-package" \
-  "./skills/bootstrap-xcode-app-project" \
-  "./skills/sync-swift-package-guidance" \
-  "./skills/sync-xcode-project-guidance"
-do
-  [[ ! -e "$skill_dir/scripts/install_repo_maintenance_toolkit.py" ]] || fail "Did not expect legacy toolkit installer in $skill_dir"
-  [[ ! -e "$skill_dir/assets/repo-maintenance" ]] || fail "Did not expect vendored repo-maintenance assets in $skill_dir"
-  [[ ! -e "$skill_dir/assets/github/repo-maintenance-workflows" ]] || fail "Did not expect vendored repo-maintenance workflow assets in $skill_dir"
-  require_contains "$skill_dir/SKILL.md" 'maintain-project-repo'
-  require_contains "$skill_dir/SKILL.md" 'Companion Plugin Requirement'
-  require_contains "$skill_dir/SKILL.md" 'https://github.com/gaelic-ghost/socket'
-done
-require_contains "./skills/bootstrap-swift-package/scripts/bootstrap_swift_package.sh" 'productivity-skills/skills/maintain-project-repo/scripts/run_workflow.py'
-require_contains "./skills/bootstrap-xcode-app-project/scripts/bootstrap_xcode_app_project.py" 'productivity-skills" / "skills" / "maintain-project-repo" / "scripts" / "run_workflow.py'
-require_contains "./skills/sync-swift-package-guidance/scripts/sync_swift_package_guidance.py" 'productivity-skills" / "skills" / "maintain-project-repo" / "scripts" / "run_workflow.py'
-require_contains "./skills/sync-xcode-project-guidance/scripts/sync_xcode_project_guidance.py" 'productivity-skills" / "skills" / "maintain-project-repo" / "scripts" / "run_workflow.py'
-
-echo "Validating preserved guidance in AGENTS assets..."
-package_agents_assets=(
-  "./skills/bootstrap-swift-package/assets/AGENTS.md"
-  "./skills/sync-swift-package-guidance/assets/AGENTS.md"
-)
-for agents_asset in "${package_agents_assets[@]}"; do
-  require_contains "$agents_asset" 'Use `swift-package-build-run-workflow`'
-  require_contains "$agents_asset" 'Use `swift-package-testing-workflow`'
-  require_contains "$agents_asset" 'scripts/repo-maintenance/config/profile.env'
-  require_contains "$agents_asset" '.swiftformat'
-  require_contains "$agents_asset" 'scripts/repo-maintenance/hooks/pre-commit.sample'
-  require_contains "$agents_asset" 'swiftformat --lint'
-  require_contains "$agents_asset" 'Resource.process(...)'
-  require_contains "$agents_asset" 'Resource.copy(...)'
-  require_contains "$agents_asset" 'Resource.embedInCode(...)'
-  require_contains "$agents_asset" 'Bundle.module'
-  require_contains "$agents_asset" '.metallib'
-  require_contains "$agents_asset" '.xctestplan'
-  require_contains "$agents_asset" 'Debug and Release'
-  require_contains "$agents_asset" 'sync-swift-package-guidance'
-done
-
-xcode_agents_assets=(
-  "./skills/bootstrap-xcode-app-project/assets/AGENTS.md"
-  "./skills/sync-xcode-project-guidance/assets/AGENTS.md"
-)
-for agents_asset in "${xcode_agents_assets[@]}"; do
-  require_contains "$agents_asset" 'Use `xcode-build-run-workflow`'
-  require_contains "$agents_asset" 'Use `xcode-testing-workflow`'
-  require_contains "$agents_asset" 'scripts/repo-maintenance/config/profile.env'
-  require_contains "$agents_asset" '.swiftformat'
-  require_contains "$agents_asset" 'scripts/repo-maintenance/hooks/pre-commit.sample'
-  require_contains "$agents_asset" 'swiftformat --lint'
-  require_contains "$agents_asset" '.xctestplan'
-  require_contains "$agents_asset" 'project membership, target membership, build phases, and resource inclusion'
-  require_contains "$agents_asset" 'Debug and Release'
-  require_contains "$agents_asset" 'Never edit `.pbxproj` files directly.'
-  require_contains "$agents_asset" 'treat that diff as critical project state'
-  require_contains "$agents_asset" 'sync-xcode-project-guidance'
-done
-
-echo "Validating skill-creator contract..."
-uv run python .github/scripts/validate_skill_creator_contract.py >/dev/null
-
-echo "All validation checks passed."
+echo "Apple Dev Skills compatibility repository docs are internally consistent."

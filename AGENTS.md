@@ -9,7 +9,7 @@ This file is the Apple Dev Skills compatibility-repo override. Follow the root `
 - Treat `productivity-skills` as the default baseline maintainer layer for general repo docs and maintenance work; this repo is the narrower specialist layer when Apple-specific behavior should change the workflow.
 - Preserve standalone-install guidance for public users who install only `apple-dev-skills`, while leading new users to the Socket marketplace.
 - Keep `.agents/plugins/marketplace.json` as the compatibility surface that redirects to the Socket subdirectory.
-- Do not edit the legacy payload copy here for new feature work; make payload changes in Socket.
+- Do not add plugin payload, `.codex-plugin`, or `.agents/skills` surfaces back to this repository for new feature work; make payload changes in Socket.
 
 ## Apple Rules
 
@@ -27,6 +27,7 @@ This file is the Apple Dev Skills compatibility-repo override. Follow the root `
 - The public README should lead with `codex plugin marketplace add gaelic-ghost/socket` and `codex plugin marketplace upgrade socket` because Socket is the preferred catalog.
 - Also document `codex plugin marketplace add gaelic-ghost/apple-dev-skills` and `codex plugin marketplace upgrade apple-dev-skills` for compatibility installs.
 - Keep explicit refs scoped to pinned reproducible installs and manual local clone marketplace instructions scoped to development, unpublished testing, or fallback cases.
+- Keep README license guidance aligned with Socket's current PolyForm Noncommercial and separate commercial licensing terms.
 
 ## Validation
 
@@ -35,3 +36,4 @@ bash .github/scripts/validate_repo_docs.sh
 ```
 
 Use the docs validator when README, AGENTS, ROADMAP, active skill inventory, or maintainer docs change. Use pytest when skill behavior, scripts, validation helpers, or tested contracts change.
+Use the docs validator when README, AGENTS, marketplace metadata, or licensing docs change. This repository no longer carries skill behavior or pytest-backed payload tests.

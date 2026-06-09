@@ -1,4 +1,4 @@
-name: Validate Docs And Skills
+name: Validate Compatibility Pointer
 
 on:
   pull_request:
@@ -16,8 +16,5 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up uv
-        uses: astral-sh/setup-uv@v8.0.0
-
-      - name: Validate roadmap and skill layout
+      - name: Validate compatibility pointer docs
         run: bash .github/scripts/validate_repo_docs.sh
