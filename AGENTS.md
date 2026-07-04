@@ -27,7 +27,7 @@ This file is the Apple Dev Skills compatibility-repo override. Follow the root `
 - The public README should lead with `codex plugin marketplace add gaelic-ghost/socket` and `codex plugin marketplace upgrade socket` because Socket is the preferred catalog.
 - Also document `codex plugin marketplace add gaelic-ghost/apple-dev-skills` and `codex plugin marketplace upgrade apple-dev-skills` for compatibility installs.
 - Keep explicit refs scoped to pinned reproducible installs and manual local clone marketplace instructions scoped to development, unpublished testing, or fallback cases.
-- Keep README license guidance aligned with Socket's current PolyForm Noncommercial and separate commercial licensing terms.
+- Keep README license guidance aligned with Socket's current Apache License 2.0 terms.
 
 ## Validation
 
